@@ -1,0 +1,276 @@
+.culture-section{
+    margin: 120px 0;
+}
+
+
+/* ============================= */
+/* HEADING */
+/* ============================= */
+
+.culture-heading{
+    max-width: 720px;
+    margin: 0 auto 50px;
+    text-align: center;
+}
+
+.culture-heading h2{
+    color: #262626;
+    font-size: 40px;
+    line-height: 1.2;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+
+.culture-heading h2 span{
+    color: rgb(36, 146, 24);
+}
+
+.culture-heading > p{
+    color: #777;
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+
+/* ============================= */
+/* GRID */
+/* ============================= */
+
+.culture-grid{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+
+/* ============================= */
+/* CARD */
+/* ============================= */
+
+.culture-card{
+    position: relative;
+    overflow: hidden;
+
+    min-height: 300px;
+
+    padding: 28px 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #fbfff9
+        );
+
+    border: 1px solid #e8eee6;
+    border-radius: 20px;
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.culture-card:hover{
+    transform: translateY(-6px);
+
+    border-color:
+        rgba(36, 146, 24, 0.25);
+
+    box-shadow:
+        0 18px 45px rgba(40, 78, 43, 0.10);
+}
+
+
+/* ============================= */
+/* ICON */
+/* ============================= */
+
+.culture-icon{
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 22px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0f9ee,
+            #fff8df
+        );
+
+    font-size: 28px;
+}
+
+
+/* ============================= */
+/* TEXT */
+/* ============================= */
+
+.culture-subtitle{
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: rgb(36, 146, 24);
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.culture-card h3{
+    color: #292929;
+    font-size: 21px;
+    font-weight: 600;
+    margin-bottom: 13px;
+}
+
+.culture-card p{
+    color: #777;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* ============================= */
+/* CARD LINE */
+/* ============================= */
+
+.culture-card-line{
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 0;
+
+    height: 3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgb(36, 146, 24),
+            #f5bd45
+        );
+
+    transform: scaleX(0);
+    transform-origin: left;
+
+    transition: 0.3s;
+}
+
+.culture-card:hover .culture-card-line{
+    transform: scaleX(1);
+}
+
+
+/* ============================= */
+/* CULTURE FACT */
+/* ============================= */
+
+.culture-fact{
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 35px;
+
+    margin-top: 45px;
+
+    padding: 32px 38px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            120deg,
+            #eef8ed,
+            #fff9e9
+        );
+
+    border: 1px solid
+        rgba(36, 146, 24, 0.12);
+}
+
+.culture-fact-label{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 90px;
+
+    border-radius: 15px;
+
+    color: #267333;
+
+    background-color:
+        rgba(255,255,255,0.75);
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.culture-fact h3{
+    color: #2d2d2d;
+    font-size: 21px;
+    margin-bottom: 8px;
+}
+
+.culture-fact p{
+    color: #6e6e6e;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 1050px){
+
+    .culture-grid{
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 700px){
+
+    .culture-section{
+        margin: 80px 0;
+    }
+
+    .culture-heading{
+        margin-bottom: 35px;
+    }
+
+    .culture-heading h2{
+        font-size: 32px;
+    }
+
+    .culture-grid{
+        grid-template-columns: 1fr;
+    }
+
+    .culture-card{
+        min-height: auto;
+    }
+
+    .culture-fact{
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 25px;
+    }
+
+    .culture-fact-label{
+        min-height: 65px;
+    }
+
+}

@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+*{
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: Outfit, sans-serif;
+  scroll-behavior: smooth;
+}
+
+html{
+  min-height: 100%;
+}
+
+body{
+  min-height: 100vh;
+  color: #262626;
+
+  background:
+    radial-gradient(
+      circle at 10% 15%,
+      rgba(80, 170, 90, 0.13),
+      transparent 28%
+    ),
+
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(255, 205, 90, 0.16),
+      transparent 28%
+    ),
+
+    radial-gradient(
+      circle at 85% 80%,
+      rgba(74, 168, 105, 0.10),
+      transparent 30%
+    ),
+
+    radial-gradient(
+      circle at 15% 90%,
+      rgba(255, 184, 77, 0.10),
+      transparent 25%
+    ),
+
+    linear-gradient(
+      135deg,
+      #fffdf7 0%,
+      #f9fff8 45%,
+      #fffaf1 100%
+    );
+
+  background-attachment: fixed;
+}
+
+a{
+  text-decoration: none;
+  color: inherit;
+}
+
+.app{
+  width: 80%;
+  max-width: 1400px;
+  margin: auto;
+}
+
+
+/* ============================= */
+/* SUBTLE TROPICAL DECORATION */
+/* ============================= */
+
+body::before{
+  content: "";
+  position: fixed;
+  top: -120px;
+  left: -120px;
+
+  width: 360px;
+  height: 360px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(46, 139, 87, 0.10),
+      rgba(46, 139, 87, 0.03) 50%,
+      transparent 70%
+    );
+
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::after{
+  content: "";
+  position: fixed;
+  right: -130px;
+  bottom: -130px;
+
+  width: 420px;
+  height: 420px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 193, 77, 0.12),
+      rgba(255, 193, 77, 0.03) 50%,
+      transparent 70%
+    );
+
+  pointer-events: none;
+  z-index: -1;
+}
+
+
+/* ============================= */
+/* TEXT SELECTION */
+/* ============================= */
+
+::selection{
+  background-color: rgba(36, 146, 24, 0.20);
+  color: #1e4f25;
+}
+
+
+/* ============================= */
+/* SCROLLBAR */
+/* ============================= */
+
+::-webkit-scrollbar{
+  width: 9px;
+}
+
+::-webkit-scrollbar-track{
+  background-color: #f6f6f1;
+}
+
+::-webkit-scrollbar-thumb{
+  background-color: rgba(36, 146, 24, 0.45);
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background-color: rgba(36, 146, 24, 0.65);
+}
+
+
+/* ============================= */
+/* FADE IN */
+/* ============================= */
+
+@keyframes fadeIn {
+
+  0%{
+    opacity: 0;
+  }
+
+  100%{
+    opacity: 1;
+  }
+
+}
+
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 1050px){
+
+  .app{
+    width: 90%;
+  }
+
+}
+
+@media (max-width: 750px){
+
+  .app{
+    width: 92%;
+  }
+
+  body{
+    background:
+      radial-gradient(
+        circle at 5% 10%,
+        rgba(80, 170, 90, 0.11),
+        transparent 24%
+      ),
+
+      radial-gradient(
+        circle at 95% 20%,
+        rgba(255, 205, 90, 0.12),
+        transparent 26%
+      ),
+
+      linear-gradient(
+        135deg,
+        #fffdf7,
+        #f8fff7,
+        #fffaf2
+      );
+  }
+
+}

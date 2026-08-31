@@ -1,0 +1,740 @@
+.my-orders {
+    width: 100%;
+    margin: 50px auto 100px;
+}
+
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.my-orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 30px;
+    margin-bottom: 35px;
+}
+
+.my-orders-header h1 {
+    color: #262626;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.my-orders-header p {
+    color: #777;
+    font-size: 15px;
+}
+
+
+/* ============================= */
+/* REFRESH BUTTON */
+/* ============================= */
+
+.refresh-orders {
+    background: transparent;
+    color: #49557e;
+    border: 1px solid rgb(36, 146, 24);
+    padding: 9px 22px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.refresh-orders:hover {
+    background-color: #fff4f2;
+}
+
+
+/* ============================= */
+/* ORDER LIST */
+/* ============================= */
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+
+/* ============================= */
+/* ORDER CARD */
+/* ============================= */
+
+.order-card {
+    background-color: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.05);
+}
+
+
+/* ============================= */
+/* ORDER HEADER */
+/* ============================= */
+
+.order-card-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    gap: 30px;
+    padding: 20px 25px;
+    background-color: #fafafa;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.order-label {
+    color: #999;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.order-id {
+    color: #262626;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.order-date p:last-child {
+    color: #555;
+    font-size: 14px;
+}
+
+
+/* ============================= */
+/* ORDER STATUS */
+/* ============================= */
+
+.order-status {
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-success {
+    background-color: #edf8ee;
+    color: #27823c;
+}
+
+.status-processing {
+    background-color: #fff8e6;
+    color: #a87200;
+}
+
+.status-cancelled {
+    background-color: #fff0f0;
+    color: #d64242;
+}
+
+.status-completed {
+    background-color: #eef5ff;
+    color: #3769a8;
+}
+
+.status-warning {
+    background-color: #fff4dc;
+    color: #9a6500;
+}
+
+
+/* ============================= */
+/* FULFILLMENT */
+/* ============================= */
+
+.order-fulfillment {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    padding: 20px 25px;
+    background-color: #fff;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.order-fulfillment-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.order-fulfillment-item strong {
+    color: #333;
+    font-size: 14px;
+}
+
+
+/* ============================= */
+/* DELIVERY METHOD BADGE */
+/* ============================= */
+
+.order-delivery-method-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 13px !important;
+    font-weight: 600;
+}
+
+
+/* AVHÄMTNING */
+
+.order-delivery-method-badge.pickup {
+    color: #17633b;
+    background-color: #e9f8ef;
+    border: 1px solid #b9e5c9;
+}
+
+
+/* LEVERANS */
+
+.order-delivery-method-badge.delivery {
+    color: #355f92;
+    background-color: #eef5ff;
+    border: 1px solid #c8daef;
+}
+
+
+/* ============================= */
+/* FULFILLMENT BADGES */
+/* ============================= */
+
+.order-fulfillment-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 13px !important;
+    font-weight: 600;
+}
+
+
+/* SAME DAY */
+
+.order-fulfillment-badge.same-day {
+    color: #157347;
+    background-color: #e8f7ee;
+    border: 1px solid #b8e4c9;
+}
+
+
+/* NEXT DAY */
+
+.order-fulfillment-badge.next-day {
+    color: #49557e;
+    background-color: #eef1f8;
+    border: 1px solid #d9deeb;
+}
+
+
+/* LARGE ORDER */
+
+.order-fulfillment-badge.large-order {
+    color: #8a5a00;
+    background-color: #fff5db;
+    border: 1px solid #f1d38d;
+}
+
+
+/* ============================= */
+/* PICKUP / DELIVERY INFORMATION */
+/* ============================= */
+
+.order-method-information {
+    margin: 18px 25px 0;
+    padding: 16px 18px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.order-method-information strong {
+    font-size: 15px;
+}
+
+.order-method-information p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.order-method-information span {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* AVHÄMTNING */
+
+.pickup-information {
+    background-color: #f4fbf6;
+    border: 1px solid #cde7d5;
+}
+
+.pickup-information strong {
+    color: #17633b;
+}
+
+.pickup-information p,
+.pickup-information span {
+    color: #567061;
+}
+
+
+/* LEVERANS */
+
+.delivery-information {
+    background-color: #f5f8fc;
+    border: 1px solid #d4e0ee;
+}
+
+.delivery-information strong {
+    color: #355f92;
+}
+
+.delivery-information p,
+.delivery-information span {
+    color: #5d6875;
+}
+
+
+/* ============================= */
+/* STOCK NOTICE */
+/* ============================= */
+
+.order-stock-notice {
+    margin: 18px 25px 0;
+    padding: 15px 17px;
+    border: 1px solid #efc46d;
+    border-radius: 10px;
+    background-color: #fff8e8;
+}
+
+.order-stock-notice strong {
+    display: block;
+    color: #8a5a00;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.order-stock-notice p {
+    margin: 0;
+    color: #765b2d;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ============================= */
+/* PRODUCTS */
+/* ============================= */
+
+.order-products {
+    padding: 5px 25px;
+}
+
+.order-product {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.order-product:last-child {
+    border-bottom: none;
+}
+
+.order-product img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.order-product-placeholder {
+    width: 65px;
+    height: 65px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    font-size: 24px;
+}
+
+.order-product-info h3 {
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.order-product-info p {
+    color: #888;
+    font-size: 13px;
+}
+
+.order-unit-price {
+    margin-top: 3px;
+}
+
+.order-product-price {
+    color: #333;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+
+/* ============================= */
+/* PRICE SUMMARY */
+/* ============================= */
+
+.order-summary {
+    margin-left: auto;
+    width: 340px;
+    padding: 20px 25px;
+}
+
+.order-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.order-total {
+    color: #262626;
+    font-size: 16px;
+    padding-top: 12px;
+    margin-top: 5px;
+    border-top: 1px solid #e5e5e5;
+}
+
+
+/* ============================= */
+/* ORDER FOOTER */
+/* ============================= */
+
+.order-footer {
+    background-color: #fafafa;
+    border-top: 1px solid #eeeeee;
+    padding: 16px 25px;
+    display: flex;
+    gap: 50px;
+}
+
+.order-footer > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-footer-label {
+    color: #888;
+    font-size: 13px;
+}
+
+.payment-paid {
+    color: rgb(36, 146, 24);
+    font-weight: 600;
+}
+
+.payment-unpaid {
+    color: #c74242;
+    font-weight: 600;
+}
+
+
+/* ============================= */
+/* EMPTY */
+/* ============================= */
+
+.no-orders {
+    text-align: center;
+    padding: 80px 20px;
+    border: 1px solid #eeeeee;
+    border-radius: 14px;
+    background-color: #fff;
+}
+
+.no-orders-icon {
+    font-size: 45px;
+    margin-bottom: 20px;
+}
+
+.no-orders h2 {
+    color: #333;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.no-orders p {
+    color: #888;
+    margin-bottom: 25px;
+}
+
+.no-orders button,
+.my-orders-message button {
+    background: transparent;
+    font-size: 15px;
+    color: #49557e;
+    border: 1px solid rgb(36, 146, 24);
+    padding: 10px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.no-orders button:hover,
+.my-orders-message button:hover {
+    background-color: #fff4f2;
+}
+
+
+/* ============================= */
+/* LOADING */
+/* ============================= */
+
+.orders-loading {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    color: #777;
+}
+
+.orders-loader {
+    width: 38px;
+    height: 38px;
+    border: 4px solid #e5e5e5;
+    border-top-color: rgb(36, 146, 24);
+    border-radius: 50%;
+    animation: ordersSpin 0.8s linear infinite;
+}
+
+@keyframes ordersSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ============================= */
+/* MESSAGE / ERROR */
+/* ============================= */
+
+.my-orders-message {
+    max-width: 550px;
+    margin: 80px auto;
+    text-align: center;
+    padding: 50px 30px;
+    border: 1px solid #eeeeee;
+    border-radius: 14px;
+}
+
+.my-orders-message h2 {
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.my-orders-message p {
+    color: #777;
+    margin-bottom: 25px;
+}
+
+.error-message {
+    border-color: #f0d4d4;
+}
+
+.my-orders-error-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+
+/* ============================= */
+/* TABLET */
+/* ============================= */
+
+@media (max-width: 1100px) {
+
+    .order-fulfillment {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    .my-orders {
+        margin-top: 35px;
+    }
+
+    .order-card-header {
+        grid-template-columns: 1fr auto;
+    }
+
+    .order-date {
+        grid-row: 2;
+    }
+
+    .order-status {
+        grid-column: 2;
+        grid-row: 1 / 3;
+    }
+
+    .order-fulfillment {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .order-summary {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+}
+
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
+@media (max-width: 650px) {
+
+    .my-orders {
+        margin: 25px auto 60px;
+    }
+
+    .my-orders-header {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-bottom: 25px;
+    }
+
+    .my-orders-header h1 {
+        font-size: 27px;
+    }
+
+    .refresh-orders {
+        width: 100%;
+    }
+
+    .order-card-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 18px;
+    }
+
+    .order-fulfillment {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 18px;
+    }
+
+    .order-method-information {
+        margin: 15px 18px 0;
+        padding: 14px 16px;
+    }
+
+    .order-stock-notice {
+        margin: 15px 18px 0;
+    }
+
+    .order-product {
+        grid-template-columns: 55px 1fr;
+        gap: 14px;
+    }
+
+    .order-product img,
+    .order-product-placeholder {
+        width: 52px;
+        height: 52px;
+    }
+
+    .order-product-price {
+        grid-column: 2;
+        margin-top: -8px;
+    }
+
+    .order-products {
+        padding: 5px 18px;
+    }
+
+    .order-summary {
+        padding: 18px;
+    }
+
+    .order-footer {
+        padding: 15px 18px;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+}
+
+
+/* ============================= */
+/* SMALL MOBILE */
+/* ============================= */
+
+@media (max-width: 400px) {
+
+    .my-orders-header h1 {
+        font-size: 24px;
+    }
+
+    .order-product-info h3 {
+        font-size: 15px;
+    }
+
+    .order-summary-row {
+        font-size: 13px;
+    }
+
+    .order-total {
+        font-size: 15px;
+    }
+
+    .order-fulfillment {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .order-method-information {
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+    .order-stock-notice {
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+    .order-delivery-method-badge,
+    .order-fulfillment-badge {
+        font-size: 12px !important;
+        padding: 5px 10px;
+    }
+
+}

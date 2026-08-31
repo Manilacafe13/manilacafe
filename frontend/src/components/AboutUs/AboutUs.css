@@ -1,0 +1,377 @@
+.about-us{
+    position: relative;
+    margin: 110px 0;
+    padding: 80px 0;
+}
+
+.about-us::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background:
+        radial-gradient(
+            circle at 10% 20%,
+            rgba(65, 145, 75, 0.10),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 90% 80%,
+            rgba(255, 190, 70, 0.13),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #fffdf7,
+            #f8fff6
+        );
+    z-index: -1;
+}
+
+.about-us-inner{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 80px;
+}
+
+
+/* ============================= */
+/* VISUAL */
+/* ============================= */
+
+.about-us-visual{
+    position: relative;
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.about-us-main-card{
+    position: relative;
+    width: 85%;
+    min-height: 350px;
+    padding: 55px 45px;
+    border-radius: 30px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.95),
+            rgba(246,255,243,0.95)
+        );
+
+    border: 1px solid rgba(36, 146, 24, 0.13);
+
+    box-shadow:
+        0 25px 60px rgba(46, 79, 47, 0.10);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    z-index: 2;
+}
+
+.about-us-small-title{
+    color: rgb(36, 146, 24);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+
+.about-us-main-card h2{
+    color: #262626;
+    font-size: 42px;
+    line-height: 1.1;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.about-us-main-card h2 span{
+    color: rgb(36, 146, 24);
+}
+
+.about-us-main-card > p{
+    color: #6e6e6e;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 390px;
+}
+
+.about-us-flavours{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.about-us-flavours span{
+    padding: 8px 15px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #47604b;
+    background-color: #edf7ed;
+}
+
+
+/* ============================= */
+/* MINI CARD */
+/* ============================= */
+
+.about-us-mini-card{
+    position: absolute;
+    bottom: 15px;
+    right: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 16px 20px;
+
+    background-color: #fff;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.10);
+
+    z-index: 3;
+}
+
+.about-us-mini-card > span{
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: rgb(36, 146, 24);
+    background-color: #edf8ee;
+
+    font-size: 20px;
+}
+
+.about-us-mini-card div{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.about-us-mini-card strong{
+    color: #333;
+    font-size: 14px;
+}
+
+.about-us-mini-card p{
+    color: #888;
+    font-size: 12px;
+}
+
+
+/* ============================= */
+/* DECORATION */
+/* ============================= */
+
+.about-us-decoration{
+    position: absolute;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.decoration-one{
+    width: 170px;
+    height: 170px;
+    top: 0;
+    left: 0;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(42, 135, 62, 0.18),
+            rgba(42, 135, 62, 0.03)
+        );
+}
+
+.decoration-two{
+    width: 140px;
+    height: 140px;
+    right: 20px;
+    top: 30px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 185, 65, 0.22),
+            rgba(255, 185, 65, 0.03)
+        );
+}
+
+
+/* ============================= */
+/* CONTENT */
+/* ============================= */
+
+.about-us-content{
+    max-width: 580px;
+}
+
+.section-eyebrow{
+    display: inline-block;
+    margin-bottom: 15px;
+
+    color: rgb(36, 146, 24);
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.about-us-content h2{
+    color: #262626;
+    font-size: 42px;
+    line-height: 1.15;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.about-us-content h2 span{
+    color: rgb(36, 146, 24);
+}
+
+.about-us-content > p{
+    color: #6f6f6f;
+    font-size: 15px;
+    line-height: 1.85;
+    margin-bottom: 16px;
+}
+
+.about-us-content .about-us-lead{
+    color: #3d3d3d;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+
+/* ============================= */
+/* QUOTE */
+/* ============================= */
+
+.about-us-quote{
+    position: relative;
+    margin-top: 28px;
+    padding: 22px 25px 22px 55px;
+
+    border-left: 3px solid rgb(36, 146, 24);
+
+    background-color: rgba(255,255,255,0.65);
+
+    border-radius: 0 12px 12px 0;
+}
+
+.about-us-quote .quote-mark{
+    position: absolute;
+    left: 20px;
+    top: 7px;
+
+    color: rgba(36, 146, 24, 0.35);
+
+    font-size: 50px;
+    line-height: 1;
+}
+
+.about-us-quote p{
+    color: #555;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 950px){
+
+    .about-us-inner{
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }
+
+    .about-us-content{
+        max-width: 100%;
+    }
+
+    .about-us-visual{
+        min-height: 400px;
+    }
+
+}
+
+
+@media (max-width: 650px){
+
+    .about-us{
+        margin: 70px 0;
+        padding: 55px 0;
+    }
+
+    .about-us-inner{
+        gap: 35px;
+    }
+
+    .about-us-visual{
+        min-height: auto;
+        padding-bottom: 65px;
+    }
+
+    .about-us-main-card{
+        width: 100%;
+        min-height: 320px;
+        padding: 40px 28px;
+        border-radius: 22px;
+    }
+
+    .about-us-main-card h2{
+        font-size: 34px;
+    }
+
+    .about-us-content h2{
+        font-size: 34px;
+    }
+
+    .about-us-mini-card{
+        right: 10px;
+        bottom: 10px;
+    }
+
+}
+
+
+@media (max-width: 420px){
+
+    .about-us-main-card h2,
+    .about-us-content h2{
+        font-size: 30px;
+    }
+
+    .about-us-main-card{
+        padding: 35px 22px;
+    }
+
+    .about-us-mini-card{
+        left: 15px;
+        right: 15px;
+    }
+
+}

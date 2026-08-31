@@ -1,0 +1,307 @@
+.list {
+    width: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.list-title {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #262626;
+}
+
+.list-count {
+    font-size: 14px;
+    color: #777;
+}
+
+
+/* ============================= */
+/* REFRESH BUTTON */
+/* ============================= */
+
+.list-refresh-button {
+    background: transparent;
+    color: #49557e;
+    border: 1px solid rgb(36, 146, 24);
+    padding: 9px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.list-refresh-button:hover {
+    background-color: #fff4f2;
+}
+
+
+/* ============================= */
+/* TABLE */
+/* ============================= */
+
+.list-table {
+    width: 100%;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+
+/* ============================= */
+/* TABLE ROW */
+/* ============================= */
+
+.list-table-format {
+    display: grid;
+    grid-template-columns:
+        90px
+        1.5fr
+        1fr
+        120px
+        100px;
+
+    align-items: center;
+    gap: 20px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.list-table-format:last-child {
+    border-bottom: none;
+}
+
+.list-table-format:hover {
+    background-color: #fafafa;
+}
+
+
+/* ============================= */
+/* TABLE HEADER */
+/* ============================= */
+
+.list-table-format.title {
+    background-color: #f7f7f7;
+    color: #444;
+    font-size: 14px;
+}
+
+.list-table-format.title:hover {
+    background-color: #f7f7f7;
+}
+
+
+/* ============================= */
+/* PRODUCT IMAGE */
+/* ============================= */
+
+.list-table-format img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 9px;
+    border: 1px solid #eeeeee;
+}
+
+
+/* ============================= */
+/* PRODUCT TEXT */
+/* ============================= */
+
+.list-table-format p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+
+/* ============================= */
+/* IMAGE PLACEHOLDER */
+/* ============================= */
+
+.list-image-placeholder {
+    width: 65px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: #f3f3f3;
+    border-radius: 9px;
+    color: #999;
+    font-size: 11px;
+}
+
+
+/* ============================= */
+/* DELETE BUTTON */
+/* ============================= */
+
+.delete-food-button {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background-color: #fff1f1;
+    color: #d63d3d;
+    font-size: 22px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.delete-food-button:hover {
+    background-color: #ffe2e2;
+    transform: scale(1.05);
+}
+
+.delete-food-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* ============================= */
+/* EMPTY STATE */
+/* ============================= */
+
+.list-empty {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.list-empty p {
+    margin: 0;
+    color: #888;
+    font-size: 15px;
+}
+
+
+/* ============================= */
+/* LOADING */
+/* ============================= */
+
+.list-loading {
+    min-height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #777;
+    font-size: 15px;
+}
+
+
+/* ============================= */
+/* TABLET */
+/* ============================= */
+
+@media (max-width: 950px) {
+
+    .list {
+        padding: 22px;
+    }
+
+    .list-table-format {
+        grid-template-columns:
+            75px
+            1.4fr
+            1fr
+            100px
+            70px;
+
+        gap: 15px;
+        padding: 12px 15px;
+    }
+
+    .list-table-format img,
+    .list-image-placeholder {
+        width: 55px;
+        height: 55px;
+    }
+
+}
+
+
+/* ============================= */
+/* SMALL TABLET */
+/* ============================= */
+
+@media (max-width: 750px) {
+
+    .list-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .list-refresh-button {
+        width: 100%;
+    }
+
+    .list-table {
+        overflow-x: auto;
+    }
+
+    .list-table-format {
+        min-width: 700px;
+    }
+
+}
+
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
+@media (max-width: 500px) {
+
+    .list {
+        padding: 15px;
+    }
+
+    .list-title {
+        font-size: 24px;
+    }
+
+    .list-table-format {
+        grid-template-columns:
+            60px
+            150px
+            120px
+            90px
+            60px;
+
+        min-width: 600px;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .list-table-format img,
+    .list-image-placeholder {
+        width: 50px;
+        height: 50px;
+    }
+
+    .delete-food-button {
+        width: 34px;
+        height: 34px;
+        font-size: 19px;
+    }
+
+}

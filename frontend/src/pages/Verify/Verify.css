@@ -1,0 +1,159 @@
+.verify {
+    min-height: 70vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+}
+
+
+.verify-card {
+    width: 100%;
+    max-width: 520px;
+    background-color: white;
+    border-radius: 18px;
+    padding: 45px 35px;
+    text-align: center;
+    box-shadow: 0px 4px 25px rgba(0, 0, 0, 0.08);
+}
+
+
+.verify-card h2 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #262626;
+}
+
+
+.verify-card p {
+    color: #676767;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+
+.verify-info {
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+
+.verify-icon {
+    width: 75px;
+    height: 75px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: 600;
+}
+
+
+.success-icon {
+    background-color: #e8f7ec;
+    color: #28a745;
+}
+
+
+.cancelled-icon {
+    background-color: #fff0f0;
+    color: #dc3545;
+}
+
+
+.error-icon {
+    background-color: #fff4e5;
+    color: #e67e22;
+}
+
+
+.verify-card button {
+    margin-top: 25px;
+    border: none;
+    background-color: rgb(3, 149, 44);
+    color: white;
+    padding: 13px 30px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+
+.verify-card button:hover {
+    background-color: rgb(2, 125, 37);
+    transform: translateY(-2px);
+}
+
+
+.verify-loader {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border: 6px solid #e5e5e5;
+    border-top: 6px solid rgb(3, 149, 44);
+    border-radius: 50%;
+    animation: verify-spin 0.8s linear infinite;
+}
+
+
+@keyframes verify-spin {
+
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .verify {
+        min-height: 65vh;
+        padding: 40px 15px;
+    }
+
+
+    .verify-card {
+        padding: 35px 20px;
+        border-radius: 15px;
+    }
+
+
+    .verify-card h2 {
+        font-size: 23px;
+    }
+
+
+    .verify-card p {
+        font-size: 14px;
+    }
+
+
+    .verify-icon {
+        width: 65px;
+        height: 65px;
+        font-size: 36px;
+    }
+
+
+    .verify-loader {
+        width: 50px;
+        height: 50px;
+    }
+
+
+    .verify-card button {
+        width: 100%;
+        padding: 12px 20px;
+    }
+}
