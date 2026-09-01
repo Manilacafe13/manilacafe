@@ -20,14 +20,27 @@ import 'react-toastify/dist/ReactToastify.css'
 
 const App = () => {
 
-  const url =
-    "http://localhost:4000"
+  // ======================================================
+  // BACKEND URL
+  // ======================================================
+
+  const url = (
+  import.meta.env.VITE_API_URL ||
+  (
+    import.meta.env.DEV
+      ? "http://localhost:4000"
+      : ""
+  )
+).replace(/\/+$/, "")
+
 
   const location =
     useLocation()
 
+
   const token =
     localStorage.getItem("token")
+
 
   const isLoginPage =
     location.pathname === "/login"
@@ -64,7 +77,9 @@ const App = () => {
 
           <Route
             path="/login"
-            element={<Login />}
+            element={
+              <Login />
+            }
           />
 
         </Routes>

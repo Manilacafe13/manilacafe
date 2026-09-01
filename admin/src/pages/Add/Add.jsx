@@ -11,10 +11,11 @@ const Add = ({ url }) => {
   // BACKEND URL
   // ======================================================
 
-  const backendUrl =
+  const backendUrl = (
     url ||
     import.meta.env.VITE_API_URL ||
-    "http://localhost:4000"
+    ""
+  ).replace(/\/+$/, "")
 
 
   // ======================================================
@@ -24,26 +25,16 @@ const Add = ({ url }) => {
   const [image, setImage] =
     useState(null)
 
-
   const [isLoading, setIsLoading] =
     useState(false)
 
-
   const [data, setData] =
     useState({
-
       name: "",
-
       description: "",
-
       price: "",
-
-      category:
-        "Halo-Halo",
-
-      sameDayStock:
-        0
-
+      category: "Halo-Halo",
+      sameDayStock: 0
     })
 
 
@@ -58,14 +49,9 @@ const Add = ({ url }) => {
       value
     } = event.target
 
-
     setData((prev) => ({
-
       ...prev,
-
-      [name]:
-        value
-
+      [name]: value
     }))
 
   }
@@ -80,13 +66,9 @@ const Add = ({ url }) => {
     const selectedFile =
       event.target.files?.[0]
 
-
     if (!selectedFile) {
-
       return
-
     }
-
 
     if (
       !selectedFile.type.startsWith(
@@ -101,9 +83,7 @@ const Add = ({ url }) => {
       event.target.value = ""
 
       return
-
     }
-
 
     setImage(
       selectedFile
@@ -124,9 +104,21 @@ const Add = ({ url }) => {
 
 
     if (isLoading) {
+      return
+    }
+
+
+    // ==================================================
+    // BACKEND URL
+    // ==================================================
+
+    if (!backendUrl) {
+
+      toast.error(
+        "Backend-adressen saknas."
+      )
 
       return
-
     }
 
 
@@ -147,7 +139,6 @@ const Add = ({ url }) => {
       )
 
       return
-
     }
 
 
@@ -162,7 +153,6 @@ const Add = ({ url }) => {
       )
 
       return
-
     }
 
 
@@ -181,7 +171,6 @@ const Add = ({ url }) => {
       )
 
       return
-
     }
 
 
@@ -205,7 +194,6 @@ const Add = ({ url }) => {
       )
 
       return
-
     }
 
 
@@ -231,7 +219,6 @@ const Add = ({ url }) => {
       )
 
       return
-
     }
 
 
@@ -297,9 +284,7 @@ const Add = ({ url }) => {
 
           {
             headers: {
-
               token
-
             }
           }
 
@@ -321,19 +306,11 @@ const Add = ({ url }) => {
 
 
         setData({
-
           name: "",
-
           description: "",
-
           price: "",
-
-          category:
-            "Halo-Halo",
-
-          sameDayStock:
-            0
-
+          category: "Halo-Halo",
+          sameDayStock: 0
         })
 
 
@@ -349,14 +326,11 @@ const Add = ({ url }) => {
 
 
         if (imageInput) {
-
           imageInput.value = ""
-
         }
 
 
         return
-
       }
 
 
@@ -384,7 +358,6 @@ const Add = ({ url }) => {
         )
 
         return
-
       }
 
 
@@ -397,7 +370,6 @@ const Add = ({ url }) => {
         )
 
         return
-
       }
 
 
@@ -424,7 +396,6 @@ const Add = ({ url }) => {
 
     <div className="add">
 
-
       <form
         className="flex-col"
         onSubmit={onSubmitHandler}
@@ -445,7 +416,6 @@ const Add = ({ url }) => {
           <label htmlFor="image">
 
             <img
-
               src={
                 image
                   ? URL.createObjectURL(
@@ -453,9 +423,7 @@ const Add = ({ url }) => {
                     )
                   : assets.upload_area
               }
-
               alt="Ladda upp produkt"
-
             />
 
           </label>
@@ -484,19 +452,12 @@ const Add = ({ url }) => {
           </p>
 
           <input
-
             onChange={onChangeHandler}
-
             value={data.name}
-
             type="text"
-
             name="name"
-
             placeholder="Exempel: Mango Float"
-
             required
-
           />
 
         </div>
@@ -513,19 +474,12 @@ const Add = ({ url }) => {
           </p>
 
           <textarea
-
             onChange={onChangeHandler}
-
             value={data.description}
-
             name="description"
-
             rows="6"
-
             placeholder="Beskriv produkten..."
-
             required
-
           />
 
         </div>
@@ -582,23 +536,14 @@ const Add = ({ url }) => {
             </p>
 
             <input
-
               onChange={onChangeHandler}
-
               value={data.price}
-
               type="number"
-
               name="price"
-
               min="0"
-
               step="0.01"
-
               placeholder="45"
-
               required
-
             />
 
           </div>
@@ -613,30 +558,18 @@ const Add = ({ url }) => {
             </p>
 
             <input
-
               onChange={onChangeHandler}
-
               value={data.sameDayStock}
-
               type="number"
-
               name="sameDayStock"
-
               min="0"
-
               step="1"
-
               placeholder="0"
-
               required
-
             />
 
             <span className="stock-help">
-
-              Antal portioner som kan
-              beställas samma dag.
-
+              Antal portioner som kan beställas samma dag.
             </span>
 
           </div>
@@ -650,13 +583,9 @@ const Add = ({ url }) => {
         {/* ============================================== */}
 
         <button
-
           type="submit"
-
           className="add-btn"
-
           disabled={isLoading}
-
         >
 
           {
@@ -669,7 +598,6 @@ const Add = ({ url }) => {
 
 
       </form>
-
 
     </div>
 

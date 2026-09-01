@@ -4,18 +4,33 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
+
 const Login = () => {
 
-  const url =
+  // ======================================================
+  // BACKEND URL
+  // ======================================================
+
+  const url = (
     import.meta.env.VITE_API_URL ||
-    "http://localhost:4000"
+    (
+      import.meta.env.DEV
+        ? "http://localhost:4000"
+        : ""
+    )
+  ).replace(/\/+$/, "")
 
-  const navigate = useNavigate()
 
-  const [data, setData] = useState({
-    email: "",
-    password: ""
-  })
+  const navigate =
+    useNavigate()
+
+
+  const [data, setData] =
+    useState({
+      email: "",
+      password: ""
+    })
+
 
   const [loading, setLoading] =
     useState(false)
@@ -31,6 +46,7 @@ const Login = () => {
       name,
       value
     } = event.target
+
 
     setData((prev) => ({
       ...prev,
@@ -48,9 +64,57 @@ const Login = () => {
 
     event.preventDefault()
 
+
     if (loading) {
       return
     }
+
+
+    // ==================================================
+    // CHECK BACKEND URL
+    // ==================================================
+
+    if (!url) {
+
+      console.error(
+        "VITE_API_URL saknas."
+      )
+
+
+      toast.error(
+        "Backend-adressen är inte konfigurerad."
+      )
+
+      return
+    }
+
+
+    // ==================================================
+    // VALIDATE LOGIN
+    // ==================================================
+
+    const email =
+      data.email
+        .trim()
+        .toLowerCase()
+
+
+    const password =
+      data.password
+
+
+    if (
+      !email ||
+      !password
+    ) {
+
+      toast.error(
+        "Fyll i e-post och lösenord."
+      )
+
+      return
+    }
+
 
     try {
 
@@ -59,20 +123,24 @@ const Login = () => {
 
       const response =
         await axios.post(
-          `${url}/api/user/login`,
-          {
-            email:
-              data.email
-                .trim()
-                .toLowerCase(),
 
-            password:
-              data.password
+          `${url}/api/user/login`,
+
+          {
+            email,
+            password
           }
+
         )
 
 
-      if (!response.data.success) {
+      // ==================================================
+      // LOGIN FAILED
+      // ==================================================
+
+      if (
+        !response.data.success
+      ) {
 
         toast.error(
           response.data.message ||
@@ -83,7 +151,13 @@ const Login = () => {
       }
 
 
-      if (!response.data.token) {
+      // ==================================================
+      // TOKEN CHECK
+      // ==================================================
+
+      if (
+        !response.data.token
+      ) {
 
         toast.error(
           "Ingen token kunde hämtas."
@@ -112,7 +186,12 @@ const Login = () => {
       // GO TO ORDERS
       // ==================================================
 
-      navigate("/orders")
+      navigate(
+        "/orders",
+        {
+          replace: true
+        }
+      )
 
 
     } catch (error) {
@@ -124,9 +203,63 @@ const Login = () => {
       )
 
 
+      // ==================================================
+      // WRONG LOGIN
+      // ==================================================
+
+      if (
+        error.response?.status === 401
+      ) {
+
+        toast.error(
+          error.response?.data?.message ||
+          "Fel e-post eller lösenord."
+        )
+
+        return
+      }
+
+
+      // ==================================================
+      // CORS / FORBIDDEN
+      // ==================================================
+
+      if (
+        error.response?.status === 403
+      ) {
+
+        toast.error(
+          error.response?.data?.message ||
+          "Åtkomst nekad."
+        )
+
+        return
+      }
+
+
+      // ==================================================
+      // NETWORK ERROR
+      // ==================================================
+
+      if (
+        !error.response
+      ) {
+
+        toast.error(
+          "Kunde inte ansluta till servern."
+        )
+
+        return
+      }
+
+
+      // ==================================================
+      // GENERAL ERROR
+      // ==================================================
+
       toast.error(
         error.response?.data?.message ||
-        "Fel e-post eller lösenord."
+        "Inloggningen misslyckades."
       )
 
 
@@ -147,57 +280,98 @@ const Login = () => {
 
     <div className="admin-login">
 
+
       <form
         className="admin-login-form"
         onSubmit={loginAdmin}
       >
 
+
         <h1>
           Admin
         </h1>
+
 
         <p>
           Logga in för att hantera Manila Café.
         </p>
 
 
+        {/* ============================================== */}
+        {/* EMAIL */}
+        {/* ============================================== */}
+
         <div className="admin-login-input">
 
-          <label>
+          <label htmlFor="admin-email">
             E-post
           </label>
 
+
           <input
+
+            id="admin-email"
+
             type="email"
+
             name="email"
+
             value={data.email}
+
             onChange={onChangeHandler}
+
             placeholder="E-post"
+
             autoComplete="email"
+
+            disabled={loading}
+
             required
+
           />
 
         </div>
 
+
+        {/* ============================================== */}
+        {/* PASSWORD */}
+        {/* ============================================== */}
 
         <div className="admin-login-input">
 
-          <label>
+          <label htmlFor="admin-password">
             Lösenord
           </label>
 
+
           <input
+
+            id="admin-password"
+
             type="password"
+
             name="password"
+
             value={data.password}
+
             onChange={onChangeHandler}
+
             placeholder="Lösenord"
+
             autoComplete="current-password"
+
+            disabled={loading}
+
             required
+
           />
 
         </div>
 
+
+        {/* ============================================== */}
+        {/* LOGIN BUTTON */}
+        {/* ============================================== */}
 
         <button
           type="submit"
@@ -212,12 +386,15 @@ const Login = () => {
 
         </button>
 
+
       </form>
+
 
     </div>
 
   )
 
 }
+
 
 export default Login

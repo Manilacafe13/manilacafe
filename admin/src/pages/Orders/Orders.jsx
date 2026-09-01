@@ -8,15 +8,17 @@ import './Orders.css'
 import axios from 'axios'
 
 
-const Orders = () => {
+const Orders = ({ url }) => {
 
   // ======================================================
   // BACKEND URL
   // ======================================================
 
-  const url =
+  const backendUrl = (
+    url ||
     import.meta.env.VITE_API_URL ||
-    "http://localhost:4000"
+    ""
+  ).replace(/\/+$/, "")
 
 
   // ======================================================
@@ -50,6 +52,45 @@ const Orders = () => {
 
 
   // ======================================================
+  // PRODUCT IMAGE URL
+  // ======================================================
+
+  const getImageUrl = (image) => {
+
+    if (!image) {
+      return ""
+    }
+
+
+    const imageValue =
+      String(image).trim()
+
+
+    if (
+      imageValue.startsWith("http://") ||
+      imageValue.startsWith("https://")
+    ) {
+
+      return imageValue
+
+    }
+
+
+    if (
+      imageValue.startsWith("//")
+    ) {
+
+      return `https:${imageValue}`
+
+    }
+
+
+    return `${backendUrl}/images/${imageValue}`
+
+  }
+
+
+  // ======================================================
   // FETCH ALL ORDERS
   // ======================================================
 
@@ -73,6 +114,19 @@ const Orders = () => {
       }
 
 
+      if (!backendUrl) {
+
+        setLoading(false)
+
+        setError(
+          "Backend-adressen saknas."
+        )
+
+        return
+
+      }
+
+
       try {
 
         setLoading(true)
@@ -83,7 +137,7 @@ const Orders = () => {
         const response =
           await axios.get(
 
-            `${url}/api/order/list`,
+            `${backendUrl}/api/order/list`,
 
             {
               headers: {
@@ -164,7 +218,7 @@ const Orders = () => {
 
       }
 
-    }, [url])
+    }, [backendUrl])
 
 
   // ======================================================
@@ -202,6 +256,17 @@ const Orders = () => {
     }
 
 
+    if (!backendUrl) {
+
+      setError(
+        "Backend-adressen saknas."
+      )
+
+      return
+
+    }
+
+
     try {
 
       setUpdatingOrder(
@@ -212,7 +277,7 @@ const Orders = () => {
       const response =
         await axios.post(
 
-          `${url}/api/order/status`,
+          `${backendUrl}/api/order/status`,
 
           {
             orderId,
@@ -269,6 +334,32 @@ const Orders = () => {
         error.response?.data ||
         error.message
       )
+
+
+      if (
+        error.response?.status === 401
+      ) {
+
+        alert(
+          "Din inloggning har gått ut. Logga in igen."
+        )
+
+        return
+
+      }
+
+
+      if (
+        error.response?.status === 403
+      ) {
+
+        alert(
+          "Du har inte administratörsbehörighet."
+        )
+
+        return
+
+      }
 
 
       alert(
@@ -878,8 +969,6 @@ const Orders = () => {
                 <div className="admin-order-fulfillment">
 
 
-                  {/* DELIVERY METHOD */}
-
                   <div>
 
                     <span className="admin-order-label">
@@ -904,8 +993,6 @@ const Orders = () => {
 
                   </div>
 
-
-                  {/* ORDER TYPE */}
 
                   <div>
 
@@ -932,8 +1019,6 @@ const Orders = () => {
                   </div>
 
 
-                  {/* DATE */}
-
                   <div>
 
                     <span className="admin-order-label">
@@ -950,8 +1035,6 @@ const Orders = () => {
 
                   </div>
 
-
-                  {/* TIME */}
 
                   <div>
 
@@ -974,8 +1057,6 @@ const Orders = () => {
 
                   </div>
 
-
-                  {/* QUANTITY */}
 
                   <div>
 
@@ -1028,8 +1109,6 @@ const Orders = () => {
                 <div className="admin-order-customer">
 
 
-                  {/* CUSTOMER */}
-
                   <div className="admin-order-section">
 
                     <h3>
@@ -1056,8 +1135,6 @@ const Orders = () => {
 
                   </div>
 
-
-                  {/* PICKUP */}
 
                   {isPickup ? (
 
@@ -1101,8 +1178,6 @@ const Orders = () => {
                     </div>
 
                   ) : (
-
-                    /* DELIVERY ADDRESS */
 
                     <div className="admin-order-section">
 
@@ -1179,7 +1254,9 @@ const Orders = () => {
 
                               <img
                                 src={
-                                  `${url}/images/${item.image}`
+                                  getImageUrl(
+                                    item.image
+                                  )
                                 }
                                 alt={
                                   item.name ||
@@ -1404,8 +1481,6 @@ const Orders = () => {
                       </option>
 
 
-                      {/* PICKUP STATUS */}
-
                       {isPickup && (
 
                         <option value="Redo för upphämtning">
@@ -1423,8 +1498,6 @@ const Orders = () => {
 
                       )}
 
-
-                      {/* DELIVERY STATUS */}
 
                       {!isPickup && (
 
