@@ -33,6 +33,34 @@ const List = () => {
 
 
   // ======================================================
+  // GET PRODUCT IMAGE URL
+  // ======================================================
+
+  const getImageUrl = (image) => {
+
+    if (!image) {
+      return ""
+    }
+
+
+    // Cloudinary / external image
+    if (
+      image.startsWith("http://") ||
+      image.startsWith("https://")
+    ) {
+
+      return image
+
+    }
+
+
+    // Old local backend image
+    return `${url}/images/${image}`
+
+  }
+
+
+  // ======================================================
   // FETCH FOOD LIST
   // ======================================================
 
@@ -652,7 +680,7 @@ const List = () => {
               {item.image ? (
 
                 <img
-                  src={`${url}/images/${item.image}`}
+                  src={getImageUrl(item.image)}
                   alt={item.name}
                 />
 

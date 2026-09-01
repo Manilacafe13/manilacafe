@@ -1,13 +1,127 @@
 import foodModel from "../models/foodmodel.js";
 import mongoose from "mongoose";
 import fs from "fs";
+import cloudinary from "../config/cloudinary.js";
+
+
+// ======================================================
+// REMOVE LOCAL TEMP FILE
+// ======================================================
+
+const removeLocalFile = (filePath) => {
+
+  if (!filePath) {
+    return;
+  }
+
+
+  fs.unlink(
+    filePath,
+    (error) => {
+
+      if (
+        error &&
+        error.code !== "ENOENT"
+      ) {
+
+        console.log(
+          "Could not remove local image:",
+          error.message
+        );
+
+      }
+
+    }
+  );
+
+};
+
+
+// ======================================================
+// GET CLOUDINARY PUBLIC ID FROM URL
+// ======================================================
+
+const getCloudinaryPublicId = (imageUrl) => {
+
+  try {
+
+    if (
+      !imageUrl ||
+      !imageUrl.includes(
+        "res.cloudinary.com"
+      )
+    ) {
+
+      return null;
+
+    }
+
+
+    const uploadPart =
+      imageUrl.split(
+        "/upload/"
+      )[1];
+
+
+    if (!uploadPart) {
+
+      return null;
+
+    }
+
+
+    const withoutVersion =
+      uploadPart.replace(
+        /^v\d+\//,
+        ""
+      );
+
+
+    const lastDot =
+      withoutVersion.lastIndexOf(
+        "."
+      );
+
+
+    if (lastDot === -1) {
+
+      return withoutVersion;
+
+    }
+
+
+    return withoutVersion.substring(
+      0,
+      lastDot
+    );
+
+
+  } catch (error) {
+
+    console.log(
+      "Cloudinary public ID error:",
+      error.message
+    );
+
+
+    return null;
+
+  }
+
+};
 
 
 // ======================================================
 // ADD FOOD
 // ======================================================
 
-const addFood = async (req, res) => {
+const addFood = async (
+  req,
+  res
+) => {
+
+  let cloudinaryPublicId = null;
+
 
   try {
 
@@ -73,10 +187,8 @@ const addFood = async (req, res) => {
       !category
     ) {
 
-      // Remove uploaded image
-      fs.unlink(
-        `uploads/${req.file.filename}`,
-        () => {}
+      removeLocalFile(
+        req.file.path
       );
 
 
@@ -101,9 +213,8 @@ const addFood = async (req, res) => {
       price < 0
     ) {
 
-      fs.unlink(
-        `uploads/${req.file.filename}`,
-        () => {}
+      removeLocalFile(
+        req.file.path
       );
 
 
@@ -130,9 +241,8 @@ const addFood = async (req, res) => {
       sameDayStock < 0
     ) {
 
-      fs.unlink(
-        `uploads/${req.file.filename}`,
-        () => {}
+      removeLocalFile(
+        req.file.path
       );
 
 
@@ -146,6 +256,40 @@ const addFood = async (req, res) => {
       });
 
     }
+
+
+    // ==================================================
+    // UPLOAD IMAGE TO CLOUDINARY
+    // ==================================================
+
+    const uploadResult =
+      await cloudinary
+        .uploader
+        .upload(
+          req.file.path,
+          {
+
+            folder:
+              "manilacafe/products",
+
+            resource_type:
+              "image"
+
+          }
+        );
+
+
+    cloudinaryPublicId =
+      uploadResult.public_id;
+
+
+    // ==================================================
+    // REMOVE TEMP IMAGE
+    // ==================================================
+
+    removeLocalFile(
+      req.file.path
+    );
 
 
     // ==================================================
@@ -164,7 +308,7 @@ const addFood = async (req, res) => {
         category,
 
         image:
-          req.file.filename,
+          uploadResult.secure_url,
 
         sameDayStock
 
@@ -200,17 +344,46 @@ const addFood = async (req, res) => {
 
 
     // ==================================================
-    // REMOVE IMAGE IF SAVE FAILED
+    // REMOVE LOCAL TEMP IMAGE
     // ==================================================
 
     if (
-      req.file?.filename
+      req.file?.path
     ) {
 
-      fs.unlink(
-        `uploads/${req.file.filename}`,
-        () => {}
+      removeLocalFile(
+        req.file.path
       );
+
+    }
+
+
+    // ==================================================
+    // REMOVE CLOUDINARY IMAGE IF SAVE FAILED
+    // ==================================================
+
+    if (
+      cloudinaryPublicId
+    ) {
+
+      try {
+
+        await cloudinary
+          .uploader
+          .destroy(
+            cloudinaryPublicId
+          );
+
+      } catch (
+        cloudinaryError
+      ) {
+
+        console.log(
+          "Could not remove Cloudinary image:",
+          cloudinaryError.message
+        );
+
+      }
 
     }
 
@@ -347,7 +520,9 @@ const updateStock = async (
 
 
     if (
-      !Number.isInteger(stock) ||
+      !Number.isInteger(
+        stock
+      ) ||
       stock < 0
     ) {
 
@@ -519,19 +694,55 @@ const removeFood = async (
 
 
     // ==================================================
-    // REMOVE PRODUCT FROM DATABASE
+    // REMOVE CLOUDINARY IMAGE
     // ==================================================
 
-    await foodModel.findByIdAndDelete(
-      id
-    );
+    if (
+      food.image &&
+      food.image.includes(
+        "res.cloudinary.com"
+      )
+    ) {
+
+      const publicId =
+        getCloudinaryPublicId(
+          food.image
+        );
+
+
+      if (publicId) {
+
+        try {
+
+          await cloudinary
+            .uploader
+            .destroy(
+              publicId
+            );
+
+        } catch (
+          cloudinaryError
+        ) {
+
+          console.log(
+            "Could not remove Cloudinary image:",
+            cloudinaryError.message
+          );
+
+        }
+
+      }
+
+    }
 
 
     // ==================================================
-    // REMOVE IMAGE
+    // SUPPORT OLD LOCAL IMAGES
     // ==================================================
 
-    if (food.image) {
+    else if (
+      food.image
+    ) {
 
       fs.unlink(
         `uploads/${food.image}`,
@@ -543,7 +754,7 @@ const removeFood = async (
           ) {
 
             console.log(
-              "Could not remove image:",
+              "Could not remove local image:",
               error.message
             );
 
@@ -553,6 +764,15 @@ const removeFood = async (
       );
 
     }
+
+
+    // ==================================================
+    // REMOVE PRODUCT FROM DATABASE
+    // ==================================================
+
+    await foodModel.findByIdAndDelete(
+      id
+    );
 
 
     // ==================================================

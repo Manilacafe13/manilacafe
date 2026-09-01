@@ -8,6 +8,7 @@ import {
 } from "../controllers/foodControllers.js";
 
 import multer from "multer";
+import fs from "fs";
 
 import authMiddleware from "../middleware/auth.js";
 import adminAuth from "../middleware/adminAuth.js";
@@ -17,19 +18,60 @@ const foodRouter = express.Router();
 
 
 // ======================================================
+// TEMP UPLOAD DIRECTORY
+// ======================================================
+
+const uploadDirectory = "uploads";
+
+
+if (!fs.existsSync(uploadDirectory)) {
+
+  fs.mkdirSync(
+    uploadDirectory,
+    {
+      recursive: true
+    }
+  );
+
+}
+
+
+// ======================================================
 // IMAGE STORAGE ENGINE
 // ======================================================
 
 const storage = multer.diskStorage({
 
-  destination: "uploads",
+  destination: (
+    req,
+    file,
+    cb
+  ) => {
 
-  filename: (req, file, cb) => {
+    cb(
+      null,
+      uploadDirectory
+    );
+
+  },
+
+  filename: (
+    req,
+    file,
+    cb
+  ) => {
 
     const safeName =
       file.originalname
-        .replace(/\s+/g, "-")
-        .replace(/[^a-zA-Z0-9._-]/g, "");
+        .replace(
+          /\s+/g,
+          "-"
+        )
+        .replace(
+          /[^a-zA-Z0-9._-]/g,
+          ""
+        );
+
 
     cb(
       null,
@@ -41,15 +83,24 @@ const storage = multer.diskStorage({
 });
 
 
+// ======================================================
+// MULTER CONFIG
+// ======================================================
+
 const upload = multer({
 
-  storage: storage,
+  storage,
 
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize:
+      5 * 1024 * 1024
   },
 
-  fileFilter: (req, file, cb) => {
+  fileFilter: (
+    req,
+    file,
+    cb
+  ) => {
 
     if (
       file.mimetype.startsWith(
@@ -57,30 +108,24 @@ const upload = multer({
       )
     ) {
 
-      cb(
+      return cb(
         null,
         true
       );
 
-    } else {
-
-      cb(
-        new Error(
-          "Endast bildfiler är tillåtna."
-        ),
-        false
-      );
-
     }
+
+
+    return cb(
+      new Error(
+        "Endast bildfiler är tillåtna."
+      ),
+      false
+    );
 
   }
 
 });
-
-
-// ======================================================
-// FOOD ROUTES
-// ======================================================
 
 
 // ======================================================
