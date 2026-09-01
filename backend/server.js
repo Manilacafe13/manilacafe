@@ -10,6 +10,10 @@ import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import futureProductRouter from "./routes/futureProductRoute.js";
 
+import {
+  stripeWebhook
+} from "./controllers/orderController.js";
+
 
 // ======================================================
 // APP CONFIG
@@ -37,7 +41,6 @@ const adminUrl =
 
 // ======================================================
 // NORMALIZE URL
-// Removes trailing slash
 // ======================================================
 
 const normalizeOrigin = (origin) => {
@@ -97,8 +100,8 @@ const corsOptions = {
 
   origin: (origin, callback) => {
 
-    // Allow requests without Origin
-    // Example: Postman, curl, server-to-server
+    // Allow server-to-server requests,
+    // Stripe webhooks, Postman, curl etc.
     if (!origin) {
 
       return callback(
@@ -164,7 +167,8 @@ const corsOptions = {
   allowedHeaders: [
     "Content-Type",
     "Authorization",
-    "token"
+    "token",
+    "Stripe-Signature"
   ],
 
 
@@ -183,7 +187,24 @@ app.use(
 
 
 // ======================================================
-// MIDDLEWARE
+// STRIPE WEBHOOK
+// IMPORTANT:
+// MUST BE BEFORE express.json()
+// ======================================================
+
+app.post(
+  "/api/order/webhook",
+
+  express.raw({
+    type: "application/json"
+  }),
+
+  stripeWebhook
+);
+
+
+// ======================================================
+// NORMAL JSON MIDDLEWARE
 // ======================================================
 
 app.use(
@@ -289,7 +310,17 @@ app.get(
         "Server is running",
 
       allowedOrigins:
-        uniqueAllowedOrigins
+        uniqueAllowedOrigins,
+
+      stripeConfigured:
+        Boolean(
+          process.env.STRIPE_SECRET_KEY
+        ),
+
+      stripeWebhookConfigured:
+        Boolean(
+          process.env.STRIPE_WEBHOOK_SECRET
+        )
 
     });
 
@@ -448,8 +479,30 @@ app.listen(
 
 
     console.log(
+      "Stripe configured:",
+      Boolean(
+        process.env.STRIPE_SECRET_KEY
+      )
+    );
+
+
+    console.log(
+      "Stripe webhook configured:",
+      Boolean(
+        process.env.STRIPE_WEBHOOK_SECRET
+      )
+    );
+
+
+    console.log(
+      "Stripe webhook:",
+      "/api/order/webhook"
+    );
+
+
+    console.log(
       "Future products API:",
-      `/api/future-product/list`
+      "/api/future-product/list"
     );
 
   }

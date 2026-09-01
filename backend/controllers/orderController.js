@@ -10,9 +10,7 @@ import Stripe from "stripe";
 // ======================================================
 
 const VAT_RATE = 0.06;
-
 const LARGE_ORDER_LIMIT = 10;
-
 
 const ALLOWED_FULFILLMENT_TYPES = [
   "same-day",
@@ -20,18 +18,29 @@ const ALLOWED_FULFILLMENT_TYPES = [
   "large-order"
 ];
 
-
 const ALLOWED_DELIVERY_METHODS = [
   "pickup",
   "delivery"
 ];
-
 
 const ALLOWED_TIME_SLOTS = [
   "15:00-16:00",
   "16:00-17:00",
   "17:00-18:00",
   "18:00-19:00"
+];
+
+const ALLOWED_ORDER_STATUSES = [
+  "InvÃ¤ntar betalning",
+  "Betalning mottagen",
+  "Betalning mottagen - lagerkontroll krÃ¤vs",
+  "BestÃ¤llning mottagen",
+  "FÃ¶rbereds",
+  "Redo fÃ¶r upphÃ¤mtning",
+  "UpphÃ¤mtad",
+  "PÃ¥ vÃ¤g",
+  "Levererad",
+  "Avbruten"
 ];
 
 
@@ -42,11 +51,8 @@ const ALLOWED_TIME_SLOTS = [
 const getStripe = () => {
 
   if (!process.env.STRIPE_SECRET_KEY) {
-
     return null;
-
   }
-
 
   return new Stripe(
     process.env.STRIPE_SECRET_KEY
@@ -56,21 +62,16 @@ const getStripe = () => {
 
 
 // ======================================================
-// ROUND MONEY
+// MONEY
 // ======================================================
 
 const roundMoney = (value) => {
 
-  const number =
-    Number(value);
-
+  const number = Number(value);
 
   if (!Number.isFinite(number)) {
-
     return 0;
-
   }
-
 
   return Number(
     number.toFixed(2)
@@ -91,26 +92,17 @@ const getSwedenDateString = (
     new Intl.DateTimeFormat(
       "en-CA",
       {
-        timeZone:
-          "Europe/Stockholm",
-
-        year:
-          "numeric",
-
-        month:
-          "2-digit",
-
-        day:
-          "2-digit"
+        timeZone: "Europe/Stockholm",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
       }
     );
-
 
   const parts =
     formatter.formatToParts(
       new Date()
     );
-
 
   const year =
     Number(
@@ -120,7 +112,6 @@ const getSwedenDateString = (
       )?.value
     );
 
-
   const month =
     Number(
       parts.find(
@@ -129,7 +120,6 @@ const getSwedenDateString = (
       )?.value
     );
 
-
   const day =
     Number(
       parts.find(
@@ -137,7 +127,6 @@ const getSwedenDateString = (
           part.type === "day"
       )?.value
     );
-
 
   const date =
     new Date(
@@ -148,12 +137,10 @@ const getSwedenDateString = (
       )
     );
 
-
   date.setUTCDate(
     date.getUTCDate() +
     daysToAdd
   );
-
 
   return date
     .toISOString()
@@ -162,10 +149,6 @@ const getSwedenDateString = (
 };
 
 
-// ======================================================
-// VALIDATE DATE STRING
-// ======================================================
-
 const isValidDateString = (
   dateString
 ) => {
@@ -173,28 +156,21 @@ const isValidDateString = (
   if (
     typeof dateString !== "string"
   ) {
-
     return false;
-
   }
-
 
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(
       dateString
     )
   ) {
-
     return false;
-
   }
-
 
   const date =
     new Date(
       `${dateString}T12:00:00.000Z`
     );
-
 
   return (
     !Number.isNaN(
@@ -209,10 +185,6 @@ const isValidDateString = (
 };
 
 
-// ======================================================
-// DATE FOR MONGOOSE
-// ======================================================
-
 const createStoredDate = (
   dateString
 ) => {
@@ -222,6 +194,509 @@ const createStoredDate = (
   );
 
 };
+
+
+// ======================================================
+// STRIPE HELPERS
+// ======================================================
+
+const getPaymentIntentId = (
+  stripeSession
+) => {
+
+  if (
+    typeof stripeSession?.payment_intent ===
+    "string"
+  ) {
+    return stripeSession.payment_intent;
+  }
+
+  return (
+    stripeSession?.payment_intent?.id ||
+    undefined
+  );
+
+};
+
+
+const validatePaidStripeSession = (
+  order,
+  stripeSession
+) => {
+
+  if (
+    !stripeSession ||
+    !stripeSession.id
+  ) {
+    throw new Error(
+      "STRIPE_SESSION_MISSING"
+    );
+  }
+
+  if (
+    !stripeSession.metadata ||
+    stripeSession.metadata.orderId !==
+      order._id.toString()
+  ) {
+    throw new Error(
+      "STRIPE_ORDER_MISMATCH"
+    );
+  }
+
+  if (
+    order.stripeSessionId &&
+    order.stripeSessionId !==
+      stripeSession.id
+  ) {
+    throw new Error(
+      "STRIPE_SESSION_MISMATCH"
+    );
+  }
+
+  if (
+    stripeSession.payment_status !==
+    "paid"
+  ) {
+    throw new Error(
+      "STRIPE_NOT_PAID"
+    );
+  }
+
+  const expectedAmount =
+    Math.round(
+      Number(
+        order.amount
+      ) *
+      100
+    );
+
+  if (
+    stripeSession.amount_total !==
+    expectedAmount
+  ) {
+    throw new Error(
+      "STRIPE_AMOUNT_MISMATCH"
+    );
+  }
+
+  if (
+    stripeSession.currency &&
+    stripeSession.currency
+      .toLowerCase() !==
+      "sek"
+  ) {
+    throw new Error(
+      "STRIPE_CURRENCY_MISMATCH"
+    );
+  }
+
+};
+
+
+const getStripeValidationMessage = (
+  error
+) => {
+
+  switch (error.message) {
+
+    case "STRIPE_SESSION_MISSING":
+      return "Stripe-sessionen saknas.";
+
+    case "STRIPE_ORDER_MISMATCH":
+      return "Stripe-betalningen matchar inte bestÃ¤llningen.";
+
+    case "STRIPE_SESSION_MISMATCH":
+      return "Stripe-sessionen matchar inte bestÃ¤llningen.";
+
+    case "STRIPE_NOT_PAID":
+      return "Betalningen Ã¤r inte genomfÃ¶rd.";
+
+    case "STRIPE_AMOUNT_MISMATCH":
+      return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
+
+    case "STRIPE_CURRENCY_MISMATCH":
+      return "Fel valuta i betalningen.";
+
+    default:
+      return null;
+  }
+
+};
+
+
+// ======================================================
+// MARK PAID WITHOUT STOCK DECREASE
+// Used if same-day stock changed before payment completed.
+// ======================================================
+
+const markPaidWithStockWarning =
+  async (
+    orderId,
+    stripeSession,
+    productName
+  ) => {
+
+    const mongoSession =
+      await mongoose.startSession();
+
+    try {
+
+      let result = null;
+
+      await mongoSession.withTransaction(
+        async () => {
+
+          const order =
+            await orderModel
+              .findById(orderId)
+              .session(mongoSession);
+
+          if (!order) {
+            throw new Error(
+              "ORDER_NOT_FOUND"
+            );
+          }
+
+          validatePaidStripeSession(
+            order,
+            stripeSession
+          );
+
+          if (order.payment) {
+
+            result = {
+              alreadyProcessed: true,
+              warning: null,
+              order:
+                order.toObject()
+            };
+
+            return;
+          }
+
+          const warning =
+            `${productName} har inte lÃ¤ngre tillrÃ¤ckligt dagslager.`;
+
+          order.payment =
+            true;
+
+          order.status =
+            "Betalning mottagen - lagerkontroll krÃ¤vs";
+
+          order.stripeSessionId =
+            stripeSession.id;
+
+          order.stripePaymentIntentId =
+            getPaymentIntentId(
+              stripeSession
+            );
+
+          order.paymentProcessedAt =
+            new Date();
+
+          await order.save({
+            session:
+              mongoSession
+          });
+
+          await userModel.findByIdAndUpdate(
+            order.userId,
+            {
+              cartData: {}
+            },
+            {
+              session:
+                mongoSession
+            }
+          );
+
+          result = {
+            alreadyProcessed: false,
+            warning,
+            order:
+              order.toObject()
+          };
+
+        }
+      );
+
+      return result;
+
+    } finally {
+
+      await mongoSession.endSession();
+
+    }
+
+  };
+
+
+// ======================================================
+// PROCESS PAID CHECKOUT SESSION
+// Shared by webhook and /verify.
+// MongoDB transaction makes processing idempotent.
+// ======================================================
+
+const processPaidCheckoutSession =
+  async (
+    stripeSession
+  ) => {
+
+    const orderId =
+      stripeSession
+        ?.metadata
+        ?.orderId;
+
+    if (
+      !orderId ||
+      !mongoose.isValidObjectId(
+        orderId
+      )
+    ) {
+      throw new Error(
+        "ORDER_NOT_FOUND"
+      );
+    }
+
+    const mongoSession =
+      await mongoose.startSession();
+
+    try {
+
+      let result = null;
+
+      try {
+
+        await mongoSession.withTransaction(
+          async () => {
+
+            const order =
+              await orderModel
+                .findById(orderId)
+                .session(mongoSession);
+
+            if (!order) {
+              throw new Error(
+                "ORDER_NOT_FOUND"
+              );
+            }
+
+            validatePaidStripeSession(
+              order,
+              stripeSession
+            );
+
+            // Already processed by webhook or /verify.
+            if (order.payment) {
+
+              result = {
+                alreadyProcessed: true,
+                warning: null,
+                order:
+                  order.toObject()
+              };
+
+              return;
+            }
+
+            // ==========================================
+            // SAME-DAY STOCK
+            // ==========================================
+
+            if (
+              order.fulfillmentType ===
+              "same-day"
+            ) {
+
+              // First verify every product before
+              // changing any stock.
+              for (
+                const item
+                of order.items
+              ) {
+
+                const product =
+                  await foodModel
+                    .findById(
+                      item._id
+                    )
+                    .session(
+                      mongoSession
+                    );
+
+                const quantity =
+                  Number(
+                    item.quantity
+                  );
+
+                const sameDayStock =
+                  Number(
+                    product?.sameDayStock ||
+                    0
+                  );
+
+                if (
+                  !product ||
+                  !Number.isInteger(
+                    quantity
+                  ) ||
+                  quantity <= 0 ||
+                  !Number.isFinite(
+                    sameDayStock
+                  ) ||
+                  sameDayStock <
+                    quantity
+                ) {
+                  throw new Error(
+                    `SAME_DAY_STOCK:${item.name}`
+                  );
+                }
+
+              }
+
+              // Then decrease all stock inside
+              // the same transaction.
+              for (
+                const item
+                of order.items
+              ) {
+
+                const quantity =
+                  Number(
+                    item.quantity
+                  );
+
+                const updateResult =
+                  await foodModel.updateOne(
+                    {
+                      _id:
+                        item._id,
+
+                      sameDayStock: {
+                        $gte:
+                          quantity
+                      }
+                    },
+                    {
+                      $inc: {
+                        sameDayStock:
+                          -quantity
+                      }
+                    },
+                    {
+                      session:
+                        mongoSession
+                    }
+                  );
+
+                if (
+                  updateResult.modifiedCount !==
+                  1
+                ) {
+                  throw new Error(
+                    `SAME_DAY_STOCK:${item.name}`
+                  );
+                }
+
+              }
+
+            }
+
+            // ==========================================
+            // MARK PAID
+            // ==========================================
+
+            order.payment =
+              true;
+
+            order.status =
+              "Betalning mottagen";
+
+            order.stripeSessionId =
+              stripeSession.id;
+
+            order.stripePaymentIntentId =
+              getPaymentIntentId(
+                stripeSession
+              );
+
+            order.paymentProcessedAt =
+              new Date();
+
+            await order.save({
+              session:
+                mongoSession
+            });
+
+            // ==========================================
+            // CLEAR CART
+            // ==========================================
+
+            await userModel.findByIdAndUpdate(
+              order.userId,
+              {
+                cartData: {}
+              },
+              {
+                session:
+                  mongoSession
+              }
+            );
+
+            result = {
+              alreadyProcessed: false,
+              warning: null,
+              order:
+                order.toObject()
+            };
+
+          }
+        );
+
+        return result;
+
+      } catch (error) {
+
+        if (
+          String(
+            error.message || ""
+          ).startsWith(
+            "SAME_DAY_STOCK:"
+          )
+        ) {
+
+          const productName =
+            String(
+              error.message
+            ).replace(
+              "SAME_DAY_STOCK:",
+              ""
+            );
+
+          /*
+            The first transaction was aborted,
+            so no partial stock decrease remains.
+            Mark the paid order for manual stock review.
+          */
+          return await markPaidWithStockWarning(
+            orderId,
+            stripeSession,
+            productName
+          );
+
+        }
+
+        throw error;
+
+      }
+
+    } finally {
+
+      await mongoSession.endSession();
+
+    }
+
+  };
 
 
 // ======================================================
@@ -235,13 +710,8 @@ const placeOrder = async (
 
   try {
 
-    // ==================================================
-    // REQUEST DATA
-    // ==================================================
-
     const userId =
       req.userId;
-
 
     const {
       items,
@@ -252,7 +722,6 @@ const placeOrder = async (
       requestedTime
     } = req.body;
 
-
     // ==================================================
     // USER
     // ==================================================
@@ -260,16 +729,12 @@ const placeOrder = async (
     if (!userId) {
 
       return res.status(401).json({
-
         success: false,
-
         message:
-          "Du måste vara inloggad."
-
+          "Du mÃ¥ste vara inloggad."
       });
 
     }
-
 
     if (
       !mongoose.isValidObjectId(
@@ -278,16 +743,12 @@ const placeOrder = async (
     ) {
 
       return res.status(401).json({
-
         success: false,
-
         message:
-          "Ogiltig användarsession."
-
+          "Ogiltig anvÃ¤ndarsession."
       });
 
     }
-
 
     // ==================================================
     // CART
@@ -299,16 +760,12 @@ const placeOrder = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Din varukorg är tom."
-
+          "Din varukorg Ã¤r tom."
       });
 
     }
-
 
     // ==================================================
     // DELIVERY METHOD
@@ -321,16 +778,12 @@ const placeOrder = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Välj avhämtning eller leverans."
-
+          "VÃ¤lj avhÃ¤mtning eller leverans."
       });
 
     }
-
 
     // ==================================================
     // CUSTOMER INFORMATION
@@ -342,128 +795,89 @@ const placeOrder = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
           "Kunduppgifter saknas."
-
       });
 
     }
 
-
-    // Alltid obligatoriska
     const requiredCustomerFields = [
-
       "firstName",
       "lastName",
       "email",
       "phone"
-
     ];
-
 
     const missingCustomerField =
       requiredCustomerFields.find(
         (field) =>
-
           !String(
             address[field] || ""
           ).trim()
-
       );
-
 
     if (missingCustomerField) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Namn, e-post och telefonnummer måste fyllas i."
-
+          "Namn, e-post och telefonnummer mÃ¥ste fyllas i."
       });
 
     }
 
-
     // ==================================================
     // DELIVERY ADDRESS
     // ==================================================
-
-    /*
-      Vid AVHÄMTNING behövs ingen adress.
-
-      Vid LEVERANS krävs:
-      - street
-      - city
-      - zipcode
-    */
 
     if (
       deliveryMethod === "delivery"
     ) {
 
       const requiredDeliveryFields = [
-
         "street",
         "city",
         "zipcode"
-
       ];
-
 
       const missingDeliveryField =
         requiredDeliveryFields.find(
           (field) =>
-
             !String(
               address[field] || ""
             ).trim()
-
         );
-
 
       if (missingDeliveryField) {
 
         return res.status(400).json({
-
           success: false,
-
           message:
-            "Fullständig leveransadress måste fyllas i."
-
+            "FullstÃ¤ndig leveransadress mÃ¥ste fyllas i."
         });
 
       }
 
     }
 
-
     // ==================================================
     // FULFILLMENT TYPE
     // ==================================================
 
     if (
-      !ALLOWED_FULFILLMENT_TYPES
-        .includes(
-          fulfillmentType
-        )
+      !ALLOWED_FULFILLMENT_TYPES.includes(
+        fulfillmentType
+      )
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Ogiltigt beställningsalternativ."
-
+          "Ogiltigt bestÃ¤llningsalternativ."
       });
 
     }
-
 
     // ==================================================
     // REQUESTED DATE
@@ -476,39 +890,30 @@ const placeOrder = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Ogiltigt beställningsdatum."
-
+          "Ogiltigt bestÃ¤llningsdatum."
       });
 
     }
-
 
     // ==================================================
     // REQUESTED TIME
     // ==================================================
 
     if (
-      !ALLOWED_TIME_SLOTS
-        .includes(
-          requestedTime
-        )
+      !ALLOWED_TIME_SLOTS.includes(
+        requestedTime
+      )
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
           "Ogiltig vald tid."
-
       });
 
     }
-
 
     // ==================================================
     // DATE RULES
@@ -517,98 +922,56 @@ const placeOrder = async (
     const today =
       getSwedenDateString(0);
 
-
     const tomorrow =
       getSwedenDateString(1);
-
 
     const minimumLargeOrderDate =
       getSwedenDateString(2);
 
-
-    // ==================================================
-    // SAME DAY
-    // ==================================================
-
     if (
       fulfillmentType ===
-      "same-day"
+      "same-day" &&
+      requestedDate !==
+      today
     ) {
 
-      if (
-        requestedDate !==
-        today
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Beställning för idag måste ha dagens datum."
-
-        });
-
-      }
+      return res.status(400).json({
+        success: false,
+        message:
+          "BestÃ¤llning fÃ¶r idag mÃ¥ste ha dagens datum."
+      });
 
     }
 
-
-    // ==================================================
-    // NEXT DAY
-    // ==================================================
-
     if (
       fulfillmentType ===
-      "next-day"
+      "next-day" &&
+      requestedDate !==
+      tomorrow
     ) {
 
-      if (
-        requestedDate !==
-        tomorrow
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Beställning för imorgon måste ha morgondagens datum."
-
-        });
-
-      }
+      return res.status(400).json({
+        success: false,
+        message:
+          "BestÃ¤llning fÃ¶r imorgon mÃ¥ste ha morgondagens datum."
+      });
 
     }
 
-
-    // ==================================================
-    // LARGE ORDER
-    // ==================================================
-
     if (
       fulfillmentType ===
-      "large-order"
+      "large-order" &&
+      requestedDate <
+      minimumLargeOrderDate
     ) {
 
-      if (
-        requestedDate <
-        minimumLargeOrderDate
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Större beställningar måste göras minst 48 timmar i förväg."
-
-        });
-
-      }
+      return res.status(400).json({
+        success: false,
+        message:
+          "StÃ¶rre bestÃ¤llningar mÃ¥ste gÃ¶ras minst 48 timmar i fÃ¶rvÃ¤g."
+      });
 
     }
-
 
     // ==================================================
     // STRIPE
@@ -617,20 +980,15 @@ const placeOrder = async (
     const stripe =
       getStripe();
 
-
     if (!stripe) {
 
       return res.status(500).json({
-
         success: false,
-
         message:
-          "Stripe är inte konfigurerat."
-
+          "Stripe Ã¤r inte konfigurerat."
       });
 
     }
-
 
     // ==================================================
     // PRODUCT IDS
@@ -638,14 +996,12 @@ const placeOrder = async (
 
     const productIds = [];
 
-
     for (const item of items) {
 
       const productId =
         item._id ||
         item.id ||
         item.itemId;
-
 
       if (
         !productId ||
@@ -655,16 +1011,12 @@ const placeOrder = async (
       ) {
 
         return res.status(400).json({
-
           success: false,
-
           message:
             "Ogiltigt produkt-ID."
-
         });
 
       }
-
 
       productIds.push(
         productId
@@ -672,39 +1024,30 @@ const placeOrder = async (
 
     }
 
-
     // ==================================================
-    // GET PRODUCTS FROM DATABASE
+    // PRODUCTS FROM DATABASE
     // ==================================================
 
     const products =
       await foodModel.find({
-
         _id: {
           $in: productIds
         }
-
       });
-
 
     const productMap =
       new Map();
-
 
     products.forEach(
       (product) => {
 
         productMap.set(
-
           product._id.toString(),
-
           product
-
         );
 
       }
     );
-
 
     // ==================================================
     // VERIFY PRODUCTS
@@ -712,11 +1055,8 @@ const placeOrder = async (
 
     const verifiedItems = [];
 
-
     let subtotal = 0;
-
     let totalQuantity = 0;
-
 
     for (const item of items) {
 
@@ -727,36 +1067,25 @@ const placeOrder = async (
           item.itemId
         ).toString();
 
-
       const product =
         productMap.get(
           productId
         );
 
-
       if (!product) {
 
         return res.status(404).json({
-
           success: false,
-
           message:
             "En eller flera produkter kunde inte hittas."
-
         });
 
       }
-
-
-      // ==================================================
-      // QUANTITY
-      // ==================================================
 
       const quantity =
         Number(
           item.quantity
         );
-
 
       if (
         !Number.isInteger(
@@ -766,30 +1095,20 @@ const placeOrder = async (
       ) {
 
         return res.status(400).json({
-
           success: false,
-
           message:
             "Ogiltigt antal produkter."
-
         });
 
       }
 
-
       totalQuantity +=
         quantity;
-
-
-      // ==================================================
-      // PRICE
-      // ==================================================
 
       const price =
         Number(
           product.price
         );
-
 
       if (
         !Number.isFinite(
@@ -799,20 +1118,12 @@ const placeOrder = async (
       ) {
 
         return res.status(400).json({
-
           success: false,
-
           message:
             "Ogiltigt produktpris."
-
         });
 
       }
-
-
-      // ==================================================
-      // SAME-DAY STOCK
-      // ==================================================
 
       if (
         fulfillmentType ===
@@ -825,7 +1136,6 @@ const placeOrder = async (
             0
           );
 
-
         if (
           !Number.isFinite(
             sameDayStock
@@ -835,51 +1145,31 @@ const placeOrder = async (
         ) {
 
           return res.status(409).json({
-
             success: false,
-
             message:
-              `${product.name} finns inte i tillräckligt antal för beställning idag.`
-
+              `${product.name} finns inte i tillrÃ¤ckligt antal fÃ¶r bestÃ¤llning idag.`
           });
 
         }
 
       }
 
-
-      // ==================================================
-      // SUBTOTAL
-      // ==================================================
-
       subtotal +=
         price *
         quantity;
 
-
-      // ==================================================
-      // VERIFIED ORDER ITEM
-      // ==================================================
-
       verifiedItems.push({
-
         _id:
           product._id,
-
         name:
           product.name,
-
         price,
-
         quantity,
-
         image:
           product.image
-
       });
 
     }
-
 
     // ==================================================
     // LARGE ORDER RULE
@@ -893,16 +1183,12 @@ const placeOrder = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en större beställning.`
-
+          `BestÃ¤llningar med ${LARGE_ORDER_LIMIT} produkter eller fler mÃ¥ste gÃ¶ras som en stÃ¶rre bestÃ¤llning.`
       });
 
     }
-
 
     // ==================================================
     // TOTALS
@@ -912,29 +1198,24 @@ const placeOrder = async (
       subtotal *
       VAT_RATE;
 
-
     const total =
       subtotal +
       vatAmount;
-
 
     const roundedSubtotal =
       roundMoney(
         subtotal
       );
 
-
     const roundedVat =
       roundMoney(
         vatAmount
       );
 
-
     const roundedTotal =
       roundMoney(
         total
       );
-
 
     // ==================================================
     // CREATE ORDER
@@ -945,30 +1226,20 @@ const placeOrder = async (
 
         userId,
 
-
-        // PRODUCTS
         items:
           verifiedItems,
 
-
-        // PICKUP / DELIVERY
         deliveryMethod,
 
-
-        // FULFILLMENT
         fulfillmentType,
-
 
         requestedDate:
           createStoredDate(
             requestedDate
           ),
 
-
         requestedTime,
 
-
-        // CUSTOMER / ADDRESS
         address: {
 
           firstName:
@@ -976,12 +1247,10 @@ const placeOrder = async (
               address.firstName
             ).trim(),
 
-
           lastName:
             String(
               address.lastName
             ).trim(),
-
 
           email:
             String(
@@ -990,14 +1259,11 @@ const placeOrder = async (
               .trim()
               .toLowerCase(),
 
-
           phone:
             String(
               address.phone
             ).trim(),
 
-
-          // Vid pickup sparas dessa tomma
           street:
             deliveryMethod ===
             "delivery"
@@ -1006,7 +1272,6 @@ const placeOrder = async (
                 ).trim()
               : "",
 
-
           city:
             deliveryMethod ===
             "delivery"
@@ -1014,7 +1279,6 @@ const placeOrder = async (
                   address.city || ""
                 ).trim()
               : "",
-
 
           zipcode:
             deliveryMethod ===
@@ -1026,44 +1290,33 @@ const placeOrder = async (
 
         },
 
-
-        // PRICE
         subtotal:
           roundedSubtotal,
-
 
         vatRate:
           6,
 
-
         vatAmount:
           roundedVat,
-
 
         amount:
           roundedTotal,
 
-
-        // PAYMENT
         payment:
           false,
-
 
         paymentMethod:
           "Stripe",
 
-
         status:
-          "Inväntar betalning"
+          "InvÃ¤ntar betalning"
 
       });
 
-
     await newOrder.save();
 
-
     // ==================================================
-    // STRIPE PRODUCT LINES
+    // STRIPE LINE ITEMS
     // ==================================================
 
     const lineItems =
@@ -1076,10 +1329,8 @@ const placeOrder = async (
               "sek",
 
             product_data: {
-
               name:
                 item.name
-
             },
 
             unit_amount:
@@ -1096,11 +1347,6 @@ const placeOrder = async (
         })
       );
 
-
-    // ==================================================
-    // VAT LINE
-    // ==================================================
-
     if (
       roundedVat > 0
     ) {
@@ -1113,10 +1359,8 @@ const placeOrder = async (
             "sek",
 
           product_data: {
-
             name:
               "Moms 6%"
-
           },
 
           unit_amount:
@@ -1134,26 +1378,30 @@ const placeOrder = async (
 
     }
 
-
     // ==================================================
     // FRONTEND URL
     // ==================================================
 
     const frontendUrl =
-      process.env.FRONTEND_URL ||
-      "http://localhost:5173";
-
+      (
+        process.env.FRONTEND_URL ||
+        "http://localhost:5173"
+      )
+        .trim()
+        .replace(
+          /\/+$/,
+          ""
+        );
 
     // ==================================================
     // STRIPE SESSION
     // ==================================================
 
-    let session;
-
+    let stripeSession;
 
     try {
 
-      session =
+      stripeSession =
         await stripe.checkout
           .sessions
           .create({
@@ -1161,24 +1409,19 @@ const placeOrder = async (
             line_items:
               lineItems,
 
-
             mode:
               "payment",
-
 
             success_url:
               `${frontendUrl}/verify?success=true&orderId=${newOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
 
-
             cancel_url:
               `${frontendUrl}/verify?success=false&orderId=${newOrder._id}`,
-
 
             client_reference_id:
               newOrder
                 ._id
                 .toString(),
-
 
             metadata: {
 
@@ -1187,60 +1430,90 @@ const placeOrder = async (
                   ._id
                   .toString(),
 
-
               userId:
                 userId.toString(),
 
-
               deliveryMethod,
-
 
               fulfillmentType,
 
-
               requestedDate,
-
 
               requestedTime,
 
-
               vatRate:
                 "6",
-
 
               subtotal:
                 roundedSubtotal
                   .toString(),
 
-
               vatAmount:
                 roundedVat
                   .toString(),
-
 
               total:
                 roundedTotal
                   .toString()
 
+            },
+
+            payment_intent_data: {
+
+              metadata: {
+
+                orderId:
+                  newOrder
+                    ._id
+                    .toString(),
+
+                userId:
+                  userId.toString()
+
+              }
+
             }
 
           });
 
+      // Save the exact Checkout Session used for this order.
+      newOrder.stripeSessionId =
+        stripeSession.id;
+
+      await newOrder.save();
 
     } catch (stripeError) {
 
-      // Om Stripe-sessionen inte kan skapas
-      // tar vi bort den obetalda ordern.
+      if (
+        stripeSession?.id
+      ) {
+
+        try {
+
+          await stripe.checkout
+            .sessions
+            .expire(
+              stripeSession.id
+            );
+
+        } catch (expireError) {
+
+          console.log(
+            "Could not expire Stripe session:",
+            expireError.message
+          );
+
+        }
+
+      }
 
       await orderModel.findByIdAndDelete(
         newOrder._id
       );
 
-
       throw stripeError;
 
     }
-
 
     // ==================================================
     // RESPONSE
@@ -1251,46 +1524,35 @@ const placeOrder = async (
       success: true,
 
       message:
-        "Beställningen har skapats.",
-
+        "BestÃ¤llningen har skapats.",
 
       subtotal:
         roundedSubtotal,
 
-
       vatRate:
         6,
-
 
       vatAmount:
         roundedVat,
 
-
       amount:
         roundedTotal,
 
-
       deliveryMethod,
-
 
       fulfillmentType,
 
-
       requestedDate,
-
 
       requestedTime,
 
-
       session_url:
-        session.url,
-
+        stripeSession.url,
 
       orderId:
         newOrder._id
 
     });
-
 
   } catch (error) {
 
@@ -1299,14 +1561,10 @@ const placeOrder = async (
       error
     );
 
-
     return res.status(500).json({
-
       success: false,
-
       message:
-        "Ett fel uppstod när beställningen skulle skapas."
-
+        "Ett fel uppstod nÃ¤r bestÃ¤llningen skulle skapas."
     });
 
   }
@@ -1315,126 +1573,9 @@ const placeOrder = async (
 
 
 // ======================================================
-// DECREASE SAME-DAY STOCK
-// ======================================================
-
-const decreaseSameDayStock =
-  async (order) => {
-
-    const mongoSession =
-      await mongoose.startSession();
-
-
-    try {
-
-      await mongoSession.withTransaction(
-        async () => {
-
-          for (
-            const item
-            of order.items
-          ) {
-
-            const quantity =
-              Number(
-                item.quantity
-              );
-
-
-            const result =
-              await foodModel.updateOne(
-
-                {
-                  _id:
-                    item._id,
-
-                  sameDayStock: {
-                    $gte:
-                      quantity
-                  }
-                },
-
-                {
-                  $inc: {
-                    sameDayStock:
-                      -quantity
-                  }
-                },
-
-                {
-                  session:
-                    mongoSession
-                }
-
-              );
-
-
-            if (
-              result.modifiedCount !==
-              1
-            ) {
-
-              throw new Error(
-                `SAME_DAY_STOCK:${item.name}`
-              );
-
-            }
-
-          }
-
-        }
-      );
-
-
-      return {
-        success: true
-      };
-
-
-    } catch (error) {
-
-      if (
-        String(
-          error.message || ""
-        ).startsWith(
-          "SAME_DAY_STOCK:"
-        )
-      ) {
-
-        const productName =
-          String(
-            error.message
-          ).replace(
-            "SAME_DAY_STOCK:",
-            ""
-          );
-
-
-        return {
-
-          success: false,
-
-          productName
-
-        };
-
-      }
-
-
-      throw error;
-
-
-    } finally {
-
-      await mongoSession.endSession();
-
-    }
-
-  };
-
-
-// ======================================================
 // VERIFY PAYMENT
+// Browser return / fallback.
+// Webhook is the primary payment confirmation.
 // ======================================================
 
 const verifyOrder = async (
@@ -1450,363 +1591,116 @@ const verifyOrder = async (
       success
     } = req.body;
 
-
-    // ==================================================
-    // ORDER ID
-    // ==================================================
-
-    if (!orderId) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          "Order-ID saknas."
-
-      });
-
-    }
-
-
     if (
+      !orderId ||
       !mongoose.isValidObjectId(
         orderId
       )
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Ogiltigt order-ID."
-
+          "Ogiltigt eller saknat order-ID."
       });
 
     }
 
-
-    // ==================================================
-    // GET ORDER
-    // ==================================================
-
-    const order =
-      await orderModel.findById(
-        orderId
-      );
-
-
-    if (!order) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        message:
-          "Beställningen kunde inte hittas."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // ALREADY PAID
-    // ==================================================
-
-    if (order.payment) {
-
-      return res.status(200).json({
-
-        success: true,
-
-        message:
-          "Beställningen är redan betald.",
-
-        data:
-          order
-
-      });
-
-    }
-
-
-    // ==================================================
-    // SUCCESSFUL STRIPE RETURN
-    // ==================================================
-
-    if (
-      success === true ||
-      success === "true"
-    ) {
-
-      if (!sessionId) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Stripe session-ID saknas."
-
-        });
-
-      }
-
-
-      const stripe =
-        getStripe();
-
-
-      if (!stripe) {
-
-        return res.status(500).json({
-
-          success: false,
-
-          message:
-            "Stripe är inte konfigurerat."
-
-        });
-
-      }
-
-
-      // ==================================================
-      // GET STRIPE SESSION
-      // ==================================================
-
-      const session =
-        await stripe.checkout
-          .sessions
-          .retrieve(
-            sessionId
-          );
-
-
-      // ==================================================
-      // VERIFY ORDER
-      // ==================================================
-
-      if (
-        !session.metadata ||
-        session.metadata.orderId !==
-          order._id.toString()
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Stripe-betalningen matchar inte beställningen."
-
-        });
-
-      }
-
-
-      // ==================================================
-      // PAYMENT STATUS
-      // ==================================================
-
-      if (
-        session.payment_status !==
-        "paid"
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Betalningen är inte genomförd."
-
-        });
-
-      }
-
-
-      // ==================================================
-      // AMOUNT
-      // ==================================================
-
-      const expectedAmount =
-        Math.round(
-          Number(
-            order.amount
-          ) *
-          100
-        );
-
-
-      if (
-        session.amount_total !==
-        expectedAmount
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Betalningsbeloppet matchar inte beställningen."
-
-        });
-
-      }
-
-
-      // ==================================================
-      // CURRENCY
-      // ==================================================
-
-      if (
-        session.currency &&
-        session.currency
-          .toLowerCase() !==
-          "sek"
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Fel valuta i betalningen."
-
-        });
-
-      }
-
-
-      // ==================================================
-      // SAME-DAY STOCK
-      // ==================================================
-
-      let stockWarning =
-        null;
-
-
-      if (
-        order.fulfillmentType ===
-        "same-day"
-      ) {
-
-        const stockResult =
-          await decreaseSameDayStock(
-            order
-          );
-
-
-        if (
-          !stockResult.success
-        ) {
-
-          stockWarning =
-            `${stockResult.productName} har inte längre tillräckligt dagslager.`;
-
-
-          order.status =
-            "Betalning mottagen - lagerkontroll krävs";
-
-        }
-
-      }
-
-
-      // ==================================================
-      // MARK PAID
-      // ==================================================
-
-      order.payment =
-        true;
-
-
-      if (!stockWarning) {
-
-        order.status =
-          "Betalning mottagen";
-
-      }
-
-
-      await order.save();
-
-
-      // ==================================================
-      // CLEAR CART
-      // ==================================================
-
-      await userModel.findByIdAndUpdate(
-
-        order.userId,
-
-        {
-          cartData: {}
-        }
-
-      );
-
-
-      return res.status(200).json({
-
-        success: true,
-
-        message:
-          stockWarning
-            ? "Betalningen lyckades, men ordern behöver lagerkontrolleras."
-            : "Betalningen lyckades.",
-
-        warning:
-          stockWarning,
-
-        data:
-          order
-
-      });
-
-    }
-
-
-    // ==================================================
-    // PAYMENT CANCELLED
-    // ==================================================
-
+    // Browser cancellation is not trusted to mutate payment state.
     if (
       success === false ||
       success === "false"
     ) {
 
-      order.status =
-        "Betalning avbruten";
-
-
-      await order.save();
-
-
       return res.status(200).json({
-
         success: false,
-
         message:
-          "Betalningen avbröts."
-
+          "Betalningen avbrÃ¶ts."
       });
 
     }
 
+    if (
+      success !== true &&
+      success !== "true"
+    ) {
 
-    return res.status(400).json({
+      return res.status(400).json({
+        success: false,
+        message:
+          "Ogiltig betalningsstatus."
+      });
 
-      success: false,
+    }
+
+    if (!sessionId) {
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Stripe session-ID saknas."
+      });
+
+    }
+
+    const stripe =
+      getStripe();
+
+    if (!stripe) {
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Stripe Ã¤r inte konfigurerat."
+      });
+
+    }
+
+    const stripeSession =
+      await stripe.checkout
+        .sessions
+        .retrieve(
+          sessionId
+        );
+
+    if (
+      stripeSession
+        .metadata
+        ?.orderId !==
+      orderId.toString()
+    ) {
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Stripe-betalningen matchar inte bestÃ¤llningen."
+      });
+
+    }
+
+    const result =
+      await processPaidCheckoutSession(
+        stripeSession
+      );
+
+    return res.status(200).json({
+
+      success: true,
 
       message:
-        "Ogiltig betalningsstatus."
+        result.warning
+          ? "Betalningen lyckades, men ordern behÃ¶ver lagerkontrolleras."
+          : result.alreadyProcessed
+            ? "BestÃ¤llningen Ã¤r redan betald."
+            : "Betalningen lyckades.",
+
+      warning:
+        result.warning,
+
+      data:
+        result.order
 
     });
-
 
   } catch (error) {
 
@@ -1815,15 +1709,242 @@ const verifyOrder = async (
       error
     );
 
+    const validationMessage =
+      getStripeValidationMessage(
+        error
+      );
+
+    if (validationMessage) {
+
+      return res.status(400).json({
+        success: false,
+        message:
+          validationMessage
+      });
+
+    }
+
+    if (
+      error.message ===
+      "ORDER_NOT_FOUND"
+    ) {
+
+      return res.status(404).json({
+        success: false,
+        message:
+          "BestÃ¤llningen kunde inte hittas."
+      });
+
+    }
 
     return res.status(500).json({
-
       success: false,
-
       message:
-        "Ett fel uppstod när betalningen skulle verifieras."
-
+        "Ett fel uppstod nÃ¤r betalningen skulle verifieras."
     });
+
+  }
+
+};
+
+
+// ======================================================
+// STRIPE WEBHOOK
+// req.body MUST be a raw Buffer.
+// ======================================================
+
+const stripeWebhook = async (
+  req,
+  res
+) => {
+
+  const stripe =
+    getStripe();
+
+  if (!stripe) {
+
+    return res.status(500).send(
+      "Stripe is not configured"
+    );
+
+  }
+
+  if (
+    !process.env.STRIPE_WEBHOOK_SECRET
+  ) {
+
+    console.log(
+      "STRIPE_WEBHOOK_SECRET is missing."
+    );
+
+    return res.status(500).send(
+      "Stripe webhook is not configured"
+    );
+
+  }
+
+  const signature =
+    req.headers[
+      "stripe-signature"
+    ];
+
+  if (!signature) {
+
+    return res.status(400).send(
+      "Stripe signature is missing"
+    );
+
+  }
+
+  let event;
+
+  try {
+
+    event =
+      stripe.webhooks.constructEvent(
+        req.body,
+        signature,
+        process.env
+          .STRIPE_WEBHOOK_SECRET
+      );
+
+  } catch (error) {
+
+    console.log(
+      "Stripe webhook signature error:",
+      error.message
+    );
+
+    return res.status(400).send(
+      "Invalid Stripe webhook signature"
+    );
+
+  }
+
+  try {
+
+    // ==================================================
+    // SUCCESSFUL PAYMENT
+    // ==================================================
+
+    if (
+      event.type ===
+        "checkout.session.completed" ||
+      event.type ===
+        "checkout.session.async_payment_succeeded"
+    ) {
+
+      const stripeSession =
+        event.data.object;
+
+      if (
+        stripeSession.payment_status ===
+        "paid"
+      ) {
+
+        const result =
+          await processPaidCheckoutSession(
+            stripeSession
+          );
+
+        console.log(
+          "Stripe payment processed:",
+          {
+            eventId:
+              event.id,
+            sessionId:
+              stripeSession.id,
+            orderId:
+              stripeSession
+                .metadata
+                ?.orderId,
+            alreadyProcessed:
+              result.alreadyProcessed,
+            warning:
+              result.warning
+          }
+        );
+
+      }
+
+    }
+
+    // ==================================================
+    // EXPIRED CHECKOUT
+    // ==================================================
+
+    if (
+      event.type ===
+      "checkout.session.expired"
+    ) {
+
+      const stripeSession =
+        event.data.object;
+
+      const orderId =
+        stripeSession
+          ?.metadata
+          ?.orderId;
+
+      if (
+        orderId &&
+        mongoose.isValidObjectId(
+          orderId
+        )
+      ) {
+
+        await orderModel.updateOne(
+          {
+            _id:
+              orderId,
+
+            payment:
+              false,
+
+            $or: [
+              {
+                stripeSessionId:
+                  stripeSession.id
+              },
+              {
+                stripeSessionId: {
+                  $exists:
+                    false
+                }
+              },
+              {
+                stripeSessionId:
+                  null
+              }
+            ]
+          },
+          {
+            $set: {
+              status:
+                "Avbruten"
+            }
+          }
+        );
+
+      }
+
+    }
+
+    return res.status(200).json({
+      received: true
+    });
+
+  } catch (error) {
+
+    console.log(
+      "Stripe webhook processing error:",
+      error
+    );
+
+    // 500 makes Stripe retry the webhook.
+    return res.status(500).send(
+      "Webhook processing failed"
+    );
 
   }
 
@@ -1844,20 +1965,15 @@ const userOrders = async (
     const userId =
       req.userId;
 
-
     if (!userId) {
 
       return res.status(401).json({
-
         success: false,
-
         message:
-          "Du måste vara inloggad."
-
+          "Du mÃ¥ste vara inloggad."
       });
 
     }
-
 
     if (
       !mongoose.isValidObjectId(
@@ -1866,16 +1982,12 @@ const userOrders = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Ogiltigt användar-ID."
-
+          "Ogiltigt anvÃ¤ndar-ID."
       });
 
     }
-
 
     const orders =
       await orderModel
@@ -1885,7 +1997,6 @@ const userOrders = async (
         .sort({
           createdAt: -1
         });
-
 
     return res.status(200).json({
 
@@ -1899,7 +2010,6 @@ const userOrders = async (
 
     });
 
-
   } catch (error) {
 
     console.log(
@@ -1907,14 +2017,10 @@ const userOrders = async (
       error
     );
 
-
     return res.status(500).json({
-
       success: false,
-
       message:
-        "Beställningarna kunde inte hämtas."
-
+        "BestÃ¤llningarna kunde inte hÃ¤mtas."
     });
 
   }
@@ -1940,7 +2046,6 @@ const listOrders = async (
           createdAt: -1
         });
 
-
     return res.status(200).json({
 
       success: true,
@@ -1953,7 +2058,6 @@ const listOrders = async (
 
     });
 
-
   } catch (error) {
 
     console.log(
@@ -1961,14 +2065,10 @@ const listOrders = async (
       error
     );
 
-
     return res.status(500).json({
-
       success: false,
-
       message:
-        "Beställningarna kunde inte hämtas."
-
+        "BestÃ¤llningarna kunde inte hÃ¤mtas."
     });
 
   }
@@ -1992,23 +2092,18 @@ const updateStatus = async (
       status
     } = req.body;
 
-
     if (
       !orderId ||
       !status
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Order-ID och status krävs."
-
+          "Order-ID och status krÃ¤vs."
       });
 
     }
-
 
     if (
       !mongoose.isValidObjectId(
@@ -2017,69 +2112,55 @@ const updateStatus = async (
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
           "Ogiltigt order-ID."
-
       });
 
     }
-
 
     const normalizedStatus =
       String(
         status
       ).trim();
 
-
-    if (!normalizedStatus) {
+    if (
+      !ALLOWED_ORDER_STATUSES.includes(
+        normalizedStatus
+      )
+    ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
-          "Orderstatus saknas."
-
+          "Ogiltig orderstatus."
       });
 
     }
-
 
     const order =
       await orderModel
         .findByIdAndUpdate(
-
           orderId,
-
           {
             status:
               normalizedStatus
           },
-
           {
             new: true,
             runValidators: true
           }
-
         );
-
 
     if (!order) {
 
       return res.status(404).json({
-
         success: false,
-
         message:
-          "Beställningen kunde inte hittas."
-
+          "BestÃ¤llningen kunde inte hittas."
       });
 
     }
-
 
     return res.status(200).json({
 
@@ -2093,7 +2174,6 @@ const updateStatus = async (
 
     });
 
-
   } catch (error) {
 
     console.log(
@@ -2101,14 +2181,10 @@ const updateStatus = async (
       error
     );
 
-
     return res.status(500).json({
-
       success: false,
-
       message:
         "Orderstatus kunde inte uppdateras."
-
     });
 
   }
@@ -2123,6 +2199,7 @@ const updateStatus = async (
 export {
   placeOrder,
   verifyOrder,
+  stripeWebhook,
   userOrders,
   listOrders,
   updateStatus

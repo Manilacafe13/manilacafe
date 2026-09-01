@@ -236,8 +236,6 @@ const orderSchema = new mongoose.Schema(
         "delivery"
       ],
 
-      // Gamla beställningar hade alltid adress,
-      // därför används delivery som standard.
       default:
         "delivery",
 
@@ -251,22 +249,6 @@ const orderSchema = new mongoose.Schema(
     // REQUESTED DATE
     // ==================================================
 
-    /*
-      Datumet kunden vill få eller
-      hämta sin beställning.
-
-      Exempel:
-
-      same-day:
-      dagens datum
-
-      next-day:
-      morgondagens datum
-
-      large-order:
-      kundens valda datum
-    */
-
     requestedDate: {
       type: Date,
       default: null
@@ -276,14 +258,6 @@ const orderSchema = new mongoose.Schema(
     // ==================================================
     // REQUESTED TIME / TIME WINDOW
     // ==================================================
-
-    /*
-      Exempel:
-
-      "15:00-16:00"
-      "16:00-17:00"
-      "17:00-18:00"
-    */
 
     requestedTime: {
       type: String,
@@ -380,6 +354,59 @@ const orderSchema = new mongoose.Schema(
 
 
     // ==================================================
+    // STRIPE CHECKOUT SESSION
+    // ==================================================
+
+    /*
+      Stripe Checkout Session som skapades
+      för just denna order.
+
+      Exempel:
+      cs_test_...
+      cs_live_...
+    */
+
+    stripeSessionId: {
+      type: String,
+      trim: true,
+      default: undefined
+    },
+
+
+    // ==================================================
+    // STRIPE PAYMENT INTENT
+    // ==================================================
+
+    /*
+      Det faktiska betalnings-ID:t hos Stripe.
+
+      Sparas när betalningen har bekräftats.
+    */
+
+    stripePaymentIntentId: {
+      type: String,
+      trim: true,
+      default: undefined
+    },
+
+
+    // ==================================================
+    // PAYMENT PROCESSED DATE
+    // ==================================================
+
+    /*
+      När vår backend faktiskt behandlade
+      Stripe-betalningen och markerade
+      ordern som betald.
+    */
+
+    paymentProcessedAt: {
+      type: Date,
+      default: null
+    },
+
+
+    // ==================================================
     // ORDER DATE
     // ==================================================
 
@@ -420,6 +447,32 @@ orderSchema.index({
   requestedDate: 1,
   deliveryMethod: 1
 });
+
+
+// Stripe Checkout Session ska endast
+// kunna tillhöra en order.
+orderSchema.index(
+  {
+    stripeSessionId: 1
+  },
+  {
+    unique: true,
+    sparse: true
+  }
+);
+
+
+// Stripe Payment Intent ska endast
+// kunna tillhöra en order.
+orderSchema.index(
+  {
+    stripePaymentIntentId: 1
+  },
+  {
+    unique: true,
+    sparse: true
+  }
+);
 
 
 // ======================================================
