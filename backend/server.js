@@ -22,23 +22,155 @@ const port =
 
 
 // ======================================================
-// ALLOWED FRONTENDS
+// FRONTEND URLS
 // ======================================================
 
 const frontendUrl =
   process.env.FRONTEND_URL ||
-  "http://localhost:5173";
+  "https://www.manilacafe.se";
 
 
 const adminUrl =
   process.env.ADMIN_URL ||
-  "http://localhost:5174";
+  "https://admin.manilacafe.se";
 
+
+// ======================================================
+// NORMALIZE URL
+// Removes trailing slash
+// ======================================================
+
+const normalizeOrigin = (origin) => {
+
+  if (!origin) {
+    return "";
+  }
+
+  return origin
+    .trim()
+    .replace(/\/+$/, "");
+
+};
+
+
+// ======================================================
+// ALLOWED FRONTENDS
+// ======================================================
 
 const allowedOrigins = [
-  frontendUrl,
-  adminUrl
+
+  // Environment variables
+  normalizeOrigin(frontendUrl),
+  normalizeOrigin(adminUrl),
+
+  // Production customer website
+  "https://www.manilacafe.se",
+  "https://manilacafe.se",
+
+  // Production admin website
+  "https://admin.manilacafe.se",
+
+  // Vercel admin fallback
+  "https://manilacafe-admin.vercel.app",
+
+  // Local customer frontend
+  "http://localhost:5173",
+
+  // Local admin frontend
+  "http://localhost:5174"
+
+]
+  .filter(Boolean);
+
+
+// Remove duplicates
+const uniqueAllowedOrigins = [
+  ...new Set(allowedOrigins)
 ];
+
+
+// ======================================================
+// CORS OPTIONS
+// ======================================================
+
+const corsOptions = {
+
+  origin: (origin, callback) => {
+
+    // Allow requests without Origin
+    // Example: Postman, curl, server-to-server
+    if (!origin) {
+
+      return callback(
+        null,
+        true
+      );
+
+    }
+
+
+    const normalizedOrigin =
+      normalizeOrigin(origin);
+
+
+    if (
+      uniqueAllowedOrigins.includes(
+        normalizedOrigin
+      )
+    ) {
+
+      return callback(
+        null,
+        true
+      );
+
+    }
+
+
+    console.log(
+      "Blocked by CORS:",
+      normalizedOrigin
+    );
+
+
+    console.log(
+      "Allowed origins:",
+      uniqueAllowedOrigins
+    );
+
+
+    return callback(
+      new Error(
+        `CORS blocked origin: ${normalizedOrigin}`
+      )
+    );
+
+  },
+
+
+  credentials: true,
+
+
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS"
+  ],
+
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "token"
+  ],
+
+
+  optionsSuccessStatus: 204
+
+};
 
 
 // ======================================================
@@ -46,50 +178,7 @@ const allowedOrigins = [
 // ======================================================
 
 app.use(
-  cors({
-
-    origin: (origin, callback) => {
-
-      // Tillåt exempelvis Postman / server requests
-      if (!origin) {
-
-        return callback(
-          null,
-          true
-        );
-
-      }
-
-
-      if (
-        allowedOrigins.includes(origin)
-      ) {
-
-        return callback(
-          null,
-          true
-        );
-
-      }
-
-
-      console.log(
-        "Blocked by CORS:",
-        origin
-      );
-
-
-      return callback(
-        new Error(
-          `CORS blocked origin: ${origin}`
-        )
-      );
-
-    },
-
-    credentials: true
-
-  })
+  cors(corsOptions)
 );
 
 
@@ -199,7 +288,8 @@ app.get(
       message:
         "Server is running",
 
-      allowedOrigins
+      allowedOrigins:
+        uniqueAllowedOrigins
 
     });
 
@@ -335,25 +425,31 @@ app.listen(
   () => {
 
     console.log(
-      `Server Started on http://localhost:${port}`
+      `Server Started on port ${port}`
     );
 
 
     console.log(
       "Customer frontend:",
-      frontendUrl
+      normalizeOrigin(frontendUrl)
     );
 
 
     console.log(
       "Admin frontend:",
-      adminUrl
+      normalizeOrigin(adminUrl)
+    );
+
+
+    console.log(
+      "Allowed origins:",
+      uniqueAllowedOrigins
     );
 
 
     console.log(
       "Future products API:",
-      `http://localhost:${port}/api/future-product/list`
+      `/api/future-product/list`
     );
 
   }
