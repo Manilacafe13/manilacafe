@@ -1,5 +1,40 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
- export const connectedDB =async() => {
-    await mongoose.connect('mongodb+srv://ManilaCafe:Dtrlm2wA9yYwlWnQ@cluster0.xso8qsl.mongodb.net/?appName=ManilaCafe').then(()=>console.log("DB Connected"));
-}
+
+// ======================================================
+// CONNECT TO MONGODB
+// ======================================================
+
+export const connectedDB = async () => {
+
+  try {
+
+    if (!process.env.MONGO_URI) {
+      throw new Error(
+        "MONGO_URI saknas i backend/.env"
+      );
+    }
+
+
+    await mongoose.connect(
+      process.env.MONGO_URI
+    );
+
+
+    console.log("DB Connected");
+
+  } catch (error) {
+
+    console.error(
+      "MongoDB connection error:",
+      error.message
+    );
+
+    process.exit(1);
+
+  }
+
+};
+
+
+export default connectedDB;
