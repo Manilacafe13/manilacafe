@@ -118,10 +118,12 @@ futureProductSchema.index({
 
 futureProductSchema.pre(
   "save",
-  function (next) {
+  function () {
 
     if (
-      Array.isArray(this.votes)
+      Array.isArray(
+        this.votes
+      )
     ) {
 
       this.votes =
@@ -142,9 +144,6 @@ futureProductSchema.pre(
         ];
 
     }
-
-
-    next();
 
   }
 );
