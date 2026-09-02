@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 import { connectedDB } from "./config/db.js";
 
@@ -20,6 +21,22 @@ import {
 // ======================================================
 
 const app = express();
+
+// ======================================================
+// SECURITY HEADERS
+// ======================================================
+
+app.disable(
+  "x-powered-by"
+);
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin"
+    }
+  })
+);
 
 const port =
   process.env.PORT || 4000;
