@@ -5,6 +5,11 @@ import {
   registerUser
 } from "../controllers/userControllers.js";
 
+import {
+  loginLimiter,
+  registerLimiter
+} from "../middleware/rateLimiters.js";
+
 
 const userRouter = express.Router();
 
@@ -15,6 +20,7 @@ const userRouter = express.Router();
 
 userRouter.post(
   "/register",
+  registerLimiter,
   registerUser
 );
 
@@ -25,6 +31,7 @@ userRouter.post(
 
 userRouter.post(
   "/login",
+  loginLimiter,
   loginUser
 );
 
