@@ -114,28 +114,12 @@ const authMiddleware = async (req, res, next) => {
     // ADD USER INFORMATION TO REQUEST
     // ==================================================
 
-    /*
-      Preferred way for future controllers:
+    // ======================================================
+// ADD VERIFIED USER ID TO REQUEST
+// ======================================================
 
-      req.userId
-
-      We also keep req.body.userId because
-      your current controllers use it.
-    */
-
-    req.userId =
-      tokenDecode.id;
-
-
-    if (!req.body) {
-
-      req.body = {};
-
-    }
-
-
-    req.body.userId =
-      tokenDecode.id;
+req.userId =
+  tokenDecode.id;
 
 
     // ==================================================
