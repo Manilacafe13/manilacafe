@@ -17,7 +17,8 @@ const orderItemSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 100
     },
 
 
@@ -25,7 +26,8 @@ const orderItemSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
-      min: 0
+      min: 0,
+      max: 100000
     },
 
 
@@ -33,10 +35,10 @@ const orderItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 1,
+      max: 99,
 
       validate: {
         validator: Number.isInteger,
-
         message:
           "Quantity must be a whole number"
       }
@@ -70,29 +72,30 @@ const addressSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 80
     },
-
 
     lastName: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 80
     },
-
 
     email: {
       type: String,
       required: true,
       trim: true,
-      lowercase: true
+      lowercase: true,
+      maxlength: 254
     },
-
 
     phone: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 30
     },
 
 
@@ -114,22 +117,23 @@ const addressSchema = new mongoose.Schema(
     street: {
       type: String,
       default: "",
-      trim: true
+      trim: true,
+      maxlength: 150
     },
-
 
     city: {
       type: String,
       default: "",
-      trim: true
+      trim: true,
+      maxlength: 100
     },
-
 
     zipcode: {
       type: String,
       default: "",
-      trim: true
-    }
+      trim: true,
+      maxlength: 20
+    },
 
   },
 
@@ -208,9 +212,7 @@ const orderSchema = new mongoose.Schema(
         "large-order"
       ],
 
-      default:
-        "next-day",
-
+      required: true,
       trim: true
     },
 
@@ -251,7 +253,7 @@ const orderSchema = new mongoose.Schema(
 
     requestedDate: {
       type: Date,
-      default: null
+      required: true
     },
 
 
@@ -261,7 +263,15 @@ const orderSchema = new mongoose.Schema(
 
     requestedTime: {
       type: String,
-      default: "",
+
+      enum: [
+        "15:00-16:00",
+        "16:00-17:00",
+        "17:00-18:00",
+        "18:00-19:00"
+      ],
+
+      required: true,
       trim: true
     },
 
@@ -329,12 +339,24 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
 
+      enum: [
+        "Inväntar betalning",
+        "Betalning mottagen",
+        "Betalning mottagen - lagerkontroll krävs",
+        "Beställning mottagen",
+        "Förbereds",
+        "Redo för upphämtning",
+        "Upphämtad",
+        "På väg",
+        "Levererad",
+        "Avbruten"
+      ],
+
       default:
         "Inväntar betalning",
 
       trim: true
     },
-
 
     // ==================================================
     // PAYMENT
@@ -348,6 +370,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
+      enum: ["Stripe"],
       default: "Stripe",
       trim: true
     },

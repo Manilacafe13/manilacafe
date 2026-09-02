@@ -3,7 +3,18 @@ import userModel from "../models/userModel.js";
 import foodModel from "../models/foodmodel.js";
 import mongoose from "mongoose";
 import Stripe from "stripe";
+import validator from "validator";
 
+
+
+const MAX_ITEM_QUANTITY = 99;
+const MAX_FIRST_NAME_LENGTH = 80;
+const MAX_LAST_NAME_LENGTH = 80;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PHONE_LENGTH = 30;
+const MAX_STREET_LENGTH = 150;
+const MAX_CITY_LENGTH = 100;
+const MAX_ZIPCODE_LENGTH = 20;
 
 // ======================================================
 // SETTINGS
@@ -11,7 +22,6 @@ import Stripe from "stripe";
 
 const VAT_RATE = 0.06;
 const LARGE_ORDER_LIMIT = 10;
-const MAX_ITEM_QUANTITY = 99;
 
 const ALLOWED_FULFILLMENT_TYPES = [
   "same-day",
@@ -789,7 +799,8 @@ const placeOrder = async (
 
     if (
       !address ||
-      typeof address !== "object"
+      typeof address !== "object" ||
+      Array.isArray(address)
     ) {
 
       return res.status(400).json({
@@ -823,11 +834,127 @@ const placeOrder = async (
           "Namn, e-post och telefonnummer mÃ¥ste fyllas i."
       });
 
+      // ======================================================
+// CUSTOMER DATA VALIDATION
+// ======================================================
+
+const firstName =
+  String(
+    address.firstName || ""
+  ).trim();
+
+const lastName =
+  String(
+    address.lastName || ""
+  ).trim();
+
+const email =
+  String(
+    address.email || ""
+  )
+    .trim()
+    .toLowerCase();
+
+const phone =
+  String(
+    address.phone || ""
+  ).trim();
+
+
+if (
+  firstName.length >
+    MAX_FIRST_NAME_LENGTH ||
+  lastName.length >
+    MAX_LAST_NAME_LENGTH
+) {
+
+  return res.status(400).json({
+    success: false,
+    message:
+      "Förnamn eller efternamn är för långt."
+  });
+
+}
+
+
+if (
+  email.length >
+    MAX_EMAIL_LENGTH ||
+  !validator.isEmail(email)
+) {
+
+  return res.status(400).json({
+    success: false,
+    message:
+      "Ange en giltig e-postadress."
+  });
+
+}
+
+
+const phoneDigits =
+  phone.replace(
+    /\D/g,
+    ""
+  );
+
+
+if (
+  phone.length >
+    MAX_PHONE_LENGTH ||
+  !/^[0-9+\s()\-]+$/.test(
+    phone
+  ) ||
+  phoneDigits.length < 7 ||
+  phoneDigits.length > 15
+) {
+
+  return res.status(400).json({
+    success: false,
+    message:
+      "Ange ett giltigt telefonnummer."
+  });
+
+}
+
     }
 
     // ==================================================
     // DELIVERY ADDRESS
     // ==================================================
+
+    const street =
+  String(
+    address.street || ""
+  ).trim();
+
+const city =
+  String(
+    address.city || ""
+  ).trim();
+
+const zipcode =
+  String(
+    address.zipcode || ""
+  ).trim();
+
+
+if (
+  street.length >
+    MAX_STREET_LENGTH ||
+  city.length >
+    MAX_CITY_LENGTH ||
+  zipcode.length >
+    MAX_ZIPCODE_LENGTH
+) {
+
+  return res.status(400).json({
+    success: false,
+    message:
+      "Leveransadressen innehåller för långa uppgifter."
+  });
+
+}
 
     if (
       deliveryMethod === "delivery"
@@ -988,82 +1115,82 @@ const placeOrder = async (
 
     }
 
-   // ======================================================
-// PRODUCT IDS
-// ======================================================
+    // ======================================================
+    // PRODUCT IDS
+    // ======================================================
 
-const productIds = [];
+    const productIds = [];
 
-for (const item of items) {
+    for (const item of items) {
 
-  const productId =
-    item._id ||
-    item.id ||
-    item.itemId;
+      const productId =
+        item._id ||
+        item.id ||
+        item.itemId;
 
-  if (
-    !productId ||
-    !mongoose.isValidObjectId(
-      productId
-    )
-  ) {
+      if (
+        !productId ||
+        !mongoose.isValidObjectId(
+          productId
+        )
+      ) {
 
-    return res.status(400).json({
-      success: false,
-      message:
-        "Ogiltigt produkt-ID."
-    });
+        return res.status(400).json({
+          success: false,
+          message:
+            "Ogiltigt produkt-ID."
+        });
 
-  }
+      }
 
-  productIds.push(
-    productId
-  );
+      productIds.push(
+        productId
+      );
 
-}
-
-
-// ======================================================
-// PREVENT DUPLICATE PRODUCT IDS
-// ======================================================
-
-const uniqueProductIds =
-  [
-    ...new Set(
-      productIds.map(
-        (productId) =>
-          productId.toString()
-      )
-    )
-  ];
+    }
 
 
-if (
-  uniqueProductIds.length !==
-  productIds.length
-) {
+    // ======================================================
+    // PREVENT DUPLICATE PRODUCT IDS
+    // ======================================================
 
-  return res.status(400).json({
+    const uniqueProductIds =
+      [
+        ...new Set(
+          productIds.map(
+            (productId) =>
+              productId.toString()
+          )
+        )
+      ];
 
-    success: false,
 
-    message:
-      "Samma produkt får inte förekomma flera gånger i beställningen."
+    if (
+      uniqueProductIds.length !==
+      productIds.length
+    ) {
 
-  });
+      return res.status(400).json({
 
-}
+        success: false,
+
+        message:
+          "Samma produkt får inte förekomma flera gånger i beställningen."
+
+      });
+
+    }
 
     // ==================================================
     // PRODUCTS FROM DATABASE
     // ==================================================
 
     const products =
-  await foodModel.find({
-    _id: {
-      $in: uniqueProductIds
-    }
-  });
+      await foodModel.find({
+        _id: {
+          $in: uniqueProductIds
+        }
+      });
 
     const productMap =
       new Map();
