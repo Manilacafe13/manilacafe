@@ -2,6 +2,18 @@ import mongoose from "mongoose";
 
 
 // ======================================================
+// LIMITS
+// ======================================================
+
+const MAX_NAME_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_CATEGORY_LENGTH = 100;
+
+const MAX_PRICE = 100000;
+const MAX_SAME_DAY_STOCK = 10000;
+
+
+// ======================================================
 // FOOD SCHEMA
 // ======================================================
 
@@ -15,7 +27,9 @@ const foodSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      minlength: 1,
+      maxlength: MAX_NAME_LENGTH
     },
 
 
@@ -26,7 +40,9 @@ const foodSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      minlength: 1,
+      maxlength: MAX_DESCRIPTION_LENGTH
     },
 
 
@@ -37,7 +53,8 @@ const foodSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
-      min: 0
+      min: 0,
+      max: MAX_PRICE
     },
 
 
@@ -47,7 +64,8 @@ const foodSchema = new mongoose.Schema(
 
     image: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
 
@@ -58,7 +76,9 @@ const foodSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      minlength: 1,
+      maxlength: MAX_CATEGORY_LENGTH
     },
 
 
@@ -66,31 +86,20 @@ const foodSchema = new mongoose.Schema(
     // SAME-DAY STOCK
     // ==================================================
 
-    /*
-      Antal färdiga portioner som finns
-      tillgängliga för beställning idag.
-
-      Exempel:
-
-      Mango Float
-      sameDayStock: 8
-
-      Kunden kan då köpa maximalt
-      8 portioner för samma dag.
-
-      När lagret är 0 är samma-dag
-      inte tillgängligt för produkten.
-    */
-
     sameDayStock: {
       type: Number,
       default: 0,
       min: 0,
+      max: MAX_SAME_DAY_STOCK,
 
       validate: {
-        validator: Number.isInteger,
+
+        validator:
+          Number.isInteger,
+
         message:
           "Same-day stock must be a whole number"
+
       }
     }
 

@@ -4,6 +4,18 @@ import fs from "fs";
 import cloudinary from "../config/cloudinary.js";
 import { fileTypeFromFile } from "file-type";
 
+
+// ======================================================
+// PRODUCT LIMITS
+// ======================================================
+
+const MAX_NAME_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_CATEGORY_LENGTH = 100;
+
+const MAX_PRICE = 100000;
+const MAX_SAME_DAY_STOCK = 10000;
+
 // ======================================================
 // ALLOWED IMAGE TYPES
 // ======================================================
@@ -154,37 +166,37 @@ const addFood = async (
     }
 
     // ======================================================
-// VERIFY ACTUAL IMAGE FILE
-// ======================================================
+    // VERIFY ACTUAL IMAGE FILE
+    // ======================================================
 
-const detectedFileType =
-  await fileTypeFromFile(
-    req.file.path
-  );
-
-
-if (
-  !detectedFileType ||
-  !ALLOWED_IMAGE_TYPES.includes(
-    detectedFileType.mime
-  )
-) {
-
-  removeLocalFile(
-    req.file.path
-  );
+    const detectedFileType =
+      await fileTypeFromFile(
+        req.file.path
+      );
 
 
-  return res.status(400).json({
+    if (
+      !detectedFileType ||
+      !ALLOWED_IMAGE_TYPES.includes(
+        detectedFileType.mime
+      )
+    ) {
 
-    success: false,
+      removeLocalFile(
+        req.file.path
+      );
 
-    message:
-      "Ogiltig bildfil. Endast JPEG, PNG och WebP är tillåtna."
 
-  });
+      return res.status(400).json({
 
-}
+        success: false,
+
+        message:
+          "Ogiltig bildfil. Endast JPEG, PNG och WebP är tillåtna."
+
+      });
+
+    }
 
 
     // ==================================================
@@ -220,6 +232,54 @@ if (
         req.body.sameDayStock || 0
       );
 
+    // ======================================================
+    // VALIDATE TEXT LENGTHS
+    // ======================================================
+
+    if (name.length > MAX_NAME_LENGTH) {
+
+      removeLocalFile(req.file.path);
+
+      return res.status(400).json({
+        success: false,
+        message:
+          `Produktnamnet får vara högst ${MAX_NAME_LENGTH} tecken.`
+      });
+
+    }
+
+
+    if (
+      description.length >
+      MAX_DESCRIPTION_LENGTH
+    ) {
+
+      removeLocalFile(req.file.path);
+
+      return res.status(400).json({
+        success: false,
+        message:
+          `Produktbeskrivningen får vara högst ${MAX_DESCRIPTION_LENGTH} tecken.`
+      });
+
+    }
+
+
+    if (
+      category.length >
+      MAX_CATEGORY_LENGTH
+    ) {
+
+      removeLocalFile(req.file.path);
+
+      return res.status(400).json({
+        success: false,
+        message:
+          `Kategorin får vara högst ${MAX_CATEGORY_LENGTH} tecken.`
+      });
+
+    }
+
 
     // ==================================================
     // VALIDATE REQUIRED DATA
@@ -254,7 +314,8 @@ if (
 
     if (
       !Number.isFinite(price) ||
-      price < 0
+      price < 0 ||
+      price > MAX_PRICE
     ) {
 
       removeLocalFile(
@@ -267,7 +328,7 @@ if (
         success: false,
 
         message:
-          "Ogiltigt produktpris."
+          `Priset måste vara mellan 0 och ${MAX_PRICE} kr.`
 
       });
 
@@ -282,7 +343,9 @@ if (
       !Number.isInteger(
         sameDayStock
       ) ||
-      sameDayStock < 0
+      sameDayStock < 0 ||
+      sameDayStock >
+      MAX_SAME_DAY_STOCK
     ) {
 
       removeLocalFile(
@@ -295,7 +358,7 @@ if (
         success: false,
 
         message:
-          "Dagslagret måste vara ett heltal från 0 och uppåt."
+          `Dagslagret måste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
 
       });
 
@@ -419,7 +482,7 @@ if (
           );
 
       } catch (
-        cloudinaryError
+      cloudinaryError
       ) {
 
         console.log(
@@ -567,7 +630,9 @@ const updateStock = async (
       !Number.isInteger(
         stock
       ) ||
-      stock < 0
+      stock < 0 ||
+      stock >
+      MAX_SAME_DAY_STOCK
     ) {
 
       return res.status(400).json({
@@ -765,7 +830,7 @@ const removeFood = async (
             );
 
         } catch (
-          cloudinaryError
+        cloudinaryError
         ) {
 
           console.log(
