@@ -187,6 +187,85 @@ app.use(
 
 
 // ======================================================
+// TEMPORARY STRIPE WEBHOOK DIAGNOSTICS
+// REMOVE AFTER PRODUCTION TEST IS COMPLETE
+// ======================================================
+
+app.use(
+  (req, res, next) => {
+
+    if (
+      req.originalUrl.startsWith(
+        "/api/order/webhook"
+      )
+    ) {
+
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "=== WEBHOOK REQUEST RECEIVED ==="
+      );
+
+      console.log(
+        "Method:",
+        req.method
+      );
+
+      console.log(
+        "URL:",
+        req.originalUrl
+      );
+
+      console.log(
+        "Content-Type:",
+        req.headers[
+          "content-type"
+        ] || "MISSING"
+      );
+
+      console.log(
+        "User-Agent:",
+        req.headers[
+          "user-agent"
+        ] || "MISSING"
+      );
+
+      console.log(
+        "Stripe-Signature:",
+        req.headers[
+          "stripe-signature"
+        ]
+          ? "YES"
+          : "NO"
+      );
+
+      console.log(
+        "Origin:",
+        req.headers.origin ||
+        "NONE"
+      );
+
+      console.log(
+        "Host:",
+        req.headers.host ||
+        "MISSING"
+      );
+
+      console.log(
+        "========================================"
+      );
+
+    }
+
+    next();
+
+  }
+);
+
+
+// ======================================================
 // STRIPE WEBHOOK
 // IMPORTANT:
 // MUST BE BEFORE express.json()
