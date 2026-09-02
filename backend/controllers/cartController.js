@@ -11,6 +11,13 @@ const VAT_RATE = 0.06;
 
 
 // ======================================================
+// MAX QUANTITY PER PRODUCT
+// ======================================================
+
+const MAX_ITEM_QUANTITY = 99;
+
+
+// ======================================================
 // ROUND MONEY
 // ======================================================
 
@@ -144,7 +151,10 @@ const calculateCartTotals = async (
 // ADD ITEM TO CART
 // ======================================================
 
-const addToCart = async (req, res) => {
+const addToCart = async (
+  req,
+  res
+) => {
 
   try {
 
@@ -293,7 +303,7 @@ const addToCart = async (req, res) => {
 
 
     // ==================================================
-    // ADD PRODUCT
+    // CURRENT QUANTITY
     // ==================================================
 
     const currentQuantity =
@@ -301,6 +311,36 @@ const addToCart = async (req, res) => {
         cartData[productId] || 0
       );
 
+
+    // ==================================================
+    // MAX QUANTITY CHECK
+    // ==================================================
+
+    if (
+      currentQuantity >=
+      MAX_ITEM_QUANTITY
+    ) {
+
+      return res.status(400).json({
+
+        success: false,
+
+        message:
+          `Du kan lägga till högst ${MAX_ITEM_QUANTITY} st av samma produkt.`,
+
+        maxQuantity:
+          MAX_ITEM_QUANTITY,
+
+        currentQuantity
+
+      });
+
+    }
+
+
+    // ==================================================
+    // ADD PRODUCT
+    // ==================================================
 
     cartData[productId] =
       currentQuantity + 1;
