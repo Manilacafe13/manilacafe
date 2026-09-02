@@ -31,14 +31,11 @@ const ALLOWED_TIME_SLOTS = [
 ];
 
 const ALLOWED_ORDER_STATUSES = [
-  "InvÃ¤ntar betalning",
-  "Betalning mottagen",
-  "Betalning mottagen - lagerkontroll krÃ¤vs",
-  "BestÃ¤llning mottagen",
-  "FÃ¶rbereds",
-  "Redo fÃ¶r upphÃ¤mtning",
-  "UpphÃ¤mtad",
-  "PÃ¥ vÃ¤g",
+  "Beställning mottagen",
+  "Förbereds",
+  "Redo för upphämtning",
+  "Upphämtad",
+  "På väg",
   "Levererad",
   "Avbruten"
 ];
