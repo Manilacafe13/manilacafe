@@ -4,24 +4,96 @@ import { assets } from '../../assets/assets'
 import { NavLink } from 'react-router-dom'
 
 const Sidebar = () => {
+
   return (
+
     <div className='sidebar'>
-     <div className="sidebar-options">
-        <NavLink to='/add' className="sidebar-option">
-            <img src={assets.add_icon} alt="" />
-            <p>Add Items</p>
-            </NavLink>
-        <NavLink to='/list' className="sidebar-option">
-            <img src={assets.order_icon} alt="" />
-            <p>List Items</p>
+
+      <div className="sidebar-options">
+
+
+        {/* ADD PRODUCT */}
+
+        <NavLink
+          to='/add'
+          className="sidebar-option"
+        >
+
+          <img
+            src={assets.add_icon}
+            alt=""
+          />
+
+          <p>
+            Lägg till produkt
+          </p>
+
         </NavLink>
-        <NavLink to='/orders' className="sidebar-option">
-            <img src={assets.order_icon} alt="" />
-            <p>Orders</p>
+
+
+        {/* PRODUCT LIST */}
+
+        <NavLink
+          to='/list'
+          className="sidebar-option"
+        >
+
+          <img
+            src={assets.order_icon}
+            alt=""
+          />
+
+          <p>
+            Produkter
+          </p>
+
         </NavLink>
-     </div>
+
+
+        {/* ORDERS */}
+
+        <NavLink
+          to='/orders'
+          className="sidebar-option"
+        >
+
+          <img
+            src={assets.order_icon}
+            alt=""
+          />
+
+          <p>
+            Beställningar
+          </p>
+
+        </NavLink>
+
+
+        {/* FUTURE PRODUCTS */}
+
+        <NavLink
+          to='/future-products'
+          className="sidebar-option"
+        >
+
+          <img
+            src={assets.add_icon}
+            alt=""
+          />
+
+          <p>
+            Framtida produkter
+          </p>
+
+        </NavLink>
+
+
+      </div>
+
     </div>
+
   )
+
 }
 
 export default Sidebar

@@ -13,6 +13,7 @@ import Add from './pages/Add/Add'
 import List from './pages/List/List'
 import Orders from './pages/Orders/Orders'
 import Login from './pages/Login/Login'
+import FutureProducts from './pages/FutureProducts/FutureProducts'
 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -25,13 +26,13 @@ const App = () => {
   // ======================================================
 
   const url = (
-  import.meta.env.VITE_API_URL ||
-  (
-    import.meta.env.DEV
-      ? "http://localhost:4000"
-      : ""
-  )
-).replace(/\/+$/, "")
+    import.meta.env.VITE_API_URL ||
+    (
+      import.meta.env.DEV
+        ? "http://localhost:4000"
+        : ""
+    )
+  ).replace(/\/+$/, "")
 
 
   const location =
@@ -145,6 +146,14 @@ const App = () => {
             path="/orders"
             element={
               <Orders url={url} />
+            }
+          />
+
+
+          <Route
+            path="/future-products"
+            element={
+              <FutureProducts url={url} />
             }
           />
 

@@ -1,0 +1,390 @@
+.future-products {
+  width: 100%;
+  padding: 30px 40px;
+  box-sizing: border-box;
+  color: #262626;
+}
+
+
+/* ======================================================
+   HEADER
+====================================================== */
+
+.future-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.future-products-header h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.future-products-header p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+
+/* ======================================================
+   FORM
+====================================================== */
+
+.future-product-form {
+  width: 100%;
+  max-width: 950px;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 25px;
+  box-sizing: border-box;
+  margin-bottom: 40px;
+}
+
+.future-product-form h2 {
+  margin: 0 0 25px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.future-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.future-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.future-form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+}
+
+.future-form-group input,
+.future-form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dcdcdc;
+  border-radius: 7px;
+  padding: 11px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+}
+
+.future-form-group input:focus,
+.future-form-group textarea:focus {
+  border-color: #888;
+}
+
+.future-form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.future-image-preview {
+  margin-bottom: 20px;
+}
+
+.future-image-preview img {
+  width: 180px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+}
+
+.future-submit-button {
+  border: none;
+  background: #262626;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 7px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.future-submit-button:hover {
+  opacity: 0.88;
+}
+
+.future-submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* ======================================================
+   LIST HEADER
+====================================================== */
+
+.future-product-list {
+  width: 100%;
+}
+
+.future-list-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.future-list-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.future-list-heading span {
+  background: #eeeeee;
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #555;
+}
+
+
+/* ======================================================
+   GRID
+====================================================== */
+
+.future-product-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(260px, 1fr)
+  );
+  gap: 22px;
+}
+
+
+/* ======================================================
+   PRODUCT CARD
+====================================================== */
+
+.future-product-card {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: 0.2s;
+}
+
+.future-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px #0000000c;
+}
+
+.future-card-image {
+  width: 100%;
+  height: 190px;
+  position: relative;
+  background: #f5f5f5;
+}
+
+.future-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.future-card-emoji {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 65px;
+}
+
+
+/* ======================================================
+   STATUS
+====================================================== */
+
+.future-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.future-status.active {
+  background: #e5f7e9;
+  color: #218838;
+}
+
+.future-status.hidden {
+  background: #eeeeee;
+  color: #666;
+}
+
+
+/* ======================================================
+   CONTENT
+====================================================== */
+
+.future-card-content {
+  padding: 18px;
+}
+
+.future-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.future-card-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.future-card-title span {
+  font-size: 22px;
+}
+
+.future-category {
+  margin: 7px 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.future-description {
+  margin: 12px 0;
+  color: #626262;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 40px;
+}
+
+
+/* ======================================================
+   VOTES
+====================================================== */
+
+.future-votes {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 15px 0;
+}
+
+.future-votes strong {
+  font-size: 24px;
+}
+
+.future-votes span {
+  color: #777;
+  font-size: 13px;
+}
+
+
+/* ======================================================
+   ACTIONS
+====================================================== */
+
+.future-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.future-card-actions button {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.future-hide-button {
+  background: #ffffff;
+  border: 1px solid #d1d1d1;
+  color: #444;
+}
+
+.future-show-button {
+  background: #eaf8ed;
+  border: 1px solid #b7dfbf;
+  color: #1f7a35;
+}
+
+.future-delete-button {
+  background: #fff4f4;
+  border: 1px solid #f0bcbc;
+  color: #b52828;
+}
+
+.future-card-actions button:hover {
+  opacity: 0.8;
+}
+
+
+/* ======================================================
+   STATES
+====================================================== */
+
+.future-state-message {
+  padding: 30px 0;
+  color: #777;
+}
+
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media (max-width: 900px) {
+
+  .future-products {
+    padding: 25px;
+  }
+
+  .future-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+}
+
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media (max-width: 600px) {
+
+  .future-products {
+    padding: 20px 15px;
+  }
+
+  .future-products-header h1 {
+    font-size: 23px;
+  }
+
+  .future-product-form {
+    padding: 18px;
+  }
+
+  .future-product-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
