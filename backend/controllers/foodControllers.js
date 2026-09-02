@@ -2,6 +2,17 @@ import foodModel from "../models/foodmodel.js";
 import mongoose from "mongoose";
 import fs from "fs";
 import cloudinary from "../config/cloudinary.js";
+import { fileTypeFromFile } from "file-type";
+
+// ======================================================
+// ALLOWED IMAGE TYPES
+// ======================================================
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
 
 
 // ======================================================
@@ -141,6 +152,39 @@ const addFood = async (
       });
 
     }
+
+    // ======================================================
+// VERIFY ACTUAL IMAGE FILE
+// ======================================================
+
+const detectedFileType =
+  await fileTypeFromFile(
+    req.file.path
+  );
+
+
+if (
+  !detectedFileType ||
+  !ALLOWED_IMAGE_TYPES.includes(
+    detectedFileType.mime
+  )
+) {
+
+  removeLocalFile(
+    req.file.path
+  );
+
+
+  return res.status(400).json({
+
+    success: false,
+
+    message:
+      "Ogiltig bildfil. Endast JPEG, PNG och WebP är tillåtna."
+
+  });
+
+}
 
 
     // ==================================================

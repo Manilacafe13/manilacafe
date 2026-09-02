@@ -1,5 +1,119 @@
 import futureProductModel from "../models/futureProductModel.js";
 import mongoose from "mongoose";
+import fs from "fs";
+import cloudinary from "../config/cloudinary.js";
+import { fileTypeFromFile } from "file-type";
+
+
+// ======================================================
+// ALLOWED IMAGE TYPES
+// ======================================================
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
+
+
+// ======================================================
+// REMOVE LOCAL TEMP FILE
+// ======================================================
+
+const removeLocalFile = (filePath) => {
+
+  if (!filePath) {
+    return;
+  }
+
+  fs.unlink(
+    filePath,
+    (error) => {
+
+      if (
+        error &&
+        error.code !== "ENOENT"
+      ) {
+
+        console.log(
+          "Could not remove local image:",
+          error.message
+        );
+
+      }
+
+    }
+  );
+
+};
+
+
+// ======================================================
+// GET CLOUDINARY PUBLIC ID
+// ======================================================
+
+const getCloudinaryPublicId = (imageUrl) => {
+
+  try {
+
+    if (
+      !imageUrl ||
+      !imageUrl.includes(
+        "res.cloudinary.com"
+      )
+    ) {
+
+      return null;
+
+    }
+
+
+    const uploadPart =
+      imageUrl.split(
+        "/upload/"
+      )[1];
+
+
+    if (!uploadPart) {
+      return null;
+    }
+
+
+    const withoutVersion =
+      uploadPart.replace(
+        /^v\d+\//,
+        ""
+      );
+
+
+    const lastDot =
+      withoutVersion.lastIndexOf(
+        "."
+      );
+
+
+    if (lastDot === -1) {
+      return withoutVersion;
+    }
+
+
+    return withoutVersion.substring(
+      0,
+      lastDot
+    );
+
+  } catch (error) {
+
+    console.log(
+      "Cloudinary public ID error:",
+      error.message
+    );
+
+    return null;
+
+  }
+
+};
 
 
 // ======================================================
@@ -569,6 +683,8 @@ const addFutureProduct = async (
   res
 ) => {
 
+  let cloudinaryPublicId = null;
+
   try {
 
     const {
@@ -580,14 +696,47 @@ const addFutureProduct = async (
 
 
     // ==================================================
-    // VALIDATE
+    // NORMALIZE DATA
     // ==================================================
 
-    if (
-      !String(
+    const normalizedName =
+      String(
         name || ""
-      ).trim()
-    ) {
+      ).trim();
+
+
+    const normalizedDescription =
+      String(
+        description || ""
+      ).trim();
+
+
+    const normalizedEmoji =
+      String(
+        emoji || "🍰"
+      ).trim();
+
+
+    const normalizedCategory =
+      String(
+        category || "Dessert"
+      ).trim();
+
+
+    // ==================================================
+    // VALIDATE NAME
+    // ==================================================
+
+    if (!normalizedName) {
+
+      if (req.file?.path) {
+
+        removeLocalFile(
+          req.file.path
+        );
+
+      }
+
 
       return res.status(400).json({
 
@@ -601,11 +750,20 @@ const addFutureProduct = async (
     }
 
 
-    if (
-      !String(
-        description || ""
-      ).trim()
-    ) {
+    // ==================================================
+    // VALIDATE DESCRIPTION
+    // ==================================================
+
+    if (!normalizedDescription) {
+
+      if (req.file?.path) {
+
+        removeLocalFile(
+          req.file.path
+        );
+
+      }
+
 
       return res.status(400).json({
 
@@ -621,10 +779,86 @@ const addFutureProduct = async (
 
     // ==================================================
     // IMAGE
+    // IMAGE IS OPTIONAL
     // ==================================================
 
-    const image =
-      req.file?.filename || "";
+    let image = "";
+
+
+    if (req.file) {
+
+      // ==================================================
+      // VERIFY ACTUAL FILE TYPE
+      // ==================================================
+
+      const detectedFileType =
+        await fileTypeFromFile(
+          req.file.path
+        );
+
+
+      if (
+        !detectedFileType ||
+        !ALLOWED_IMAGE_TYPES.includes(
+          detectedFileType.mime
+        )
+      ) {
+
+        removeLocalFile(
+          req.file.path
+        );
+
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Ogiltig bildfil. Endast JPEG, PNG och WebP är tillåtna."
+
+        });
+
+      }
+
+
+      // ==================================================
+      // UPLOAD TO CLOUDINARY
+      // ==================================================
+
+      const uploadResult =
+        await cloudinary
+          .uploader
+          .upload(
+            req.file.path,
+            {
+
+              folder:
+                "manilacafe/future-products",
+
+              resource_type:
+                "image"
+
+            }
+          );
+
+
+      cloudinaryPublicId =
+        uploadResult.public_id;
+
+
+      image =
+        uploadResult.secure_url;
+
+
+      // ==================================================
+      // REMOVE LOCAL TEMP FILE
+      // ==================================================
+
+      removeLocalFile(
+        req.file.path
+      );
+
+    }
 
 
     // ==================================================
@@ -635,27 +869,18 @@ const addFutureProduct = async (
       new futureProductModel({
 
         name:
-          String(
-            name
-          ).trim(),
+          normalizedName,
 
         description:
-          String(
-            description
-          ).trim(),
+          normalizedDescription,
 
         image,
 
         emoji:
-          String(
-            emoji || "🍰"
-          ).trim(),
+          normalizedEmoji,
 
         category:
-          String(
-            category ||
-            "Dessert"
-          ).trim(),
+          normalizedCategory,
 
         votes:
           [],
@@ -666,8 +891,16 @@ const addFutureProduct = async (
       });
 
 
+    // ==================================================
+    // SAVE PRODUCT
+    // ==================================================
+
     await product.save();
 
+
+    // ==================================================
+    // SUCCESS
+    // ==================================================
 
     return res.status(201).json({
 
@@ -713,6 +946,47 @@ const addFutureProduct = async (
       "Add future product error:",
       error
     );
+
+
+    // ==================================================
+    // REMOVE LOCAL TEMP FILE IF IT STILL EXISTS
+    // ==================================================
+
+    if (req.file?.path) {
+
+      removeLocalFile(
+        req.file.path
+      );
+
+    }
+
+
+    // ==================================================
+    // ROLLBACK CLOUDINARY IMAGE IF DATABASE SAVE FAILED
+    // ==================================================
+
+    if (cloudinaryPublicId) {
+
+      try {
+
+        await cloudinary
+          .uploader
+          .destroy(
+            cloudinaryPublicId
+          );
+
+      } catch (
+        cloudinaryError
+      ) {
+
+        console.log(
+          "Could not remove Cloudinary image:",
+          cloudinaryError.message
+        );
+
+      }
+
+    }
 
 
     return res.status(500).json({
