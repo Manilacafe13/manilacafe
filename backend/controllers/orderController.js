@@ -11,6 +11,7 @@ import Stripe from "stripe";
 
 const VAT_RATE = 0.06;
 const LARGE_ORDER_LIMIT = 10;
+const MAX_ITEM_QUANTITY = 99;
 
 const ALLOWED_FULFILLMENT_TYPES = [
   "same-day",
@@ -176,7 +177,7 @@ const isValidDateString = (
     date
       .toISOString()
       .slice(0, 10) ===
-      dateString
+    dateString
   );
 
 };
@@ -233,7 +234,7 @@ const validatePaidStripeSession = (
   if (
     !stripeSession.metadata ||
     stripeSession.metadata.orderId !==
-      order._id.toString()
+    order._id.toString()
   ) {
     throw new Error(
       "STRIPE_ORDER_MISMATCH"
@@ -243,7 +244,7 @@ const validatePaidStripeSession = (
   if (
     order.stripeSessionId &&
     order.stripeSessionId !==
-      stripeSession.id
+    stripeSession.id
   ) {
     throw new Error(
       "STRIPE_SESSION_MISMATCH"
@@ -280,7 +281,7 @@ const validatePaidStripeSession = (
     stripeSession.currency &&
     stripeSession.currency
       .toLowerCase() !==
-      "sek"
+    "sek"
   ) {
     throw new Error(
       "STRIPE_CURRENCY_MISMATCH"
@@ -542,7 +543,7 @@ const processPaidCheckoutSession =
                     sameDayStock
                   ) ||
                   sameDayStock <
-                    quantity
+                  quantity
                 ) {
                   throw new Error(
                     `SAME_DAY_STOCK:${item.name}`
@@ -987,50 +988,82 @@ const placeOrder = async (
 
     }
 
-    // ==================================================
-    // PRODUCT IDS
-    // ==================================================
+   // ======================================================
+// PRODUCT IDS
+// ======================================================
 
-    const productIds = [];
+const productIds = [];
 
-    for (const item of items) {
+for (const item of items) {
 
-      const productId =
-        item._id ||
-        item.id ||
-        item.itemId;
+  const productId =
+    item._id ||
+    item.id ||
+    item.itemId;
 
-      if (
-        !productId ||
-        !mongoose.isValidObjectId(
-          productId
-        )
-      ) {
+  if (
+    !productId ||
+    !mongoose.isValidObjectId(
+      productId
+    )
+  ) {
 
-        return res.status(400).json({
-          success: false,
-          message:
-            "Ogiltigt produkt-ID."
-        });
+    return res.status(400).json({
+      success: false,
+      message:
+        "Ogiltigt produkt-ID."
+    });
 
-      }
+  }
 
-      productIds.push(
-        productId
-      );
+  productIds.push(
+    productId
+  );
 
-    }
+}
+
+
+// ======================================================
+// PREVENT DUPLICATE PRODUCT IDS
+// ======================================================
+
+const uniqueProductIds =
+  [
+    ...new Set(
+      productIds.map(
+        (productId) =>
+          productId.toString()
+      )
+    )
+  ];
+
+
+if (
+  uniqueProductIds.length !==
+  productIds.length
+) {
+
+  return res.status(400).json({
+
+    success: false,
+
+    message:
+      "Samma produkt får inte förekomma flera gånger i beställningen."
+
+  });
+
+}
 
     // ==================================================
     // PRODUCTS FROM DATABASE
     // ==================================================
 
     const products =
-      await foodModel.find({
-        _id: {
-          $in: productIds
-        }
-      });
+  await foodModel.find({
+    _id: {
+      $in: uniqueProductIds
+    }
+  });
 
     const productMap =
       new Map();
@@ -1088,13 +1121,14 @@ const placeOrder = async (
         !Number.isInteger(
           quantity
         ) ||
-        quantity <= 0
+        quantity <= 0 ||
+        quantity > MAX_ITEM_QUANTITY
       ) {
 
         return res.status(400).json({
           success: false,
           message:
-            "Ogiltigt antal produkter."
+            `Du kan beställa högst ${MAX_ITEM_QUANTITY} st av samma produkt.`
         });
 
       }
@@ -1263,26 +1297,26 @@ const placeOrder = async (
 
           street:
             deliveryMethod ===
-            "delivery"
+              "delivery"
               ? String(
-                  address.street || ""
-                ).trim()
+                address.street || ""
+              ).trim()
               : "",
 
           city:
             deliveryMethod ===
-            "delivery"
+              "delivery"
               ? String(
-                  address.city || ""
-                ).trim()
+                address.city || ""
+              ).trim()
               : "",
 
           zipcode:
             deliveryMethod ===
-            "delivery"
+              "delivery"
               ? String(
-                  address.zipcode || ""
-                ).trim()
+                address.zipcode || ""
+              ).trim()
               : ""
 
         },
@@ -1782,7 +1816,7 @@ const stripeWebhook = async (
 
   const signature =
     req.headers[
-      "stripe-signature"
+    "stripe-signature"
     ];
 
   if (!signature) {
@@ -1826,9 +1860,9 @@ const stripeWebhook = async (
 
     if (
       event.type ===
-        "checkout.session.completed" ||
+      "checkout.session.completed" ||
       event.type ===
-        "checkout.session.async_payment_succeeded"
+      "checkout.session.async_payment_succeeded"
     ) {
 
       const stripeSession =
