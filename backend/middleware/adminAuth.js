@@ -10,12 +10,11 @@ const adminAuth = async (req, res, next) => {
   try {
 
     // ==================================================
-    // CHECK USER ID FROM authMiddleware
+    // GET VERIFIED USER ID FROM authMiddleware
     // ==================================================
 
     const userId =
-      req.userId ||
-      req.body?.userId;
+      req.userId;
 
 
     if (!userId) {
@@ -44,7 +43,7 @@ const adminAuth = async (req, res, next) => {
 
     if (!user) {
 
-      return res.status(404).json({
+      return res.status(401).json({
 
         success: false,
 
