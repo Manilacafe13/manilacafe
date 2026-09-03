@@ -21,7 +21,10 @@ export const connectedDB = async () => {
     );
 
 
-    console.log("DB Connected");
+    console.log(
+      "DB Connected:",
+      mongoose.connection.name
+    );
 
   } catch (error) {
 
