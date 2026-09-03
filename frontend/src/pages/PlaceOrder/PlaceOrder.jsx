@@ -10,7 +10,18 @@ import { StoreContext } from '../../context/StoreContext'
 import axios from 'axios'
 
 
+const MAX_ITEM_QUANTITY = 99
+const MAX_FIRST_NAME_LENGTH = 80
+const MAX_LAST_NAME_LENGTH = 80
+const MAX_EMAIL_LENGTH = 254
+const MAX_PHONE_LENGTH = 30
+const MAX_STREET_LENGTH = 150
+const MAX_CITY_LENGTH = 100
+const MAX_ZIPCODE_LENGTH = 20
+
+
 const PlaceOrder = () => {
+
 
   const {
     getTotalCartAmount,
@@ -21,6 +32,8 @@ const PlaceOrder = () => {
     food_list,
     url
   } = useContext(StoreContext)
+
+
 
 
   // ======================================================
@@ -489,6 +502,56 @@ const PlaceOrder = () => {
       !data.phone.trim()
     ) {
 
+
+    if (
+  data.firstName.trim().length >
+    MAX_FIRST_NAME_LENGTH ||
+  data.lastName.trim().length >
+    MAX_LAST_NAME_LENGTH
+) {
+
+  alert(
+    "Förnamn eller efternamn är för långt."
+  )
+
+  return
+}
+
+
+if (
+  data.email.trim().length >
+  MAX_EMAIL_LENGTH
+) {
+
+  alert(
+    "E-postadressen är för lång."
+  )
+
+  return
+}
+
+
+const phone =
+  data.phone.trim()
+
+const phoneDigits =
+  phone.replace(/\D/g, "")
+
+
+if (
+  phone.length >
+    MAX_PHONE_LENGTH ||
+  !/^[0-9+\s()\-]+$/.test(phone) ||
+  phoneDigits.length < 7 ||
+  phoneDigits.length > 15
+) {
+
+  alert(
+    "Ange ett giltigt telefonnummer."
+  )
+
+  return
+}
       alert(
         "Fyll i namn, e-post och telefonnummer."
       )
@@ -510,6 +573,25 @@ const PlaceOrder = () => {
         !data.zipcode.trim()
       )
     ) {
+
+      if (
+  deliveryMethod === "delivery" &&
+  (
+    data.street.trim().length >
+      MAX_STREET_LENGTH ||
+    data.city.trim().length >
+      MAX_CITY_LENGTH ||
+    data.zipcode.trim().length >
+      MAX_ZIPCODE_LENGTH
+  )
+) {
+
+  alert(
+    "Leveransadressen innehåller för långa uppgifter."
+  )
+
+  return
+}
 
       alert(
         "Fyll i fullständig leveransadress."
@@ -636,13 +718,15 @@ const PlaceOrder = () => {
 
 
       const invalidItem =
-        orderItems.find(
-          (item) =>
-            !Number.isInteger(
-              item.quantity
-            ) ||
-            item.quantity <= 0
-        )
+  orderItems.find(
+    (item) =>
+      !Number.isInteger(
+        item.quantity
+      ) ||
+      item.quantity <= 0 ||
+      item.quantity >
+        MAX_ITEM_QUANTITY
+  )
 
 
       if (invalidItem) {
@@ -1016,64 +1100,46 @@ const PlaceOrder = () => {
         </div>
 
 
-        {/* ============================================== */}
-        {/* DELIVERY ADDRESS */}
-        {/* ============================================== */}
-
-        {deliveryMethod ===
-          "delivery" && (
-
-          <div className="delivery-address-section">
-
-
-            <p className="delivery-address-title">
-              Leveransadress
-            </p>
+        <input
+  name="street"
+  onChange={onChangeHandler}
+  value={data.street}
+  type="text"
+  placeholder="Gatuadress"
+  autoComplete="street-address"
+  maxLength={MAX_STREET_LENGTH}
+  required
+/>
 
 
-            <input
-              name="street"
-              onChange={onChangeHandler}
-              value={data.street}
-              type="text"
-              placeholder="Gatuadress"
-              autoComplete="street-address"
-              required
-            />
+<div className="Alternativ">
 
 
-            <div className="Alternativ">
+  <input
+    name="city"
+    onChange={onChangeHandler}
+    value={data.city}
+    type="text"
+    placeholder="Stad"
+    autoComplete="address-level2"
+    maxLength={MAX_CITY_LENGTH}
+    required
+  />
 
 
-              <input
-                name="city"
-                onChange={onChangeHandler}
-                value={data.city}
-                type="text"
-                placeholder="Stad"
-                autoComplete="address-level2"
-                required
-              />
+  <input
+    name="zipcode"
+    onChange={onChangeHandler}
+    value={data.zipcode}
+    type="text"
+    placeholder="Postnummer"
+    autoComplete="postal-code"
+    maxLength={MAX_ZIPCODE_LENGTH}
+    required
+  />
 
 
-              <input
-                name="zipcode"
-                onChange={onChangeHandler}
-                value={data.zipcode}
-                type="text"
-                placeholder="Postnummer"
-                autoComplete="postal-code"
-                required
-              />
-
-
-            </div>
-
-
-          </div>
-
-        )}
-
+</div>
 
         {/* ============================================== */}
         {/* FULFILLMENT */}
