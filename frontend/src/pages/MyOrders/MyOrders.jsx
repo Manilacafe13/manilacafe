@@ -361,7 +361,7 @@ const MyOrders = () => {
   ) => {
 
     switch (
-      fulfillmentType
+    fulfillmentType
     ) {
 
       case "same-day":
@@ -397,7 +397,7 @@ const MyOrders = () => {
   ) => {
 
     switch (
-      fulfillmentType
+    fulfillmentType
     ) {
 
       case "same-day":
@@ -907,10 +907,9 @@ const MyOrders = () => {
 
                     <strong
                       className={
-                        `order-delivery-method-badge ${
-                          getDeliveryMethodClass(
-                            order.deliveryMethod
-                          )
+                        `order-delivery-method-badge ${getDeliveryMethodClass(
+                          order.deliveryMethod
+                        )
                         }`
                       }
                     >
@@ -934,10 +933,9 @@ const MyOrders = () => {
 
                     <strong
                       className={
-                        `order-fulfillment-badge ${
-                          getFulfillmentClass(
-                            order.fulfillmentType
-                          )
+                        `order-fulfillment-badge ${getFulfillmentClass(
+                          order.fulfillmentType
+                        )
                         }`
                       }
                     >
@@ -1088,22 +1086,22 @@ const MyOrders = () => {
                 {order.status ===
                   "Betalning mottagen - lagerkontroll krävs" && (
 
-                  <div className="order-stock-notice">
+                    <div className="order-stock-notice">
 
-                    <strong>
-                      Din betalning är mottagen
-                    </strong>
+                      <strong>
+                        Din betalning är mottagen
+                      </strong>
 
-                    <p>
-                      Vi kontrollerar tillgängligheten
-                      för din beställning och uppdaterar
-                      orderstatusen så snart den är
-                      bekräftad.
-                    </p>
+                      <p>
+                        Vi kontrollerar tillgängligheten
+                        för din beställning och uppdaterar
+                        orderstatusen så snart den är
+                        bekräftad.
+                      </p>
 
-                  </div>
+                    </div>
 
-                )}
+                  )}
 
 
                 {/* ====================================== */}
@@ -1156,7 +1154,10 @@ const MyOrders = () => {
 
                               <img
                                 src={
-                                  `${url}/images/${item.image}`
+                                  item.image?.startsWith("http://") ||
+                                    item.image?.startsWith("https://")
+                                    ? item.image
+                                    : `${url}/images/${item.image}`
                                 }
                                 alt={
                                   item.name ||

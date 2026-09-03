@@ -90,9 +90,13 @@ const Cart = () => {
 
 
                 {/* PRODUKTBILD */}
-
                 <img
-                  src={`${url}/images/${item.image}`}
+                  src={
+                    item.image?.startsWith("http://") ||
+                      item.image?.startsWith("https://")
+                      ? item.image
+                      : `${url}/images/${item.image}`
+                  }
                   alt={item.name}
                 />
 
