@@ -3,6 +3,7 @@
     margin: 30px auto;
     background: url('/header_img.png') no-repeat;
     background-size: contain;
+    background-position: center;
     position: relative;
 }
 
@@ -37,17 +38,48 @@
     background-color: white;
     font-size: max(1vw, 13px);
     border-radius: 50px;
+    cursor: pointer;
 }
 
+
+/* ============================= */
+/* TABLET */
+/* ============================= */
+
 @media (max-width:1050px) {
+
     .header-contents{
         max-width: 45%;
     }
+
 }
 
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
 @media (max-width:750px) {
+
+    .header{
+        height: 300px;
+        margin: 20px auto;
+        background-size: cover;
+        background-position: center;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
     .header-contents{
-        max-width: 65%;
+        max-width: 80%;
+        left: 5vw;
+        bottom: 12%;
+        gap: 10px;
+    }
+
+    .header-contents h2{
+        font-size: 28px;
+        line-height: 1.15;
     }
 
     .header-contents p{
@@ -55,6 +87,37 @@
     }
 
     .header-contents button{
-        padding: 2vw 4vw;
+        padding: 10px 20px;
+        font-size: 13px;
     }
+
+}
+
+
+/* ============================= */
+/* SMALL MOBILE */
+/* ============================= */
+
+@media (max-width:480px) {
+
+    .header{
+        height: 260px;
+        margin: 15px auto;
+    }
+
+    .header-contents{
+        max-width: 85%;
+        left: 5%;
+        bottom: 10%;
+    }
+
+    .header-contents h2{
+        font-size: 24px;
+    }
+
+    .header-contents button{
+        padding: 9px 18px;
+        font-size: 12px;
+    }
+
 }
