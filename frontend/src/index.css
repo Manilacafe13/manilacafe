@@ -175,6 +175,7 @@ body::after{
 
 }
 
+
 @media (max-width: 750px){
 
   .app{
@@ -201,6 +202,8 @@ body::after{
         #f8fff7,
         #fffaf2
       );
+
+    background-attachment: scroll;
   }
 
 }
