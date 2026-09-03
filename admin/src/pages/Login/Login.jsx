@@ -76,9 +76,6 @@ const Login = () => {
 
     if (!url) {
 
-      console.error(
-        "VITE_API_URL saknas."
-      )
 
 
       toast.error(
@@ -196,11 +193,6 @@ const Login = () => {
 
     } catch (error) {
 
-      console.log(
-        "Admin login error:",
-        error.response?.data ||
-        error.message
-      )
 
 
       // ==================================================

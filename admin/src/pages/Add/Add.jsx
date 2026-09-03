@@ -378,11 +378,6 @@ if (
 
     } catch (error) {
 
-      console.log(
-        "Add product error:",
-        error.response?.data ||
-        error.message
-      )
 
 
       if (

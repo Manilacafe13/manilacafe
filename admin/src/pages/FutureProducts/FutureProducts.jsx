@@ -154,10 +154,6 @@ const FutureProducts = ({
 
       } catch (error) {
 
-        console.log(
-          "Future products error:",
-          error
-        )
 
 
         if (
@@ -430,10 +426,6 @@ const FutureProducts = ({
 
       } catch (error) {
 
-        console.log(
-          "Add future product error:",
-          error
-        )
 
 
         toast.error(
@@ -530,10 +522,6 @@ const FutureProducts = ({
 
       } catch (error) {
 
-        console.log(
-          "Status update error:",
-          error
-        )
 
 
         toast.error(
@@ -619,10 +607,6 @@ const FutureProducts = ({
 
       } catch (error) {
 
-        console.log(
-          "Remove future product error:",
-          error
-        )
 
 
         toast.error(

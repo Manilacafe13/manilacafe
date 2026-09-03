@@ -134,11 +134,6 @@ const List = () => {
 
     } catch (error) {
 
-      console.log(
-        "Fetch food list error:",
-        error.response?.data ||
-        error.message
-      )
 
 
       setList([])
@@ -307,11 +302,6 @@ const List = () => {
 
     } catch (error) {
 
-      console.log(
-        "Update stock error:",
-        error.response?.data ||
-        error.message
-      )
 
 
       if (
@@ -481,11 +471,6 @@ const List = () => {
 
     } catch (error) {
 
-      console.log(
-        "Remove food error:",
-        error.response?.data ||
-        error.message
-      )
 
 
       if (

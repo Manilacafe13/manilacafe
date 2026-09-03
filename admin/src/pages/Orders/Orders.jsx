@@ -176,11 +176,6 @@ const Orders = ({ url }) => {
 
       } catch (error) {
 
-        console.log(
-          "Admin orders error:",
-          error.response?.data ||
-          error.message
-        )
 
 
         setOrders([])
@@ -329,11 +324,6 @@ const Orders = ({ url }) => {
 
     } catch (error) {
 
-      console.log(
-        "Update order status error:",
-        error.response?.data ||
-        error.message
-      )
 
 
       if (
