@@ -304,12 +304,12 @@ const Orders = ({ url }) => {
             order._id === orderId
 
               ? {
-                  ...order,
+                ...order,
 
-                  status:
-                    response.data.data?.status ||
-                    status
-                }
+                status:
+                  response.data.data?.status ||
+                  status
+              }
 
               : order
 
@@ -514,7 +514,7 @@ const Orders = ({ url }) => {
   ) => {
 
     switch (
-      fulfillmentType
+    fulfillmentType
     ) {
 
       case "same-day":
@@ -550,7 +550,7 @@ const Orders = ({ url }) => {
   ) => {
 
     switch (
-      fulfillmentType
+    fulfillmentType
     ) {
 
       case "same-day":
@@ -977,10 +977,9 @@ const Orders = ({ url }) => {
 
                     <strong
                       className={
-                        `delivery-method-badge ${
-                          getDeliveryMethodClass(
-                            order.deliveryMethod
-                          )
+                        `delivery-method-badge ${getDeliveryMethodClass(
+                          order.deliveryMethod
+                        )
                         }`
                       }
                     >
@@ -1002,10 +1001,9 @@ const Orders = ({ url }) => {
 
                     <strong
                       className={
-                        `fulfillment-badge ${
-                          getFulfillmentClass(
-                            order.fulfillmentType
-                          )
+                        `fulfillment-badge ${getFulfillmentClass(
+                          order.fulfillmentType
+                        )
                         }`
                       }
                     >
@@ -1085,21 +1083,21 @@ const Orders = ({ url }) => {
                 {order.status ===
                   "Betalning mottagen - lagerkontroll krävs" && (
 
-                  <div className="admin-stock-warning">
+                    <div className="admin-stock-warning">
 
-                    <strong>
-                      ⚠ Lagerkontroll krävs
-                    </strong>
+                      <strong>
+                        ⚠ Lagerkontroll krävs
+                      </strong>
 
-                    <p>
-                      Kunden har betalat men dagslagret
-                      behöver kontrolleras innan ordern
-                      bekräftas.
-                    </p>
+                      <p>
+                        Kunden har betalat men dagslagret
+                        behöver kontrolleras innan ordern
+                        bekräftas.
+                      </p>
 
-                  </div>
+                    </div>
 
-                )}
+                  )}
 
 
                 {/* ====================================== */}
@@ -1456,19 +1454,20 @@ const Orders = ({ url }) => {
                     >
 
 
-                      <option value="Inväntar betalning">
-                        Inväntar betalning
-                      </option>
+                      {[
+                        "Inväntar betalning",
+                        "Betalning mottagen",
+                        "Betalning mottagen - lagerkontroll krävs"
+                      ].includes(order.status) && (
 
+                          <option
+                            value={order.status}
+                            disabled
+                          >
+                            {order.status}
+                          </option>
 
-                      <option value="Betalning mottagen">
-                        Betalning mottagen
-                      </option>
-
-
-                      <option value="Betalning mottagen - lagerkontroll krävs">
-                        Betalning mottagen - lagerkontroll krävs
-                      </option>
+                        )}
 
 
                       <option value="Beställning mottagen">
@@ -1528,11 +1527,11 @@ const Orders = ({ url }) => {
                     {updatingOrder ===
                       order._id && (
 
-                      <span className="status-saving">
-                        Sparar...
-                      </span>
+                        <span className="status-saving">
+                          Sparar...
+                        </span>
 
-                    )}
+                      )}
 
 
                   </div>
