@@ -311,16 +311,16 @@ const getStripeValidationMessage = (
       return "Stripe-sessionen saknas.";
 
     case "STRIPE_ORDER_MISMATCH":
-      return "Stripe-betalningen matchar inte bestÃ¤llningen.";
+      return "Stripe-betalningen matchar inte beställningen.";
 
     case "STRIPE_SESSION_MISMATCH":
-      return "Stripe-sessionen matchar inte bestÃ¤llningen.";
+      return "Stripe-sessionen matchar inte beställningen.";
 
     case "STRIPE_NOT_PAID":
-      return "Betalningen Ã¤r inte genomfÃ¶rd.";
+      return "Betalningen är inte genomförd.";
 
     case "STRIPE_AMOUNT_MISMATCH":
-      return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
+      return "Betalningsbeloppet matchar inte beställningen.";
 
     case "STRIPE_CURRENCY_MISMATCH":
       return "Fel valuta i betalningen.";
@@ -383,13 +383,13 @@ const markPaidWithStockWarning =
           }
 
           const warning =
-            `${productName} har inte lÃ¤ngre tillrÃ¤ckligt dagslager.`;
+            `${productName} har inte längre tillräckligt dagslager.`;
 
           order.payment =
             true;
 
           order.status =
-            "Betalning mottagen - lagerkontroll krÃ¤vs";
+            "Betalning mottagen - lagerkontroll krävs";
 
           order.stripeSessionId =
             stripeSession.id;
@@ -739,7 +739,7 @@ const placeOrder = async (
       return res.status(401).json({
         success: false,
         message:
-          "Du mÃ¥ste vara inloggad."
+          "Du måste vara inloggad."
       });
 
     }
@@ -753,7 +753,7 @@ const placeOrder = async (
       return res.status(401).json({
         success: false,
         message:
-          "Ogiltig anvÃ¤ndarsession."
+          "Ogiltig användarsession."
       });
 
     }
@@ -770,7 +770,7 @@ const placeOrder = async (
       return res.status(400).json({
         success: false,
         message:
-          "Din varukorg Ã¤r tom."
+          "Din varukorg är tom."
       });
 
     }
@@ -788,7 +788,7 @@ const placeOrder = async (
       return res.status(400).json({
         success: false,
         message:
-          "VÃ¤lj avhÃ¤mtning eller leverans."
+          "Välj avhämtning eller leverans."
       });
 
     }
@@ -831,7 +831,7 @@ const placeOrder = async (
       return res.status(400).json({
         success: false,
         message:
-          "Namn, e-post och telefonnummer mÃ¥ste fyllas i."
+          "Namn, e-post och telefonnummer måste fyllas i."
       });
 
       // ======================================================
@@ -979,7 +979,7 @@ if (
         return res.status(400).json({
           success: false,
           message:
-            "FullstÃ¤ndig leveransadress mÃ¥ste fyllas i."
+            "Fullständig leveransadress måste fyllas i."
         });
 
       }
@@ -999,7 +999,7 @@ if (
       return res.status(400).json({
         success: false,
         message:
-          "Ogiltigt bestÃ¤llningsalternativ."
+          "Ogiltigt beställningsalternativ."
       });
 
     }
@@ -1017,7 +1017,7 @@ if (
       return res.status(400).json({
         success: false,
         message:
-          "Ogiltigt bestÃ¤llningsdatum."
+          "Ogiltigt beställningsdatum."
       });
 
     }
@@ -1063,7 +1063,7 @@ if (
       return res.status(400).json({
         success: false,
         message:
-          "BestÃ¤llning fÃ¶r idag mÃ¥ste ha dagens datum."
+          "Beställning för idag måste ha dagens datum."
       });
 
     }
@@ -1078,7 +1078,7 @@ if (
       return res.status(400).json({
         success: false,
         message:
-          "BestÃ¤llning fÃ¶r imorgon mÃ¥ste ha morgondagens datum."
+          "Beställning för imorgon måste ha morgondagens datum."
       });
 
     }
@@ -1093,7 +1093,7 @@ if (
       return res.status(400).json({
         success: false,
         message:
-          "StÃ¶rre bestÃ¤llningar mÃ¥ste gÃ¶ras minst 48 timmar i fÃ¶rvÃ¤g."
+          "Större beställningar måste göras minst 48 timmar i förväg."
       });
 
     }
@@ -1110,7 +1110,7 @@ if (
       return res.status(500).json({
         success: false,
         message:
-          "Stripe Ã¤r inte konfigurerat."
+          "Stripe är inte konfigurerat."
       });
 
     }
@@ -1305,7 +1305,7 @@ if (
           return res.status(409).json({
             success: false,
             message:
-              `${product.name} finns inte i tillrÃ¤ckligt antal fÃ¶r bestÃ¤llning idag.`
+              `${product.name} finns inte i tillräckligt antal för beställning idag.`
           });
 
         }
@@ -1343,7 +1343,7 @@ if (
       return res.status(400).json({
         success: false,
         message:
-          `BestÃ¤llningar med ${LARGE_ORDER_LIMIT} produkter eller fler mÃ¥ste gÃ¶ras som en stÃ¶rre bestÃ¤llning.`
+          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en större beställning.`
       });
 
     }
@@ -1467,7 +1467,7 @@ if (
           "Stripe",
 
         status:
-          "InvÃ¤ntar betalning"
+          "Inväntar betalning"
 
       });
 
@@ -1682,7 +1682,7 @@ if (
       success: true,
 
       message:
-        "BestÃ¤llningen har skapats.",
+        "Beställningen har skapats.",
 
       subtotal:
         roundedSubtotal,
@@ -1719,7 +1719,7 @@ if (
     return res.status(500).json({
       success: false,
       message:
-        "Ett fel uppstod nÃ¤r bestÃ¤llningen skulle skapas."
+        "Ett fel uppstod när beställningen skulle skapas."
     });
 
   }
@@ -1770,7 +1770,7 @@ const verifyOrder = async (
       return res.status(200).json({
         success: false,
         message:
-          "Betalningen avbrÃ¶ts."
+          "Betalningen avbröts."
       });
 
     }
@@ -1806,7 +1806,7 @@ const verifyOrder = async (
       return res.status(500).json({
         success: false,
         message:
-          "Stripe Ã¤r inte konfigurerat."
+          "Stripe är inte konfigurerat."
       });
 
     }
@@ -1828,7 +1828,7 @@ const verifyOrder = async (
       return res.status(400).json({
         success: false,
         message:
-          "Stripe-betalningen matchar inte bestÃ¤llningen."
+          "Stripe-betalningen matchar inte beställningen."
       });
 
     }
@@ -1844,9 +1844,9 @@ const verifyOrder = async (
 
       message:
         result.warning
-          ? "Betalningen lyckades, men ordern behÃ¶ver lagerkontrolleras."
+          ? "Betalningen lyckades, men ordern behöver lagerkontrolleras."
           : result.alreadyProcessed
-            ? "BestÃ¤llningen Ã¤r redan betald."
+            ? "Beställningen är redan betald."
             : "Betalningen lyckades.",
 
       warning:
@@ -1884,7 +1884,7 @@ const verifyOrder = async (
       return res.status(404).json({
         success: false,
         message:
-          "BestÃ¤llningen kunde inte hittas."
+          "Beställningen kunde inte hittas."
       });
 
     }
@@ -1892,7 +1892,7 @@ const verifyOrder = async (
     return res.status(500).json({
       success: false,
       message:
-        "Ett fel uppstod nÃ¤r betalningen skulle verifieras."
+        "Ett fel uppstod när betalningen skulle verifieras."
     });
 
   }
@@ -2119,7 +2119,7 @@ const userOrders = async (
       return res.status(401).json({
         success: false,
         message:
-          "Du mÃ¥ste vara inloggad."
+          "Du måste vara inloggad."
       });
 
     }
@@ -2133,7 +2133,7 @@ const userOrders = async (
       return res.status(400).json({
         success: false,
         message:
-          "Ogiltigt anvÃ¤ndar-ID."
+          "Ogiltigt användar-ID."
       });
 
     }
@@ -2166,7 +2166,7 @@ const userOrders = async (
     return res.status(500).json({
       success: false,
       message:
-        "BestÃ¤llningarna kunde inte hÃ¤mtas."
+        "Beställningarna kunde inte hämtas."
     });
 
   }
@@ -2211,7 +2211,7 @@ const listOrders = async (
     return res.status(500).json({
       success: false,
       message:
-        "BestÃ¤llningarna kunde inte hÃ¤mtas."
+        "Beställningarna kunde inte hämtas."
     });
 
   }
@@ -2243,7 +2243,7 @@ const updateStatus = async (
       return res.status(400).json({
         success: false,
         message:
-          "Order-ID och status krÃ¤vs."
+          "Order-ID och status krävs."
       });
 
     }
@@ -2300,7 +2300,7 @@ const updateStatus = async (
       return res.status(404).json({
         success: false,
         message:
-          "BestÃ¤llningen kunde inte hittas."
+          "Beställningen kunde inte hittas."
       });
 
     }
