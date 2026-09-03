@@ -535,7 +535,7 @@ const List = () => {
 
     return (
 
-      <div className="list add flex-col">
+      <div className="list flex-col">
 
         <p className="list-title">
           Alla produkter
@@ -558,7 +558,7 @@ const List = () => {
 
   return (
 
-    <div className="list add flex-col">
+    <div className="list flex-col">
 
 
       {/* ================================================ */}
