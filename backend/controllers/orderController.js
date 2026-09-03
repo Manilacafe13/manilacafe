@@ -1714,10 +1714,7 @@ if (
 
   } catch (error) {
 
-    console.log(
-      "Place order error:",
-      error
-    );
+    console.error("Place order error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -1862,10 +1859,7 @@ const verifyOrder = async (
 
   } catch (error) {
 
-    console.log(
-      "Verify order error:",
-      error
-    );
+    console.error("Verify order error:", error.message);
 
     const validationMessage =
       getStripeValidationMessage(
@@ -2094,10 +2088,7 @@ const stripeWebhook = async (
 
   } catch (error) {
 
-    console.log(
-      "Stripe webhook processing error:",
-      error
-    );
+    console.error("Stripe webhook processing error:", error.message);
 
     // 500 makes Stripe retry the webhook.
     return res.status(500).send(
@@ -2170,10 +2161,7 @@ const userOrders = async (
 
   } catch (error) {
 
-    console.log(
-      "User orders error:",
-      error
-    );
+    console.error("User orders error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -2218,10 +2206,7 @@ const listOrders = async (
 
   } catch (error) {
 
-    console.log(
-      "List orders error:",
-      error
-    );
+    console.error("List orders error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -2334,10 +2319,7 @@ const updateStatus = async (
 
   } catch (error) {
 
-    console.log(
-      "Update status error:",
-      error
-    );
+    console.error("Update status error:", error.message);
 
     return res.status(500).json({
       success: false,

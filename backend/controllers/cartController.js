@@ -398,10 +398,7 @@ const addToCart = async (
 
   } catch (error) {
 
-    console.log(
-      "Add to cart error:",
-      error
-    );
+    console.error("Add to cart error:", error.message);
 
 
     return res.status(500).json({
@@ -640,10 +637,7 @@ const removeFromCart = async (
 
   } catch (error) {
 
-    console.log(
-      "Remove from cart error:",
-      error
-    );
+    console.error("Remove from cart error:", error.message);
 
 
     return res.status(500).json({
@@ -779,10 +773,7 @@ const getCart = async (
 
   } catch (error) {
 
-    console.log(
-      "Get cart error:",
-      error
-    );
+    console.error("Get cart error:", error.message);
 
 
     return res.status(500).json({

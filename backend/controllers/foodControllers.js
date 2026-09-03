@@ -444,10 +444,7 @@ const addFood = async (
 
   } catch (error) {
 
-    console.log(
-      "Add food error:",
-      error
-    );
+    console.error("Add food error:", error.message);
 
 
     // ==================================================
@@ -543,10 +540,7 @@ const listFood = async (
 
   } catch (error) {
 
-    console.log(
-      "List food error:",
-      error
-    );
+    console.error("List food error:", error.message);
 
 
     return res.status(500).json({
@@ -706,10 +700,7 @@ const updateStock = async (
 
   } catch (error) {
 
-    console.log(
-      "Update stock error:",
-      error
-    );
+    console.error("Update stock error:", error.message);
 
 
     return res.status(500).json({
@@ -900,10 +891,7 @@ const removeFood = async (
 
   } catch (error) {
 
-    console.log(
-      "Remove food error:",
-      error
-    );
+    console.error("Remove food error:", error.message);
 
 
     return res.status(500).json({

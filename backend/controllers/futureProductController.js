@@ -239,10 +239,7 @@ const listFutureProducts = async (
 
   } catch (error) {
 
-    console.log(
-      "List future products error:",
-      error
-    );
+    console.error("List future products error:", error.message);
 
 
     return res.status(500).json({
@@ -489,10 +486,7 @@ const voteFutureProduct = async (
 
   } catch (error) {
 
-    console.log(
-      "Vote future product error:",
-      error
-    );
+    console.error("Vote future product error:", error.message);
 
 
     return res.status(500).json({
@@ -653,10 +647,7 @@ const removeFutureProductVote = async (
 
   } catch (error) {
 
-    console.log(
-      "Remove future product vote error:",
-      error
-    );
+    console.error("Remove future product vote error:", error.message);
 
 
     return res.status(500).json({
@@ -942,10 +933,7 @@ const addFutureProduct = async (
 
   } catch (error) {
 
-    console.log(
-      "Add future product error:",
-      error
-    );
+    console.error("Add future product error:", error.message);
 
 
     // ==================================================
@@ -1077,10 +1065,7 @@ const adminListFutureProducts = async (
 
   } catch (error) {
 
-    console.log(
-      "Admin list future products error:",
-      error
-    );
+    console.error("Admin list future products error:", error.message);
 
 
     return res.status(500).json({
@@ -1207,10 +1192,7 @@ const updateFutureProductStatus = async (
 
   } catch (error) {
 
-    console.log(
-      "Update future product status error:",
-      error
-    );
+    console.error("Update future product status error:", error.message);
 
 
     return res.status(500).json({
@@ -1296,10 +1278,7 @@ const removeFutureProduct = async (
 
   } catch (error) {
 
-    console.log(
-      "Remove future product error:",
-      error
-    );
+    console.error("Remove future product error:", error.message);
 
 
     return res.status(500).json({

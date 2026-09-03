@@ -205,10 +205,7 @@ const loginUser = async (req, res) => {
 
   } catch (error) {
 
-    console.log(
-      "Login error:",
-      error
-    );
+    console.error("Login error:", error.message);
 
 
     return res.status(500).json({
@@ -478,10 +475,7 @@ const registerUser = async (req, res) => {
 
   } catch (error) {
 
-    console.log(
-      "Register error:",
-      error
-    );
+    console.error("Register error:", error.message);
 
 
     // --------------------------------------------------
