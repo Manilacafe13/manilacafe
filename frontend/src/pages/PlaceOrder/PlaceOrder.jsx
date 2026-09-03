@@ -490,7 +490,6 @@ const PlaceOrder = () => {
 
     }
 
-
     // ==================================================
     // CHECK CUSTOMER INFORMATION
     // ==================================================
@@ -502,56 +501,6 @@ const PlaceOrder = () => {
       !data.phone.trim()
     ) {
 
-
-    if (
-  data.firstName.trim().length >
-    MAX_FIRST_NAME_LENGTH ||
-  data.lastName.trim().length >
-    MAX_LAST_NAME_LENGTH
-) {
-
-  alert(
-    "Förnamn eller efternamn är för långt."
-  )
-
-  return
-}
-
-
-if (
-  data.email.trim().length >
-  MAX_EMAIL_LENGTH
-) {
-
-  alert(
-    "E-postadressen är för lång."
-  )
-
-  return
-}
-
-
-const phone =
-  data.phone.trim()
-
-const phoneDigits =
-  phone.replace(/\D/g, "")
-
-
-if (
-  phone.length >
-    MAX_PHONE_LENGTH ||
-  !/^[0-9+\s()\-]+$/.test(phone) ||
-  phoneDigits.length < 7 ||
-  phoneDigits.length > 15
-) {
-
-  alert(
-    "Ange ett giltigt telefonnummer."
-  )
-
-  return
-}
       alert(
         "Fyll i namn, e-post och telefonnummer."
       )
@@ -561,43 +510,96 @@ if (
     }
 
 
+    if (
+      data.firstName.trim().length >
+      MAX_FIRST_NAME_LENGTH ||
+      data.lastName.trim().length >
+      MAX_LAST_NAME_LENGTH
+    ) {
+
+      alert(
+        "Förnamn eller efternamn är för långt."
+      )
+
+      return
+
+    }
+
+
+    if (
+      data.email.trim().length >
+      MAX_EMAIL_LENGTH
+    ) {
+
+      alert(
+        "E-postadressen är för lång."
+      )
+
+      return
+
+    }
+
+
+    const phone =
+      data.phone.trim()
+
+
+    const phoneDigits =
+      phone.replace(/\D/g, "")
+
+
+    if (
+      phone.length >
+      MAX_PHONE_LENGTH ||
+      !/^[0-9+\s()\-]+$/.test(phone) ||
+      phoneDigits.length < 7 ||
+      phoneDigits.length > 15
+    ) {
+
+      alert(
+        "Ange ett giltigt telefonnummer."
+      )
+
+      return
+
+    }
     // ==================================================
     // CHECK DELIVERY ADDRESS
     // ==================================================
 
-    if (
-      deliveryMethod === "delivery" &&
-      (
+    if (deliveryMethod === "delivery") {
+
+      if (
         !data.street.trim() ||
         !data.city.trim() ||
         !data.zipcode.trim()
-      )
-    ) {
+      ) {
+
+        alert(
+          "Fyll i fullständig leveransadress."
+        )
+
+        return
+
+      }
+
 
       if (
-  deliveryMethod === "delivery" &&
-  (
-    data.street.trim().length >
-      MAX_STREET_LENGTH ||
-    data.city.trim().length >
-      MAX_CITY_LENGTH ||
-    data.zipcode.trim().length >
-      MAX_ZIPCODE_LENGTH
-  )
-) {
+        data.street.trim().length >
+        MAX_STREET_LENGTH ||
+        data.city.trim().length >
+        MAX_CITY_LENGTH ||
+        data.zipcode.trim().length >
+        MAX_ZIPCODE_LENGTH
+      ) {
 
-  alert(
-    "Leveransadressen innehåller för långa uppgifter."
-  )
+        alert(
+          "Leveransadressen innehåller för långa uppgifter."
+        )
 
-  return
-}
+        return
 
-      alert(
-        "Fyll i fullständig leveransadress."
-      )
-
-      return
+      }
 
     }
 
@@ -718,20 +720,18 @@ if (
 
 
       const invalidItem =
-  orderItems.find(
-    (item) =>
-      !Number.isInteger(
-        item.quantity
-      ) ||
-      item.quantity <= 0 ||
-      item.quantity >
-        MAX_ITEM_QUANTITY
-  )
+        orderItems.find(
+          (item) =>
+            !Number.isInteger(
+              item.quantity
+            ) ||
+            item.quantity <= 0 ||
+            item.quantity >
+            MAX_ITEM_QUANTITY
+        )
 
 
-    {
-
-
+      if (invalidItem) {
 
         alert(
           "Ett fel uppstod med antalet produkter i varukorgen."
@@ -937,6 +937,7 @@ if (
             type="text"
             placeholder="Förnamn"
             autoComplete="given-name"
+            maxLength={MAX_FIRST_NAME_LENGTH}
             required
           />
 
@@ -948,6 +949,7 @@ if (
             type="text"
             placeholder="Efternamn"
             autoComplete="family-name"
+            maxLength={MAX_LAST_NAME_LENGTH}
             required
           />
 
@@ -962,6 +964,7 @@ if (
           type="email"
           placeholder="E-post"
           autoComplete="email"
+          maxLength={MAX_EMAIL_LENGTH}
           required
         />
 
@@ -973,6 +976,7 @@ if (
           type="tel"
           placeholder="Telefonnummer"
           autoComplete="tel"
+          maxLength={MAX_PHONE_LENGTH}
           required
         />
 
@@ -1001,10 +1005,9 @@ if (
 
             <label
               className={
-                `delivery-method-option ${
-                  deliveryMethod === "pickup"
-                    ? "active"
-                    : ""
+                `delivery-method-option ${deliveryMethod === "pickup"
+                  ? "active"
+                  : ""
                 }`
               }
             >
@@ -1044,10 +1047,9 @@ if (
 
             <label
               className={
-                `delivery-method-option ${
-                  deliveryMethod === "delivery"
-                    ? "active"
-                    : ""
+                `delivery-method-option ${deliveryMethod === "delivery"
+                  ? "active"
+                  : ""
                 }`
               }
             >
@@ -1089,46 +1091,52 @@ if (
         </div>
 
 
-        <input
-  name="street"
-  onChange={onChangeHandler}
-  value={data.street}
-  type="text"
-  placeholder="Gatuadress"
-  autoComplete="street-address"
-  maxLength={MAX_STREET_LENGTH}
-  required
-/>
+        {deliveryMethod === "delivery" && (
+
+          <>
+
+            <input
+              name="street"
+              onChange={onChangeHandler}
+              value={data.street}
+              type="text"
+              placeholder="Gatuadress"
+              autoComplete="street-address"
+              maxLength={MAX_STREET_LENGTH}
+              required
+            />
 
 
-<div className="Alternativ">
+            <div className="Alternativ">
+
+              <input
+                name="city"
+                onChange={onChangeHandler}
+                value={data.city}
+                type="text"
+                placeholder="Stad"
+                autoComplete="address-level2"
+                maxLength={MAX_CITY_LENGTH}
+                required
+              />
 
 
-  <input
-    name="city"
-    onChange={onChangeHandler}
-    value={data.city}
-    type="text"
-    placeholder="Stad"
-    autoComplete="address-level2"
-    maxLength={MAX_CITY_LENGTH}
-    required
-  />
+              <input
+                name="zipcode"
+                onChange={onChangeHandler}
+                value={data.zipcode}
+                type="text"
+                placeholder="Postnummer"
+                autoComplete="postal-code"
+                maxLength={MAX_ZIPCODE_LENGTH}
+                required
+              />
 
+            </div>
 
-  <input
-    name="zipcode"
-    onChange={onChangeHandler}
-    value={data.zipcode}
-    type="text"
-    placeholder="Postnummer"
-    autoComplete="postal-code"
-    maxLength={MAX_ZIPCODE_LENGTH}
-    required
-  />
+          </>
 
-
-</div>
+        )}
 
         {/* ============================================== */}
         {/* FULFILLMENT */}
@@ -1154,15 +1162,13 @@ if (
 
             <label
               className={
-                `delivery-option ${
-                  fulfillmentType === "same-day"
-                    ? "active"
-                    : ""
-                } ${
-                  !sameDayAvailable ||
+                `delivery-option ${fulfillmentType === "same-day"
+                  ? "active"
+                  : ""
+                } ${!sameDayAvailable ||
                   isLargeOrder
-                    ? "disabled"
-                    : ""
+                  ? "disabled"
+                  : ""
                 }`
               }
             >
@@ -1212,14 +1218,12 @@ if (
 
             <label
               className={
-                `delivery-option ${
-                  fulfillmentType === "next-day"
-                    ? "active"
-                    : ""
-                } ${
-                  isLargeOrder
-                    ? "disabled"
-                    : ""
+                `delivery-option ${fulfillmentType === "next-day"
+                  ? "active"
+                  : ""
+                } ${isLargeOrder
+                  ? "disabled"
+                  : ""
                 }`
               }
             >
@@ -1262,10 +1266,9 @@ if (
 
             <label
               className={
-                `delivery-option ${
-                  fulfillmentType === "large-order"
-                    ? "active"
-                    : ""
+                `delivery-option ${fulfillmentType === "large-order"
+                  ? "active"
+                  : ""
                 }`
               }
             >
@@ -1336,29 +1339,29 @@ if (
           {fulfillmentType ===
             "large-order" && (
 
-            <div className="delivery-date-field">
+              <div className="delivery-date-field">
 
-              <label>
-                Välj datum
-              </label>
+                <label>
+                  Välj datum
+                </label>
 
-              <input
-                type="date"
-                value={largeOrderDate}
-                min={
-                  getMinimumLargeOrderDate()
-                }
-                onChange={(event) =>
-                  setLargeOrderDate(
-                    event.target.value
-                  )
-                }
-                required
-              />
+                <input
+                  type="date"
+                  value={largeOrderDate}
+                  min={
+                    getMinimumLargeOrderDate()
+                  }
+                  onChange={(event) =>
+                    setLargeOrderDate(
+                      event.target.value
+                    )
+                  }
+                  required
+                />
 
-            </div>
+              </div>
 
-          )}
+            )}
 
 
           {/* ============================================ */}
