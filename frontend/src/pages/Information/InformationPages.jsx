@@ -481,10 +481,12 @@ export const ContactPage = () => {
         <h2>Företagsuppgifter</h2>
 
         <p>
-          Registrerat företagsnamn, organisationsnummer
-          och fysisk företagsadress kompletteras före
-          lansering.
-        </p>
+  <strong>Företagsnamn:</strong> Manila Café
+  <br />
+  <strong>Organisationsnummer:</strong> [980908163]
+  <br />
+  <strong>Adress:</strong> Mandolingatan 13, 421 45 Västra Frölunda
+</p>
 
       </section>
 
