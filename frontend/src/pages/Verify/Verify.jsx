@@ -213,11 +213,7 @@ const Verify = () => {
       } catch (error) {
 
 
-        console.log(
-          "Verify payment error:",
-          error.response?.data ||
-          error.message
-        )
+
 
 
         setStatus("error")

@@ -106,11 +106,7 @@ const MyOrders = () => {
 
       } catch (error) {
 
-        console.log(
-          "Fetch orders error:",
-          error.response?.data ||
-          error.message
-        )
+
 
 
         setOrders([])

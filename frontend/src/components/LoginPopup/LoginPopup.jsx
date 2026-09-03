@@ -85,11 +85,6 @@ const LoginPopup = ({ setShowLogin }) => {
 
     } catch (error) {
 
-      console.log(
-        "Login/Register Error:",
-        error.response?.data || error.message
-      )
-
       if (error.response?.data?.message) {
         alert(error.response.data.message)
       } else {

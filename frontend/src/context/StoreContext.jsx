@@ -103,11 +103,6 @@ const StoreContextProvider = (props) => {
 
             } else {
 
-                console.log(
-                    response.data.message
-                );
-
-
                 // Restore old cart
                 setCartItems(
                     previousCart
@@ -115,13 +110,7 @@ const StoreContextProvider = (props) => {
 
             }
 
-        } catch (error) {
-
-            console.log(
-                "Error adding item to cart:",
-                error
-            );
-
+        } catch {
 
             // Restore old cart if request fails
             setCartItems(
@@ -223,11 +212,6 @@ const StoreContextProvider = (props) => {
 
             } else {
 
-                console.log(
-                    response.data.message
-                );
-
-
                 // Restore old cart
                 setCartItems(
                     previousCart
@@ -235,13 +219,7 @@ const StoreContextProvider = (props) => {
 
             }
 
-        } catch (error) {
-
-            console.log(
-                "Error removing item from cart:",
-                error
-            );
-
+        } catch {
 
             // Restore old cart
             setCartItems(
@@ -414,20 +392,11 @@ const StoreContextProvider = (props) => {
                     response.data.data || []
                 );
 
-            } else {
-
-                console.log(
-                    response.data.message
-                );
-
             }
 
-        } catch (error) {
+        } catch {
 
-            console.log(
-                "Error fetching food list:",
-                error
-            );
+            setFoodList([]);
 
         }
 
@@ -475,18 +444,13 @@ const StoreContextProvider = (props) => {
 
             } else {
 
-                console.log(
-                    response.data.message
-                );
+                setCartItems({});
 
             }
 
-        } catch (error) {
+        } catch {
 
-            console.log(
-                "Error loading cart data:",
-                error
-            );
+            setCartItems({});
 
         }
 

@@ -729,12 +729,8 @@ if (
   )
 
 
-      if (invalidItem) {
+    {
 
-        console.log(
-          "Invalid order item:",
-          invalidItem
-        )
 
 
         alert(
@@ -821,10 +817,7 @@ if (
       }
 
 
-      console.log(
-        "Order sent to backend:",
-        orderData
-      )
+
 
 
       // ==================================================
@@ -888,11 +881,7 @@ if (
 
     } catch (error) {
 
-      console.log(
-        "Order error:",
-        error.response?.data ||
-        error.message
-      )
+
 
 
       alert(

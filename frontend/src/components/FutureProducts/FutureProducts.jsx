@@ -146,14 +146,6 @@ const FutureProducts = () => {
 
 
       } catch (error) {
-
-        console.log(
-          "Future products error:",
-          error.response?.data ||
-          error.message
-        )
-
-
         setError(
           error.response?.data?.message ||
           "Något gick fel när produkterna skulle hämtas."
@@ -315,14 +307,6 @@ const FutureProducts = () => {
 
 
     } catch (error) {
-
-      console.log(
-        "Vote error:",
-        error.response?.data ||
-        error.message
-      )
-
-
       if (
         error.response?.status === 401
       ) {
