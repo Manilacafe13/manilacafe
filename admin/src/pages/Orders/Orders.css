@@ -738,6 +738,7 @@
 
     .admin-status-control select {
         width: 100%;
+        min-width: 0;
         max-width: none;
     }
 
