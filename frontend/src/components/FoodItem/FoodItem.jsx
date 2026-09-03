@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import './FoodItem.css'
 import { assets } from '../../assets/assets'
 import { StoreContext } from '../../context/StoreContext'
@@ -19,6 +19,64 @@ const FoodItem = ({
         url
     } = useContext(StoreContext)
 
+    const [showAllergens, setShowAllergens] =
+        useState(false)
+
+
+    // ======================================================
+    // INGREDIENTS & ALLERGENS
+    // ======================================================
+
+    const productInformation = {
+
+        "mango float": {
+            ingredients:
+                "Mango, kondenserad mjölk, grädde, Graham crackers och Philadelphia.",
+            allergens:
+                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            extra:
+                "Innehåller mango."
+        },
+
+        "banana float": {
+            ingredients:
+                "Banan, kondenserad mjölk, grädde, Graham crackers, Philadelphia och kanel.",
+            allergens:
+                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            extra:
+                "Innehåller banan och kanel."
+        },
+
+        "fruit salad": {
+            ingredients:
+                "Eden cheese, Fiesta fruit cocktail, nata de coco, kokoskött, kokosgelé och kondenserad mjölk.",
+            allergens:
+                "Innehåller MJÖLK (mjölkprotein och laktos).",
+            extra:
+                "Innehåller blandad frukt och kokos. Kokosgelén innehåller inte gelatin från gris."
+        },
+
+        "ube cake": {
+            ingredients:
+                "Gräddfil, strösocker, kokosflingor, Graham crackers, kokosgrädde, ube jam, Philadelphia, smör och salt.",
+            allergens:
+                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            extra:
+                "Innehåller kokos."
+        }
+
+    }
+
+
+    const normalizedName =
+        String(name || "")
+            .trim()
+            .toLowerCase()
+
+
+    const productInfo =
+        productInformation[normalizedName]
+
 
     // ======================================================
     // PRODUCT IMAGE URL
@@ -30,7 +88,6 @@ const FoodItem = ({
             String(image || "").trim()
 
 
-        // No image
         if (!imageValue) {
 
             return assets.upload_area || ""
@@ -38,7 +95,6 @@ const FoodItem = ({
         }
 
 
-        // Cloudinary / external image
         if (
             imageValue.startsWith("https://") ||
             imageValue.startsWith("http://")
@@ -49,7 +105,6 @@ const FoodItem = ({
         }
 
 
-        // Protocol-relative external URL
         if (
             imageValue.startsWith("//")
         ) {
@@ -59,7 +114,6 @@ const FoodItem = ({
         }
 
 
-        // Old local backend image
         return `${url}/images/${imageValue}`
 
     }
@@ -78,9 +132,7 @@ const FoodItem = ({
         <div className="food-item">
 
 
-            {/* ============================================== */}
             {/* PRODUCT IMAGE */}
-            {/* ============================================== */}
 
             <div className="food-item-img-container">
 
@@ -91,10 +143,6 @@ const FoodItem = ({
                     loading="lazy"
                 />
 
-
-                {/* ========================================== */}
-                {/* ADD TO CART */}
-                {/* ========================================== */}
 
                 {!cartItems[id] ? (
 
@@ -111,9 +159,6 @@ const FoodItem = ({
 
                     <div className="food-item-counter">
 
-
-                        {/* REMOVE */}
-
                         <img
                             onClick={() =>
                                 removeFromCart(id)
@@ -123,14 +168,10 @@ const FoodItem = ({
                         />
 
 
-                        {/* QUANTITY */}
-
                         <p>
                             {cartItems[id]}
                         </p>
 
-
-                        {/* ADD */}
 
                         <img
                             onClick={() =>
@@ -140,7 +181,6 @@ const FoodItem = ({
                             alt="Lägg till"
                         />
 
-
                     </div>
 
                 )}
@@ -148,12 +188,9 @@ const FoodItem = ({
             </div>
 
 
-            {/* ============================================== */}
             {/* PRODUCT INFO */}
-            {/* ============================================== */}
 
             <div className="food-item-info">
-
 
                 <div className="food-item-name-rating">
 
@@ -174,10 +211,67 @@ const FoodItem = ({
                 </p>
 
 
+                {productInfo && (
+
+                    <div className="food-item-allergen-section">
+
+                        <button
+                            type="button"
+                            className="food-item-allergen-button"
+                            onClick={() =>
+                                setShowAllergens(
+                                    (prev) => !prev
+                                )
+                            }
+                            aria-expanded={showAllergens}
+                        >
+                            Ingredienser & allergener
+
+                            <span>
+                                {showAllergens ? "−" : "+"}
+                            </span>
+                        </button>
+
+
+                        {showAllergens && (
+
+                            <div className="food-item-allergen-content">
+
+                                <p>
+                                    <strong>
+                                        Ingredienser:
+                                    </strong>{" "}
+                                    {productInfo.ingredients}
+                                </p>
+
+
+                                <p>
+                                    <strong>
+                                        Allergener:
+                                    </strong>{" "}
+                                    {productInfo.allergens}
+                                </p>
+
+
+                                <p>
+                                    <strong>
+                                        Övrig information:
+                                    </strong>{" "}
+                                    {productInfo.extra}
+                                </p>
+
+                            </div>
+
+                        )}
+
+                    </div>
+
+                )}
+
+
                 <p className="food-item-price">
                     {price}kr
                 </p>
-
 
             </div>
 
