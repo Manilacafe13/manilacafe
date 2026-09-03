@@ -3,6 +3,8 @@ import './LoginPopup.css'
 import { assets } from '../../assets/assets'
 import { StoreContext } from '../../context/StoreContext'
 import axios from "axios"
+import { Link } from 'react-router-dom'
+
 
 const LoginPopup = ({ setShowLogin }) => {
 
@@ -18,6 +20,7 @@ const LoginPopup = ({ setShowLogin }) => {
 
 
   const onChangeHandler = (event) => {
+
     const name = event.target.name
     const value = event.target.value
 
@@ -25,10 +28,12 @@ const LoginPopup = ({ setShowLogin }) => {
       ...data,
       [name]: value
     }))
+
   }
 
 
   const onLogin = async (event) => {
+
     event.preventDefault()
 
     try {
@@ -86,12 +91,17 @@ const LoginPopup = ({ setShowLogin }) => {
     } catch (error) {
 
       if (error.response?.data?.message) {
+
         alert(error.response.data.message)
+
       } else {
+
         alert("Något gick fel. Försök igen.")
+
       }
 
     }
+
   }
 
 
@@ -104,6 +114,7 @@ const LoginPopup = ({ setShowLogin }) => {
       email: "",
       password: ""
     })
+
   }
 
 
@@ -116,11 +127,13 @@ const LoginPopup = ({ setShowLogin }) => {
       email: "",
       password: ""
     })
+
   }
 
 
   return (
-    <div className='login-popup'>
+
+    <div className="login-popup">
 
       <form
         onSubmit={onLogin}
@@ -129,7 +142,9 @@ const LoginPopup = ({ setShowLogin }) => {
 
         <div className="login-popup-title">
 
-          <h2>{currState}</h2>
+          <h2>
+            {currState}
+          </h2>
 
           <img
             onClick={() => setShowLogin(false)}
@@ -143,6 +158,7 @@ const LoginPopup = ({ setShowLogin }) => {
         <div className="login-popup-inputs">
 
           {currState === "Skapa konto" && (
+
             <input
               name="name"
               onChange={onChangeHandler}
@@ -151,6 +167,7 @@ const LoginPopup = ({ setShowLogin }) => {
               placeholder="Namn"
               required
             />
+
           )}
 
 
@@ -159,7 +176,7 @@ const LoginPopup = ({ setShowLogin }) => {
             onChange={onChangeHandler}
             value={data.email}
             type="email"
-            placeholder="Email"
+            placeholder="E-post"
             required
           />
 
@@ -187,38 +204,64 @@ const LoginPopup = ({ setShowLogin }) => {
         </button>
 
 
-        <div className="login-popup-condition">
+        {currState === "Skapa konto" && (
 
-          <input
-            type="checkbox"
-            required
-          />
+          <div className="login-popup-condition">
 
-          <p>
-            Genom att fortsätta godkänner jag användarvillkoren och integritetspolicyn.
-          </p>
+            <input
+              type="checkbox"
+              required
+            />
 
-        </div>
+            <p>
+
+              Jag godkänner{' '}
+
+              <Link
+                to="/kopvillkor"
+                onClick={() => setShowLogin(false)}
+              >
+                köpvillkoren
+              </Link>
+
+              {' '}och har tagit del av{' '}
+
+              <Link
+                to="/integritet"
+                onClick={() => setShowLogin(false)}
+              >
+                integritetspolicyn
+              </Link>.
+
+            </p>
+
+          </div>
+
+        )}
 
 
         {currState === "Logga in" ? (
 
           <p>
+
             Skapa ett nytt konto?{" "}
 
             <span onClick={switchToRegister}>
               Klicka här
             </span>
+
           </p>
 
         ) : (
 
           <p>
+
             Har du redan ett konto?{" "}
 
             <span onClick={switchToLogin}>
               Logga in här
             </span>
+
           </p>
 
         )}
@@ -226,7 +269,10 @@ const LoginPopup = ({ setShowLogin }) => {
       </form>
 
     </div>
+
   )
+
 }
+
 
 export default LoginPopup

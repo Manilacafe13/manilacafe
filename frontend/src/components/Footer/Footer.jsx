@@ -1,6 +1,8 @@
 import React from 'react'
 import './Footer.css'
 import { assets } from '../../assets/assets'
+import { Link } from 'react-router-dom'
+
 
 const Footer = () => {
 
@@ -13,10 +15,6 @@ const Footer = () => {
 
       <div className="footer-content">
 
-
-        {/* ============================= */}
-        {/* MANILA CAFÉ */}
-        {/* ============================= */}
 
         <div className="footer-content-left">
 
@@ -63,56 +61,54 @@ const Footer = () => {
         </div>
 
 
-        {/* ============================= */}
-        {/* LINKS */}
-        {/* ============================= */}
-
         <div className="footer-content-center">
 
           <h3>
-            Utforska
+            Information
           </h3>
 
           <ul>
 
             <li>
-              <a href="/">
+              <Link to="/">
                 Hem
-              </a>
+              </Link>
             </li>
 
             <li>
-              <a href="#explore-menu">
-                Våra desserter
-              </a>
+              <Link to="/kopvillkor">
+                Köpvillkor
+              </Link>
             </li>
 
             <li>
-              <a href="#about-us">
-                Om oss
-              </a>
+              <Link to="/avbokning">
+                Avbokning & återbetalning
+              </Link>
             </li>
 
             <li>
-              <a href="#culture">
-                Filippinsk kultur
-              </a>
+              <Link to="/leverans">
+                Leverans & upphämtning
+              </Link>
             </li>
 
             <li>
-              <a href="#footer">
-                Kontakta oss
-              </a>
+              <Link to="/integritet">
+                Integritetspolicy
+              </Link>
+            </li>
+
+            <li>
+              <Link to="/kontakt">
+                Kontakt & företagsinfo
+              </Link>
             </li>
 
           </ul>
 
         </div>
 
-
-        {/* ============================= */}
-        {/* CONTACT */}
-        {/* ============================= */}
 
         <div className="footer-content-right">
 
@@ -163,21 +159,12 @@ const Footer = () => {
 
         </div>
 
-
       </div>
 
-
-      {/* ============================= */}
-      {/* DIVIDER */}
-      {/* ============================= */}
 
       <div className="footer-divider">
       </div>
 
-
-      {/* ============================= */}
-      {/* BOTTOM */}
-      {/* ============================= */}
 
       <div className="footer-bottom">
 
@@ -196,5 +183,6 @@ const Footer = () => {
   )
 
 }
+
 
 export default Footer

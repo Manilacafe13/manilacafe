@@ -1,0 +1,168 @@
+.information-page{
+    width: min(900px, 100%);
+    margin: 60px auto 100px;
+    color: #262626;
+}
+
+.information-header{
+    margin-bottom: 45px;
+}
+
+.information-header > span{
+    display: inline-block;
+    margin-bottom: 10px;
+
+    color: rgb(36, 146, 24);
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.information-header h1{
+    margin-bottom: 12px;
+
+    font-size: 38px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.information-header p{
+    max-width: 650px;
+
+    color: #707070;
+
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+.information-content{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.information-content section{
+    padding: 28px 30px;
+
+    background-color: rgba(255, 255, 255, 0.78);
+
+    border: 1px solid #e7e7e7;
+    border-radius: 14px;
+}
+
+.information-content h2{
+    margin-bottom: 14px;
+
+    color: #303030;
+
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.information-content p{
+    margin-bottom: 12px;
+
+    color: #626262;
+
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.information-content p:last-child{
+    margin-bottom: 0;
+}
+
+.information-content ul{
+    padding-left: 20px;
+
+    color: #626262;
+
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.information-content a{
+    color: rgb(36, 146, 24);
+    font-weight: 500;
+}
+
+.information-contact{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.information-contact > div{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.information-contact span{
+    color: #888;
+
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.information-company-reminder{
+    border-color: #efd49b !important;
+    background-color: #fffaf0 !important;
+}
+
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
+@media (max-width:750px){
+
+    .information-page{
+        margin: 40px auto 70px;
+    }
+
+    .information-header{
+        margin-bottom: 30px;
+    }
+
+    .information-header h1{
+        font-size: 30px;
+    }
+
+    .information-header p{
+        font-size: 14px;
+    }
+
+    .information-content section{
+        padding: 22px 20px;
+    }
+
+}
+
+
+/* ============================= */
+/* SMALL MOBILE */
+/* ============================= */
+
+@media (max-width:420px){
+
+    .information-page{
+        margin-top: 30px;
+    }
+
+    .information-header h1{
+        font-size: 26px;
+    }
+
+    .information-content section{
+        padding: 20px 17px;
+    }
+
+    .information-content h2{
+        font-size: 18px;
+    }
+
+}

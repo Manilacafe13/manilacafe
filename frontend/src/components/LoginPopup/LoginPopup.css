@@ -218,3 +218,13 @@
     }
 
 }
+.login-popup-condition a{
+    color: rgb(10, 125, 14);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.login-popup-condition a:hover{
+    opacity: 0.8;
+}
