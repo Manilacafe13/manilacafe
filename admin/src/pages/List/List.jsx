@@ -8,6 +8,8 @@ import './List.css'
 import axios from "axios"
 import { toast } from "react-toastify"
 
+const MAX_SAME_DAY_STOCK = 10000
+
 
 const List = () => {
 
@@ -221,11 +223,12 @@ const List = () => {
 
     if (
       !Number.isInteger(stock) ||
-      stock < 0
+      stock < 0 ||
+      stock > MAX_SAME_DAY_STOCK
     ) {
 
       toast.error(
-        "Dagslagret måste vara ett heltal från 0 och uppåt."
+        `Dagslagret måste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
       )
 
       return
@@ -748,6 +751,8 @@ const List = () => {
                   type="number"
 
                   min="0"
+
+                  max={MAX_SAME_DAY_STOCK}
 
                   step="1"
 
