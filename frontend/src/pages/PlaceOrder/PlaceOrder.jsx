@@ -832,9 +832,10 @@ const PlaceOrder = () => {
           orderData,
 
           {
-            headers: {
+            headers:
               token
-            }
+                ? { token }
+                : {}
           }
 
         )

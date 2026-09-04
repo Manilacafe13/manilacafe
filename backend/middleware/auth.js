@@ -1,43 +1,54 @@
-
 import jwt from "jsonwebtoken";
 
 
 // ======================================================
-// AUTH MIDDLEWARE
+// GET TOKEN HELPER
+// ======================================================
+
+const getToken = (req) => {
+
+  let token = req.headers.token;
+
+
+  // Also support:
+  // Authorization: Bearer TOKEN
+  if (
+    !token &&
+    req.headers.authorization
+  ) {
+
+    const authHeader =
+      req.headers.authorization;
+
+
+    if (
+      authHeader.startsWith("Bearer ")
+    ) {
+
+      token =
+        authHeader.substring(7);
+
+    }
+
+  }
+
+
+  return token;
+
+};
+
+
+
+// ======================================================
+// REQUIRED AUTH MIDDLEWARE
 // ======================================================
 
 const authMiddleware = async (req, res, next) => {
 
   try {
 
-    // ==================================================
-    // GET TOKEN
-    // ==================================================
-
-    let token = req.headers.token;
-
-
-    // Also support:
-    // Authorization: Bearer TOKEN
-    if (
-      !token &&
-      req.headers.authorization
-    ) {
-
-      const authHeader =
-        req.headers.authorization;
-
-
-      if (
-        authHeader.startsWith("Bearer ")
-      ) {
-
-        token =
-          authHeader.substring(7);
-
-      }
-
-    }
+    const token =
+      getToken(req);
 
 
     // ==================================================
@@ -111,30 +122,12 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // ADD USER INFORMATION TO REQUEST
+    // ADD VERIFIED USER TO REQUEST
     // ==================================================
 
-    // ======================================================
-// ADD VERIFIED USER ID TO REQUEST
-// ======================================================
+    req.userId =
+      tokenDecode.id;
 
-req.userId =
-  tokenDecode.id;
-
-
-    // ==================================================
-    // OPTIONAL TOKEN DATA
-    // ==================================================
-
-    /*
-      If your JWT later contains:
-
-      role
-      email
-      isAdmin
-
-      they can also be accessed here.
-    */
 
     req.user = {
 
@@ -152,10 +145,6 @@ req.userId =
 
     };
 
-
-    // ==================================================
-    // CONTINUE
-    // ==================================================
 
     next();
 
@@ -226,6 +215,177 @@ req.userId =
   }
 
 };
+
+
+
+// ======================================================
+// OPTIONAL AUTH MIDDLEWARE
+// ======================================================
+// Allows both:
+// - logged-in customers
+// - guest customers
+//
+// If a valid token exists, req.userId is added.
+// If no token exists, checkout continues as guest.
+// ======================================================
+
+export const optionalAuthMiddleware =
+  async (req, res, next) => {
+
+    try {
+
+      const token =
+        getToken(req);
+
+
+      // ==================================================
+      // NO TOKEN = CONTINUE AS GUEST
+      // ==================================================
+
+      if (!token) {
+
+        req.userId = null;
+        req.user = null;
+
+        return next();
+
+      }
+
+
+      // ==================================================
+      // CHECK JWT SECRET
+      // ==================================================
+
+      if (!process.env.JWT_SECRET) {
+
+        console.error(
+          "JWT_SECRET is missing"
+        );
+
+
+        return res.status(500).json({
+
+          success: false,
+
+          message:
+            "Server configuration error"
+
+        });
+
+      }
+
+
+      // ==================================================
+      // VERIFY TOKEN IF PROVIDED
+      // ==================================================
+
+      const tokenDecode =
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET
+        );
+
+
+      if (!tokenDecode.id) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Ogiltig inloggning."
+
+        });
+
+      }
+
+
+      // ==================================================
+      // LOGGED-IN CUSTOMER
+      // ==================================================
+
+      req.userId =
+        tokenDecode.id;
+
+
+      req.user = {
+
+        id:
+          tokenDecode.id,
+
+        role:
+          tokenDecode.role || null,
+
+        email:
+          tokenDecode.email || null,
+
+        isAdmin:
+          tokenDecode.isAdmin || false
+
+      };
+
+
+      next();
+
+    } catch (error) {
+
+
+      console.log(
+        "Optional auth middleware error:",
+        error.message
+      );
+
+
+      // If customer sends a broken/expired token,
+      // do not silently treat them as another person.
+
+      if (
+        error.name ===
+        "TokenExpiredError"
+      ) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Din session har gått ut. Logga in igen eller fortsätt som gäst."
+
+        });
+
+      }
+
+
+      if (
+        error.name ===
+        "JsonWebTokenError"
+      ) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Ogiltig inloggning."
+
+        });
+
+      }
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Authentication error"
+
+      });
+
+    }
+
+  };
+
 
 
 export default authMiddleware;

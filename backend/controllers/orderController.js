@@ -407,16 +407,20 @@ const markPaidWithStockWarning =
               mongoSession
           });
 
-          await userModel.findByIdAndUpdate(
-            order.userId,
-            {
-              cartData: {}
-            },
-            {
-              session:
-                mongoSession
-            }
-          );
+          if (order.userId) {
+
+            await userModel.findByIdAndUpdate(
+              order.userId,
+              {
+                cartData: {}
+              },
+              {
+                session:
+                  mongoSession
+              }
+            );
+
+          }
 
           result = {
             alreadyProcessed: false,
@@ -719,43 +723,19 @@ const placeOrder = async (
   try {
 
     const userId =
-      req.userId;
-
-    const {
-      items,
-      address,
-      deliveryMethod,
-      fulfillmentType,
-      requestedDate,
-      requestedTime
-    } = req.body;
-
-    // ==================================================
-    // USER
-    // ==================================================
-
-    if (!userId) {
-
-      return res.status(401).json({
-        success: false,
-        message:
-          "Du måste vara inloggad."
-      });
-
-    }
+      req.userId || null;
 
     if (
+      userId &&
       !mongoose.isValidObjectId(
         userId
       )
     ) {
-
       return res.status(401).json({
         success: false,
         message:
           "Ogiltig användarsession."
       });
-
     }
 
     // ==================================================
@@ -835,87 +815,87 @@ const placeOrder = async (
       });
 
       // ======================================================
-// CUSTOMER DATA VALIDATION
-// ======================================================
+      // CUSTOMER DATA VALIDATION
+      // ======================================================
 
-const firstName =
-  String(
-    address.firstName || ""
-  ).trim();
+      const firstName =
+        String(
+          address.firstName || ""
+        ).trim();
 
-const lastName =
-  String(
-    address.lastName || ""
-  ).trim();
+      const lastName =
+        String(
+          address.lastName || ""
+        ).trim();
 
-const email =
-  String(
-    address.email || ""
-  )
-    .trim()
-    .toLowerCase();
+      const email =
+        String(
+          address.email || ""
+        )
+          .trim()
+          .toLowerCase();
 
-const phone =
-  String(
-    address.phone || ""
-  ).trim();
-
-
-if (
-  firstName.length >
-    MAX_FIRST_NAME_LENGTH ||
-  lastName.length >
-    MAX_LAST_NAME_LENGTH
-) {
-
-  return res.status(400).json({
-    success: false,
-    message:
-      "Förnamn eller efternamn är för långt."
-  });
-
-}
+      const phone =
+        String(
+          address.phone || ""
+        ).trim();
 
 
-if (
-  email.length >
-    MAX_EMAIL_LENGTH ||
-  !validator.isEmail(email)
-) {
+      if (
+        firstName.length >
+        MAX_FIRST_NAME_LENGTH ||
+        lastName.length >
+        MAX_LAST_NAME_LENGTH
+      ) {
 
-  return res.status(400).json({
-    success: false,
-    message:
-      "Ange en giltig e-postadress."
-  });
+        return res.status(400).json({
+          success: false,
+          message:
+            "Förnamn eller efternamn är för långt."
+        });
 
-}
-
-
-const phoneDigits =
-  phone.replace(
-    /\D/g,
-    ""
-  );
+      }
 
 
-if (
-  phone.length >
-    MAX_PHONE_LENGTH ||
-  !/^[0-9+\s()\-]+$/.test(
-    phone
-  ) ||
-  phoneDigits.length < 7 ||
-  phoneDigits.length > 15
-) {
+      if (
+        email.length >
+        MAX_EMAIL_LENGTH ||
+        !validator.isEmail(email)
+      ) {
 
-  return res.status(400).json({
-    success: false,
-    message:
-      "Ange ett giltigt telefonnummer."
-  });
+        return res.status(400).json({
+          success: false,
+          message:
+            "Ange en giltig e-postadress."
+        });
 
-}
+      }
+
+
+      const phoneDigits =
+        phone.replace(
+          /\D/g,
+          ""
+        );
+
+
+      if (
+        phone.length >
+        MAX_PHONE_LENGTH ||
+        !/^[0-9+\s()\-]+$/.test(
+          phone
+        ) ||
+        phoneDigits.length < 7 ||
+        phoneDigits.length > 15
+      ) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Ange ett giltigt telefonnummer."
+        });
+
+      }
 
     }
 
@@ -924,37 +904,37 @@ if (
     // ==================================================
 
     const street =
-  String(
-    address.street || ""
-  ).trim();
+      String(
+        address.street || ""
+      ).trim();
 
-const city =
-  String(
-    address.city || ""
-  ).trim();
+    const city =
+      String(
+        address.city || ""
+      ).trim();
 
-const zipcode =
-  String(
-    address.zipcode || ""
-  ).trim();
+    const zipcode =
+      String(
+        address.zipcode || ""
+      ).trim();
 
 
-if (
-  street.length >
-    MAX_STREET_LENGTH ||
-  city.length >
-    MAX_CITY_LENGTH ||
-  zipcode.length >
-    MAX_ZIPCODE_LENGTH
-) {
+    if (
+      street.length >
+      MAX_STREET_LENGTH ||
+      city.length >
+      MAX_CITY_LENGTH ||
+      zipcode.length >
+      MAX_ZIPCODE_LENGTH
+    ) {
 
-  return res.status(400).json({
-    success: false,
-    message:
-      "Leveransadressen innehåller för långa uppgifter."
-  });
+      return res.status(400).json({
+        success: false,
+        message:
+          "Leveransadressen innehåller för långa uppgifter."
+      });
 
-}
+    }
 
     if (
       deliveryMethod === "delivery"
@@ -1589,7 +1569,9 @@ if (
                   .toString(),
 
               userId:
-                userId.toString(),
+                userId
+                  ? userId.toString()
+                  : "guest",
 
               deliveryMethod,
 
@@ -1626,7 +1608,9 @@ if (
                     .toString(),
 
                 userId:
-                  userId.toString()
+                  userId
+                    ? userId.toString()
+                    : "guest"
 
               }
 

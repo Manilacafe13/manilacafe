@@ -8,7 +8,10 @@ import {
   updateStatus
 } from "../controllers/orderController.js";
 
-import authMiddleware from "../middleware/auth.js";
+import authMiddleware, {
+  optionalAuthMiddleware
+} from "../middleware/auth.js";
+
 import adminAuth from "../middleware/adminAuth.js";
 
 
@@ -23,10 +26,14 @@ const orderRouter = express.Router();
 // ------------------------------------------------------
 // CREATE NEW ORDER
 // ------------------------------------------------------
+// Supports both:
+// - logged-in customer
+// - guest checkout
+// ------------------------------------------------------
 
 orderRouter.post(
   "/place",
-  authMiddleware,
+  optionalAuthMiddleware,
   placeOrder
 );
 

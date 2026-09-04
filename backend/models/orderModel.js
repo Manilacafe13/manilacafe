@@ -133,7 +133,7 @@ const addressSchema = new mongoose.Schema(
       default: "",
       trim: true,
       maxlength: 20
-    },
+    }
 
   },
 
@@ -154,10 +154,24 @@ const orderSchema = new mongoose.Schema(
     // USER
     // ==================================================
 
+    /*
+      userId är valfritt.
+
+      Inloggad kund:
+      userId innehåller kundens MongoDB-ID.
+
+      Gästkund:
+      userId blir null.
+
+      Kundens namn, e-post och telefonnummer
+      sparas fortfarande i address.
+    */
+
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
-      required: true
+      required: false,
+      default: null
     },
 
 
@@ -358,6 +372,7 @@ const orderSchema = new mongoose.Schema(
       trim: true
     },
 
+
     // ==================================================
     // PAYMENT
     // ==================================================
@@ -380,15 +395,6 @@ const orderSchema = new mongoose.Schema(
     // STRIPE CHECKOUT SESSION
     // ==================================================
 
-    /*
-      Stripe Checkout Session som skapades
-      för just denna order.
-
-      Exempel:
-      cs_test_...
-      cs_live_...
-    */
-
     stripeSessionId: {
       type: String,
       trim: true,
@@ -400,12 +406,6 @@ const orderSchema = new mongoose.Schema(
     // STRIPE PAYMENT INTENT
     // ==================================================
 
-    /*
-      Det faktiska betalnings-ID:t hos Stripe.
-
-      Sparas när betalningen har bekräftats.
-    */
-
     stripePaymentIntentId: {
       type: String,
       trim: true,
@@ -416,12 +416,6 @@ const orderSchema = new mongoose.Schema(
     // ==================================================
     // PAYMENT PROCESSED DATE
     // ==================================================
-
-    /*
-      När vår backend faktiskt behandlade
-      Stripe-betalningen och markerade
-      ordern som betald.
-    */
 
     paymentProcessedAt: {
       type: Date,
@@ -451,7 +445,8 @@ const orderSchema = new mongoose.Schema(
 // INDEXES
 // ======================================================
 
-// Kundens senaste orders först
+// Kundens senaste orders först.
+// Gästorders har userId: null.
 orderSchema.index({
   userId: 1,
   createdAt: -1
