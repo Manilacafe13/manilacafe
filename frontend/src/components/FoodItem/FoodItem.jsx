@@ -38,6 +38,15 @@ const FoodItem = ({
                 "Innehåller mango."
         },
 
+        "cinnamon banana float": {
+            ingredients:
+                "Banan, kondenserad mjölk, grädde, Graham crackers, Philadelphia och kanel.",
+            allergens:
+                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            extra:
+                "Innehåller banan och kanel."
+        },
+
         "banana float": {
             ingredients:
                 "Banan, kondenserad mjölk, grädde, Graham crackers, Philadelphia och kanel.",
@@ -63,6 +72,15 @@ const FoodItem = ({
                 "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
             extra:
                 "Innehåller kokos."
+        },
+
+        "taho": {
+            ingredients:
+                "Silkestofu, söt sirap och sagopärlor.",
+            allergens:
+                "Kontrollera aktuell produktinformation vid beställning.",
+            extra:
+                "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
         }
 
     }
@@ -129,7 +147,10 @@ const FoodItem = ({
 
     return (
 
-        <div className="food-item">
+        <article
+            className="food-item"
+            aria-label={name}
+        >
 
 
             {/* PRODUCT IMAGE */}
@@ -139,8 +160,9 @@ const FoodItem = ({
                 <img
                     className="food-item-image"
                     src={imageUrl}
-                    alt={name || "Produkt"}
+                    alt={`${name} – filippinsk dessert från Manila Café`}
                     loading="lazy"
+                    decoding="async"
                 />
 
 
@@ -152,7 +174,7 @@ const FoodItem = ({
                             addToCart(id)
                         }
                         src={assets.add_icon_white}
-                        alt="Lägg till"
+                        alt={`Lägg till ${name} i varukorgen`}
                     />
 
                 ) : (
@@ -164,7 +186,7 @@ const FoodItem = ({
                                 removeFromCart(id)
                             }
                             src={assets.remove_icon_red}
-                            alt="Ta bort"
+                            alt={`Minska antal ${name}`}
                         />
 
 
@@ -178,7 +200,7 @@ const FoodItem = ({
                                 addToCart(id)
                             }
                             src={assets.add_icon_green}
-                            alt="Lägg till"
+                            alt={`Lägg till en ${name}`}
                         />
 
                     </div>
@@ -194,13 +216,14 @@ const FoodItem = ({
 
                 <div className="food-item-name-rating">
 
-                    <p>
+                    <h3>
                         {name}
-                    </p>
+                    </h3>
 
                     <img
                         src={assets.rating_starts}
-                        alt="Betyg"
+                        alt=""
+                        aria-hidden="true"
                     />
 
                 </div>
@@ -230,6 +253,7 @@ const FoodItem = ({
                             <span>
                                 {showAllergens ? "−" : "+"}
                             </span>
+
                         </button>
 
 
@@ -269,13 +293,16 @@ const FoodItem = ({
                 )}
 
 
-                <p className="food-item-price">
-                    {price}kr
+                <p
+                    className="food-item-price"
+                    aria-label={`Pris ${price} kronor`}
+                >
+                    {price} kr
                 </p>
 
             </div>
 
-        </div>
+        </article>
 
     )
 }
