@@ -457,20 +457,6 @@ const PlaceOrder = () => {
     }
 
 
-    // ==================================================
-    // CHECK LOGIN
-    // ==================================================
-
-    if (!token) {
-
-      alert(
-        "Du måste logga in innan du kan lägga en beställning."
-      )
-
-      return
-
-    }
-
 
     // ==================================================
     // CHECK CART
