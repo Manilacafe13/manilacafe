@@ -421,6 +421,27 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    
+
+    // ==================================================
+// ORDER CONFIRMATION EMAIL
+// ==================================================
+
+orderConfirmationEmailSent: {
+  type: Boolean,
+  default: false
+},
+
+orderConfirmationEmailSentAt: {
+  type: Date,
+  default: null
+},
+
+orderConfirmationEmailId: {
+  type: String,
+  default: undefined,
+  trim: true
+},
 
 
     // ==================================================

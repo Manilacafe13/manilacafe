@@ -4,6 +4,7 @@ import foodModel from "../models/foodmodel.js";
 import mongoose from "mongoose";
 import Stripe from "stripe";
 import validator from "validator";
+import { sendOrderConfirmation } from "../services/orderEmail.js";
 
 
 
@@ -705,6 +706,132 @@ const processPaidCheckoutSession =
     } finally {
 
       await mongoSession.endSession();
+
+    }
+
+  };
+
+// ======================================================
+// SEND ORDER CONFIRMATION EMAIL SAFELY
+// ======================================================
+
+const sendOrderConfirmationSafely =
+  async (orderId) => {
+
+    try {
+
+      if (
+        !orderId ||
+        !mongoose.isValidObjectId(
+          orderId
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      const order =
+        await orderModel.findById(
+          orderId
+        );
+
+
+      if (!order) {
+
+        console.log(
+          "Order confirmation email skipped: order not found"
+        );
+
+        return;
+
+      }
+
+
+      // Only send after confirmed payment.
+      if (!order.payment) {
+
+        return;
+
+      }
+
+
+      // Already sent.
+      if (
+        order.orderConfirmationEmailSent
+      ) {
+
+        return;
+
+      }
+
+
+      const emailResult =
+        await sendOrderConfirmation(
+          order
+        );
+
+
+      const updateData = {
+
+        orderConfirmationEmailSent:
+          true,
+
+        orderConfirmationEmailSentAt:
+          new Date()
+
+      };
+
+
+      if (emailResult?.id) {
+
+        updateData.orderConfirmationEmailId =
+          emailResult.id;
+
+      }
+
+
+      await orderModel.updateOne(
+        {
+          _id:
+            order._id,
+
+          orderConfirmationEmailSent: {
+            $ne: true
+          }
+        },
+        {
+          $set:
+            updateData
+        }
+      );
+
+
+      console.log(
+        "Order confirmation email sent:",
+        {
+          orderId:
+            order._id.toString(),
+
+          emailId:
+            emailResult?.id || null
+        }
+      );
+
+    } catch (error) {
+
+      /*
+        IMPORTANT:
+        Email failure must never change
+        a successful Stripe payment into
+        a failed order.
+      */
+
+      console.error(
+        "Order confirmation email error:",
+        error.message
+      );
 
     }
 
@@ -1834,6 +1961,16 @@ const verifyOrder = async (
       await processPaidCheckoutSession(
         stripeSession
       );
+
+      await sendOrderConfirmationSafely(
+  stripeSession
+    .metadata
+    ?.orderId
+);
+
+    await sendOrderConfirmationSafely(
+      orderId
+    );
 
     return res.status(200).json({
 
