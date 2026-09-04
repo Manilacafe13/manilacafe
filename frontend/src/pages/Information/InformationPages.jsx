@@ -401,8 +401,8 @@ export const PrivacyPage = () => {
         <p>
           E-post:
           {' '}
-          <a href="mailto:manilacafe.goteborg@gmail.com">
-            manilacafe.goteborg@gmail.com
+          <a href="mailto:info@manilacafe.se">
+            info@manilacafe.se
           </a>
         </p>
 
@@ -447,8 +447,8 @@ export const ContactPage = () => {
           <div>
             <span>E-post</span>
 
-            <a href="mailto:manilacafe.goteborg@gmail.com">
-              manilacafe.goteborg@gmail.com
+            <a href="mailto:info@manilacafe.se">
+              info@manilacafe.se
             </a>
           </div>
 

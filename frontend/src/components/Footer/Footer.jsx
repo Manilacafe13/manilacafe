@@ -136,8 +136,8 @@ const Footer = () => {
               E-post
             </span>
 
-            <a href="mailto:manilacafe.goteborg@gmail.com">
-              manilacafe.goteborg@gmail.com
+            <a href="mailto:info@manilacafe.se">
+              info@manilacafe.se
             </a>
 
           </div>
