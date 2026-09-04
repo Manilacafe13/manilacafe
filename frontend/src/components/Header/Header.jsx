@@ -5,8 +5,17 @@ const Header = () => {
   return (
     <div className='header'>
       <div className="header-contents">
-        <h2>Beställ dina favoriter här</h2>
-        <p>Utforska vårt utbud och hitta din nya favoritdessert.</p>
+
+        <h1>
+          Manila Café – Filippinska desserter i Göteborg
+        </h1>
+
+        <p>
+          Upptäck klassiska filippinska favoriter som Mango Float,
+          Ube Cake, Taho och fler tropiska desserter.
+          Beställ enkelt online för avhämtning eller leverans.
+        </p>
+
       </div>
     </div>
   )
