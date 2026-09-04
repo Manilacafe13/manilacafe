@@ -2,10 +2,33 @@
     margin-top: 30px;
 }
 
-.food-display h2{
+
+/* ============================= */
+/* INTRO */
+/* ============================= */
+
+.food-display-intro{
+    max-width: 760px;
+}
+
+.food-display-intro h2{
     font-size: max(2vw, 24px);
     font-weight: 600;
+    color: #262626;
+    margin: 0;
 }
+
+.food-display-intro p{
+    margin-top: 10px;
+    color: #676767;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+
+/* ============================= */
+/* PRODUCT GRID */
+/* ============================= */
 
 .food-display-list{
     display: grid;
@@ -26,6 +49,20 @@
         margin-top: 25px;
     }
 
+    .food-display-intro{
+        max-width: 100%;
+    }
+
+    .food-display-intro h2{
+        font-size: 24px;
+        line-height: 1.2;
+    }
+
+    .food-display-intro p{
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
     .food-display-list{
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         margin-top: 20px;
@@ -42,8 +79,12 @@
 
 @media (max-width:480px) {
 
-    .food-display h2{
+    .food-display-intro h2{
         font-size: 22px;
+    }
+
+    .food-display-intro p{
+        font-size: 13px;
     }
 
     .food-display-list{
