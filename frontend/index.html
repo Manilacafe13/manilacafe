@@ -1,7 +1,12 @@
 <!doctype html>
+
 <html lang="sv">
 
   <head>
+
+    <!-- ================================================= -->
+    <!-- BASIC -->
+    <!-- ================================================= -->
 
     <meta charset="UTF-8" />
 
@@ -11,9 +16,48 @@
     />
 
 
-    <!-- =============================================== -->
+    <!-- ================================================= -->
+    <!-- PRIMARY SEO -->
+    <!-- ================================================= -->
+
+    <title>
+      Manila Café | Filippinska desserter i Göteborg
+    </title>
+
+    <meta
+      name="description"
+      content="Manila Café erbjuder filippinska desserter i Göteborg. Beställ Mango Float, Ube Cake, Taho, Fruit Salad och andra filippinska favoriter för avhämtning eller leverans."
+    />
+
+
+    <!-- ================================================= -->
+    <!-- SEARCH ENGINE INDEXING -->
+    <!-- ================================================= -->
+
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
+    <meta
+      name="googlebot"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
+
+    <!-- ================================================= -->
+    <!-- CANONICAL -->
+    <!-- ================================================= -->
+
+    <link
+      rel="canonical"
+      href="https://www.manilacafe.se/"
+    />
+
+
+    <!-- ================================================= -->
     <!-- FAVICON -->
-    <!-- =============================================== -->
+    <!-- ================================================= -->
 
     <link
       rel="icon"
@@ -27,33 +71,10 @@
     />
 
 
-    <!-- =============================================== -->
-    <!-- PRIMARY SEO -->
-    <!-- =============================================== -->
-
-    <title>
-      Manila Café Göteborg | Filippinska desserter
-    </title>
-
-    <meta
-      name="description"
-      content="Upptäck filippinska desserter i Göteborg hos Manila Café. Beställ Mango Float, Ube Cake, Fruit Salad och andra filippinska favoriter online."
-    />
-
-    <meta
-      name="robots"
-      content="index, follow"
-    />
-
-    <link
-      rel="canonical"
-      href="https://www.manilacafe.se/"
-    />
-
-
-    <!-- =============================================== -->
-    <!-- OPEN GRAPH / FACEBOOK -->
-    <!-- =============================================== -->
+    <!-- ================================================= -->
+    <!-- OPEN GRAPH -->
+    <!-- Facebook / Messenger / social sharing -->
+    <!-- ================================================= -->
 
     <meta
       property="og:type"
@@ -72,12 +93,12 @@
 
     <meta
       property="og:title"
-      content="Manila Café Göteborg | Filippinska desserter"
+      content="Manila Café | Filippinska desserter i Göteborg"
     />
 
     <meta
       property="og:description"
-      content="Filippinska desserter med tropiska smaker i Göteborg. Upptäck och beställ dina favoriter från Manila Café."
+      content="Upptäck filippinska desserter i Göteborg. Beställ Mango Float, Ube Cake, Taho och andra favoriter från Manila Café."
     />
 
     <meta
@@ -90,10 +111,15 @@
       content="https://www.manilacafe.se/header_img.png"
     />
 
+    <meta
+      property="og:image:alt"
+      content="Manila Café – filippinska desserter i Göteborg"
+    />
 
-    <!-- =============================================== -->
-    <!-- SOCIAL PREVIEW -->
-    <!-- =============================================== -->
+
+    <!-- ================================================= -->
+    <!-- TWITTER / X -->
+    <!-- ================================================= -->
 
     <meta
       name="twitter:card"
@@ -102,12 +128,12 @@
 
     <meta
       name="twitter:title"
-      content="Manila Café Göteborg | Filippinska desserter"
+      content="Manila Café | Filippinska desserter i Göteborg"
     />
 
     <meta
       name="twitter:description"
-      content="Upptäck filippinska desserter och tropiska smaker hos Manila Café i Göteborg."
+      content="Filippinska desserter i Göteborg. Beställ Mango Float, Ube Cake, Taho och andra favoriter från Manila Café."
     />
 
     <meta
@@ -116,9 +142,9 @@
     />
 
 
-    <!-- =============================================== -->
+    <!-- ================================================= -->
     <!-- BROWSER -->
-    <!-- =============================================== -->
+    <!-- ================================================= -->
 
     <meta
       name="theme-color"
@@ -126,21 +152,64 @@
     />
 
 
-    <!-- =============================================== -->
-    <!-- STRUCTURED DATA -->
-    <!-- =============================================== -->
+    <!-- ================================================= -->
+    <!-- WEBSITE / BRAND STRUCTURED DATA -->
+    <!-- Helps Google understand the site name -->
+    <!-- ================================================= -->
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://www.manilacafe.se/#website",
+        "url": "https://www.manilacafe.se/",
+        "name": "Manila Café",
+        "alternateName": [
+          "Manila Cafe",
+          "ManilaCafe",
+          "Manila Café Göteborg",
+          "Manila Cafe Göteborg",
+          "manilacafe.se"
+        ],
+        "inLanguage": "sv-SE"
+      }
+    </script>
+
+
+    <!-- ================================================= -->
+    <!-- BUSINESS STRUCTURED DATA -->
+    <!-- ================================================= -->
 
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "FoodEstablishment",
+        "@id": "https://www.manilacafe.se/#business",
+
         "name": "Manila Café",
+
+        "alternateName": [
+          "Manila Cafe",
+          "ManilaCafe"
+        ],
+
         "url": "https://www.manilacafe.se/",
+
         "image": "https://www.manilacafe.se/header_img.png",
-        "description": "Filippinska desserter med tropiska smaker i Göteborg.",
-        "servesCuisine": "Filipino",
+
+        "logo": "https://www.manilacafe.se/favicon.png",
+
+        "description": "Manila Café erbjuder filippinska desserter i Göteborg, bland annat Mango Float, Ube Cake, Taho och Fruit Salad.",
+
+        "servesCuisine": [
+          "Filipino",
+          "Filippinska desserter"
+        ],
+
         "telephone": "+46762226393",
+
         "email": "info@manilacafe.se",
+
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "Mandolingatan 13",
@@ -148,9 +217,20 @@
           "addressLocality": "Västra Frölunda",
           "addressRegion": "Västra Götaland",
           "addressCountry": "SE"
-        }
+        },
+
+        "areaServed": {
+          "@type": "City",
+          "name": "Göteborg"
+        },
+
+        "sameAs": [
+          "https://www.instagram.com/MANILACAFE.GBG",
+          "https://www.tiktok.com/@MANILA.CAFE.GOTEBORG"
+        ]
       }
     </script>
+
 
   </head>
 
