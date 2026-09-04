@@ -714,7 +714,6 @@ const processPaidCheckoutSession =
 // ======================================================
 // PLACE ORDER
 // ======================================================
-
 const placeOrder = async (
   req,
   res
@@ -725,18 +724,32 @@ const placeOrder = async (
     const userId =
       req.userId || null;
 
+
+    const {
+      items,
+      address,
+      deliveryMethod,
+      fulfillmentType,
+      requestedDate,
+      requestedTime
+    } = req.body || {};
+
+
     if (
       userId &&
       !mongoose.isValidObjectId(
         userId
       )
     ) {
+
       return res.status(401).json({
         success: false,
         message:
           "Ogiltig användarsession."
       });
+
     }
+
 
     // ==================================================
     // CART
