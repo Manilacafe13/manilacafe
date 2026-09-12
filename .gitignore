@@ -31,3 +31,5 @@ npm-debug.log*
 # Backend uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/mongodb-backup/
+backend/mongodb-backup-manilacafe/
