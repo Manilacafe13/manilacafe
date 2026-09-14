@@ -1,18 +1,124 @@
-import { createContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useEffect,
+    useState
+} from "react";
+
 import axios from "axios";
 
-export const StoreContext = createContext(null);
+
+export const StoreContext =
+    createContext(null);
 
 
 // ======================================================
-// VAT / MOMS
+// SETTINGS
 // ======================================================
 
 // 6% moms läggs ovanpå produktpriset
 const VAT_RATE = 0.06;
 
+// Samma maxgräns som backend
+const MAX_ITEM_QUANTITY = 99;
+
+// Guest/local cart storage
+const CART_STORAGE_KEY =
+    "manilaCafeCart";
+
+
+// ======================================================
+// CLEAN CART DATA
+// ======================================================
+
+const sanitizeCart = (cart) => {
+
+    if (
+        !cart ||
+        typeof cart !== "object" ||
+        Array.isArray(cart)
+    ) {
+        return {};
+    }
+
+
+    const cleanCart = {};
+
+
+    for (
+        const [itemId, value]
+        of Object.entries(cart)
+    ) {
+
+        const quantity =
+            Number(value);
+
+
+        if (
+            itemId &&
+            Number.isFinite(quantity) &&
+            quantity > 0
+        ) {
+
+            cleanCart[itemId] =
+                Math.min(
+                    Math.floor(quantity),
+                    MAX_ITEM_QUANTITY
+                );
+
+        }
+
+    }
+
+
+    return cleanCart;
+
+};
+
+
+// ======================================================
+// READ LOCAL CART
+// ======================================================
+
+const getStoredCart = () => {
+
+    try {
+
+        const savedCart =
+            localStorage.getItem(
+                CART_STORAGE_KEY
+            );
+
+
+        if (!savedCart) {
+            return {};
+        }
+
+
+        return sanitizeCart(
+            JSON.parse(savedCart)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not read stored cart:",
+            error
+        );
+
+
+        return {};
+
+    }
+
+};
+
+
+// ======================================================
+// STORE CONTEXT PROVIDER
+// ======================================================
 
 const StoreContextProvider = (props) => {
+
 
     // ==================================================
     // BACKEND URL
@@ -27,48 +133,205 @@ const StoreContextProvider = (props) => {
     // STATES
     // ==================================================
 
-    const [cartItems, setCartItems] = useState({});
+    const [
+        cartItems,
+        setCartItems
+    ] = useState(
+        () => getStoredCart()
+    );
 
-    const [food_list, setFoodList] = useState([]);
 
-    const [token, setToken] = useState("");
+    const [
+        food_list,
+        setFoodList
+    ] = useState([]);
+
+
+    const [
+        token,
+        setToken
+    ] = useState("");
+
+
+    // ==================================================
+    // SAVE CART LOCALLY
+    // ==================================================
+
+    /*
+        IMPORTANT:
+
+        Varukorgen sparas lokalt oavsett om kunden är:
+
+        - gäst
+        - inloggad
+        - har nätverksproblem
+        - har en trasig session
+
+        Kunden ska inte förlora sin varukorg.
+    */
+
+    useEffect(() => {
+
+        try {
+
+            localStorage.setItem(
+                CART_STORAGE_KEY,
+                JSON.stringify(
+                    sanitizeCart(cartItems)
+                )
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Could not save cart:",
+                error
+            );
+
+        }
+
+    }, [cartItems]);
+
+
+    // ==================================================
+    // CLEAR INVALID SESSION
+    // ==================================================
+
+    const clearInvalidSession = () => {
+
+        localStorage.removeItem(
+            "token"
+        );
+
+
+        setToken("");
+
+    };
+
+
+    // ==================================================
+    // HANDLE AUTH ERROR
+    // ==================================================
+
+    const handleAuthError = (
+        error
+    ) => {
+
+        const status =
+            error?.response?.status;
+
+
+        if (status === 401) {
+
+            console.warn(
+                "Session invalid. Continuing as guest."
+            );
+
+
+            clearInvalidSession();
+
+
+            return true;
+
+        }
+
+
+        return false;
+
+    };
 
 
     // ==================================================
     // ADD TO CART
     // ==================================================
 
-    const addToCart = async (itemId) => {
+    const addToCart = async (
+        itemId
+    ) => {
 
         if (!itemId) {
+
+            console.error(
+                "addToCart called without itemId"
+            );
+
             return;
+
         }
 
 
-        // Save old cart in case backend fails
-        const previousCart = {
-            ...cartItems
-        };
+        const currentQuantity =
+            Number(
+                cartItems[itemId] || 0
+            );
 
 
-        // Optimistic update
-        setCartItems((prev) => ({
+        // Same limit as backend
+        if (
+            currentQuantity >=
+            MAX_ITEM_QUANTITY
+        ) {
 
-            ...prev,
+            return;
 
-            [itemId]:
-                prev[itemId]
-                    ? Number(prev[itemId]) + 1
-                    : 1
-
-        }));
+        }
 
 
-        // Guest user
+        // ==================================================
+        // ALWAYS UPDATE FRONTEND FIRST
+        // ==================================================
+
+        /*
+            Detta är viktigt.
+
+            Backend får INTE bestämma om kunden
+            får använda sin varukorg.
+
+            Cart fungerar lokalt även om:
+
+            - servern ligger nere
+            - nätverket bryts
+            - token är gammal
+            - användarkontot har tagits bort
+        */
+
+        setCartItems((prev) => {
+
+            const quantity =
+                Number(
+                    prev[itemId] || 0
+                );
+
+
+            return {
+
+                ...prev,
+
+                [itemId]:
+                    Math.min(
+                        quantity + 1,
+                        MAX_ITEM_QUANTITY
+                    )
+
+            };
+
+        });
+
+
+        // ==================================================
+        // GUEST
+        // ==================================================
+
         if (!token) {
+
             return;
+
         }
 
+
+        // ==================================================
+        // SYNC LOGGED-IN CART WITH BACKEND
+        // ==================================================
 
         try {
 
@@ -90,31 +353,57 @@ const StoreContextProvider = (props) => {
                 );
 
 
-            if (response.data.success) {
+            if (
+                !response.data?.success
+            ) {
 
-                // Backend becomes source of truth
-                if (response.data.cartData) {
+                /*
+                    IMPORTANT:
 
-                    setCartItems(
-                        response.data.cartData
-                    );
+                    Do NOT remove product from
+                    frontend cart.
 
-                }
+                    Customer cart must continue
+                    working.
+                */
 
-            } else {
-
-                // Restore old cart
-                setCartItems(
-                    previousCart
+                console.warn(
+                    "Backend cart add was not successful:",
+                    response.data
                 );
 
             }
 
-        } catch {
+        } catch (error) {
 
-            // Restore old cart if request fails
-            setCartItems(
-                previousCart
+            // Invalid login/session
+            if (
+                handleAuthError(error)
+            ) {
+
+                /*
+                    Product stays in cart.
+
+                    Customer simply continues
+                    as guest.
+                */
+
+                return;
+
+            }
+
+
+            /*
+                Network/server error.
+
+                Product STILL stays in cart.
+            */
+
+            console.error(
+                "Add to cart sync failed:",
+                error?.response?.status ||
+                error.message,
+                error?.response?.data || ""
             );
 
         }
@@ -126,19 +415,43 @@ const StoreContextProvider = (props) => {
     // REMOVE FROM CART
     // ==================================================
 
-    const removeFromCart = async (itemId) => {
+    const removeFromCart = async (
+        itemId
+    ) => {
 
         if (!itemId) {
+
+            console.error(
+                "removeFromCart called without itemId"
+            );
+
             return;
+
         }
 
 
-        const previousCart = {
-            ...cartItems
-        };
+        const currentQuantity =
+            Number(
+                cartItems[itemId] || 0
+            );
 
 
-        // Optimistic frontend update
+        if (
+            !Number.isFinite(
+                currentQuantity
+            ) ||
+            currentQuantity <= 0
+        ) {
+
+            return;
+
+        }
+
+
+        // ==================================================
+        // ALWAYS UPDATE FRONTEND FIRST
+        // ==================================================
+
         setCartItems((prev) => {
 
             const updatedCart = {
@@ -146,21 +459,16 @@ const StoreContextProvider = (props) => {
             };
 
 
-            if (!updatedCart[itemId]) {
+            const quantity =
+                Number(
+                    updatedCart[itemId] || 0
+                );
 
-                return updatedCart;
 
-            }
-
-
-            if (
-                Number(updatedCart[itemId]) > 1
-            ) {
+            if (quantity > 1) {
 
                 updatedCart[itemId] =
-                    Number(
-                        updatedCart[itemId]
-                    ) - 1;
+                    quantity - 1;
 
             } else {
 
@@ -174,11 +482,20 @@ const StoreContextProvider = (props) => {
         });
 
 
-        // Guest user
+        // ==================================================
+        // GUEST
+        // ==================================================
+
         if (!token) {
+
             return;
+
         }
 
+
+        // ==================================================
+        // SYNC WITH BACKEND
+        // ==================================================
 
         try {
 
@@ -200,30 +517,40 @@ const StoreContextProvider = (props) => {
                 );
 
 
-            if (response.data.success) {
+            if (
+                !response.data?.success
+            ) {
 
-                if (response.data.cartData) {
+                /*
+                    Do not restore old cart.
 
-                    setCartItems(
-                        response.data.cartData
-                    );
+                    Customer's local cart
+                    remains functional.
+                */
 
-                }
-
-            } else {
-
-                // Restore old cart
-                setCartItems(
-                    previousCart
+                console.warn(
+                    "Backend cart remove was not successful:",
+                    response.data
                 );
 
             }
 
-        } catch {
+        } catch (error) {
 
-            // Restore old cart
-            setCartItems(
-                previousCart
+            if (
+                handleAuthError(error)
+            ) {
+
+                return;
+
+            }
+
+
+            console.error(
+                "Remove from cart sync failed:",
+                error?.response?.status ||
+                error.message,
+                error?.response?.data || ""
             );
 
         }
@@ -236,17 +563,8 @@ const StoreContextProvider = (props) => {
     // ==================================================
 
     /*
-        IMPORTANT:
-
         getTotalCartAmount()
         = subtotal EXCLUDING VAT
-
-        Example:
-
-        Products = 100 kr
-
-        getTotalCartAmount()
-        returns 100
     */
 
     const getTotalCartAmount = () => {
@@ -254,7 +572,9 @@ const StoreContextProvider = (props) => {
         let subtotal = 0;
 
 
-        for (const itemId in cartItems) {
+        for (
+            const itemId in cartItems
+        ) {
 
             const quantity =
                 Number(
@@ -263,7 +583,9 @@ const StoreContextProvider = (props) => {
 
 
             if (
-                !Number.isFinite(quantity) ||
+                !Number.isFinite(
+                    quantity
+                ) ||
                 quantity <= 0
             ) {
 
@@ -276,13 +598,16 @@ const StoreContextProvider = (props) => {
                 food_list.find(
 
                     (product) =>
-                        product._id === itemId
+                        product._id ===
+                        itemId
 
                 );
 
 
             if (!itemInfo) {
+
                 continue;
+
             }
 
 
@@ -293,7 +618,9 @@ const StoreContextProvider = (props) => {
 
 
             if (
-                !Number.isFinite(price) ||
+                !Number.isFinite(
+                    price
+                ) ||
                 price < 0
             ) {
 
@@ -316,7 +643,7 @@ const StoreContextProvider = (props) => {
 
 
     // ==================================================
-    // CALCULATE 6% VAT
+    // CALCULATE VAT
     // ==================================================
 
     const getVatAmount = () => {
@@ -337,17 +664,8 @@ const StoreContextProvider = (props) => {
 
 
     // ==================================================
-    // CALCULATE FINAL TOTAL
+    // CALCULATE TOTAL INCLUDING VAT
     // ==================================================
-
-    /*
-        Example:
-
-        Subtotal: 100 kr
-        VAT 6%:      6 kr
-        ----------------
-        Total:     106 kr
-    */
 
     const getTotalWithVat = () => {
 
@@ -386,17 +704,32 @@ const StoreContextProvider = (props) => {
                 );
 
 
-            if (response.data.success) {
+            if (
+                response.data?.success
+            ) {
 
                 setFoodList(
-                    response.data.data || []
+                    Array.isArray(
+                        response.data.data
+                    )
+                        ? response.data.data
+                        : []
                 );
 
             }
 
-        } catch {
+        } catch (error) {
 
-            setFoodList([]);
+            /*
+                Don't unnecessarily destroy
+                already loaded product data.
+            */
+
+            console.error(
+                "Failed to fetch food list:",
+                error?.response?.status ||
+                error.message
+            );
 
         }
 
@@ -404,14 +737,21 @@ const StoreContextProvider = (props) => {
 
 
     // ==================================================
-    // LOAD USER CART
+    // LOAD LOGGED-IN USER CART
     // ==================================================
 
-    const loadCartData = async (userToken) => {
+    const loadCartData = async (
+        userToken
+    ) => {
+
+        /*
+            No token = guest.
+
+            IMPORTANT:
+            Do NOT clear local cart.
+        */
 
         if (!userToken) {
-
-            setCartItems({});
 
             return;
 
@@ -429,28 +769,79 @@ const StoreContextProvider = (props) => {
 
                     {
                         headers: {
-                            token: userToken
+                            token:
+                                userToken
                         }
                     }
 
                 );
 
 
-            if (response.data.success) {
+            if (
+                response.data?.success
+            ) {
+
+                const backendCart =
+                    sanitizeCart(
+                        response.data
+                            .cartData || {}
+                    );
+
 
                 setCartItems(
-                    response.data.cartData || {}
+                    backendCart
                 );
-
-            } else {
-
-                setCartItems({});
 
             }
 
-        } catch {
+        } catch (error) {
 
-            setCartItems({});
+            const status =
+                error?.response?.status;
+
+
+            // ==================================================
+            // INVALID / EXPIRED SESSION
+            // ==================================================
+
+            if (status === 401) {
+
+                console.warn(
+                    "Stored session is invalid. Continuing as guest."
+                );
+
+
+                /*
+                    Remove broken token.
+
+                    IMPORTANT:
+                    Do NOT clear cartItems.
+                */
+
+                localStorage.removeItem(
+                    "token"
+                );
+
+
+                setToken("");
+
+
+                return;
+
+            }
+
+
+            /*
+                Backend/network error.
+
+                Keep existing local cart.
+            */
+
+            console.error(
+                "Could not load backend cart:",
+                status ||
+                error.message
+            );
 
         }
 
@@ -520,8 +911,8 @@ const StoreContextProvider = (props) => {
         getVatAmount,
         getTotalWithVat,
 
-        // 0.06
-        vatRate: VAT_RATE,
+        vatRate:
+            VAT_RATE,
 
         // Backend functions
         fetchFoodList,
@@ -544,7 +935,9 @@ const StoreContextProvider = (props) => {
     return (
 
         <StoreContext.Provider
-            value={contextValue}
+            value={
+                contextValue
+            }
         >
 
             {props.children}

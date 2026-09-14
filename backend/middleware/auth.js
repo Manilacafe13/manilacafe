@@ -10,7 +10,7 @@ const getToken = (req) => {
   let token = req.headers.token;
 
 
-  // Also support:
+  // Standard Authorization header:
   // Authorization: Bearer TOKEN
   if (
     !token &&
@@ -22,6 +22,7 @@ const getToken = (req) => {
 
 
     if (
+      typeof authHeader === "string" &&
       authHeader.startsWith("Bearer ")
     ) {
 
@@ -33,7 +34,41 @@ const getToken = (req) => {
   }
 
 
-  return token;
+  // Make sure token is always a clean string
+  if (typeof token === "string") {
+
+    token = token.trim();
+
+  }
+
+
+  return token || null;
+
+};
+
+
+
+// ======================================================
+// CREATE USER OBJECT FROM TOKEN
+// ======================================================
+
+const createUserFromToken = (tokenDecode) => {
+
+  return {
+
+    id:
+      tokenDecode.id,
+
+    role:
+      tokenDecode.role || null,
+
+    email:
+      tokenDecode.email || null,
+
+    isAdmin:
+      tokenDecode.isAdmin === true
+
+  };
 
 };
 
@@ -52,7 +87,7 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // CHECK TOKEN EXISTS
+    // TOKEN MISSING
     // ==================================================
 
     if (!token) {
@@ -60,6 +95,9 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({
 
         success: false,
+
+        code:
+          "AUTH_REQUIRED",
 
         message:
           "Du är inte inloggad. Logga in igen."
@@ -70,7 +108,7 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // CHECK JWT SECRET
+    // JWT SECRET CHECK
     // ==================================================
 
     if (!process.env.JWT_SECRET) {
@@ -84,6 +122,9 @@ const authMiddleware = async (req, res, next) => {
 
         success: false,
 
+        code:
+          "AUTH_CONFIG_ERROR",
+
         message:
           "Server configuration error"
 
@@ -93,7 +134,7 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // VERIFY JWT
+    // VERIFY TOKEN
     // ==================================================
 
     const tokenDecode =
@@ -104,14 +145,21 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // CHECK USER ID
+    // VALIDATE TOKEN PAYLOAD
     // ==================================================
 
-    if (!tokenDecode.id) {
+    if (
+      !tokenDecode ||
+      typeof tokenDecode !== "object" ||
+      !tokenDecode.id
+    ) {
 
       return res.status(401).json({
 
         success: false,
+
+        code:
+          "INVALID_TOKEN",
 
         message:
           "Ogiltig inloggning."
@@ -122,36 +170,25 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // ADD VERIFIED USER TO REQUEST
+    // ADD USER TO REQUEST
     // ==================================================
 
     req.userId =
       tokenDecode.id;
 
 
-    req.user = {
-
-      id:
-        tokenDecode.id,
-
-      role:
-        tokenDecode.role || null,
-
-      email:
-        tokenDecode.email || null,
-
-      isAdmin:
-        tokenDecode.isAdmin || false
-
-    };
+    req.user =
+      createUserFromToken(
+        tokenDecode
+      );
 
 
-    next();
+    return next();
 
   } catch (error) {
 
 
-    console.log(
+    console.error(
       "Auth middleware error:",
       error.message
     );
@@ -170,6 +207,9 @@ const authMiddleware = async (req, res, next) => {
 
         success: false,
 
+        code:
+          "TOKEN_EXPIRED",
+
         message:
           "Din session har gått ut. Logga in igen."
 
@@ -184,12 +224,17 @@ const authMiddleware = async (req, res, next) => {
 
     if (
       error.name ===
-      "JsonWebTokenError"
+      "JsonWebTokenError" ||
+      error.name ===
+      "NotBeforeError"
     ) {
 
       return res.status(401).json({
 
         success: false,
+
+        code:
+          "INVALID_TOKEN",
 
         message:
           "Ogiltig inloggning."
@@ -200,12 +245,15 @@ const authMiddleware = async (req, res, next) => {
 
 
     // ==================================================
-    // OTHER AUTH ERROR
+    // UNKNOWN AUTH ERROR
     // ==================================================
 
     return res.status(500).json({
 
       success: false,
+
+      code:
+        "AUTH_ERROR",
 
       message:
         "Authentication error"
@@ -221,12 +269,17 @@ const authMiddleware = async (req, res, next) => {
 // ======================================================
 // OPTIONAL AUTH MIDDLEWARE
 // ======================================================
-// Allows both:
-// - logged-in customers
-// - guest customers
 //
-// If a valid token exists, req.userId is added.
-// If no token exists, checkout continues as guest.
+// Used for routes where BOTH are allowed:
+//
+// - logged-in customer
+// - guest customer
+//
+// IMPORTANT:
+//
+// A broken or expired token should NOT prevent
+// a customer from continuing as a guest.
+//
 // ======================================================
 
 export const optionalAuthMiddleware =
@@ -239,13 +292,18 @@ export const optionalAuthMiddleware =
 
 
       // ==================================================
-      // NO TOKEN = CONTINUE AS GUEST
+      // NO TOKEN = GUEST
       // ==================================================
 
       if (!token) {
 
         req.userId = null;
+
         req.user = null;
+
+        req.authStatus =
+          "guest";
+
 
         return next();
 
@@ -253,7 +311,7 @@ export const optionalAuthMiddleware =
 
 
       // ==================================================
-      // CHECK JWT SECRET
+      // JWT SECRET CHECK
       // ==================================================
 
       if (!process.env.JWT_SECRET) {
@@ -267,6 +325,9 @@ export const optionalAuthMiddleware =
 
           success: false,
 
+          code:
+            "AUTH_CONFIG_ERROR",
+
           message:
             "Server configuration error"
 
@@ -276,7 +337,7 @@ export const optionalAuthMiddleware =
 
 
       // ==================================================
-      // VERIFY TOKEN IF PROVIDED
+      // VERIFY TOKEN
       // ==================================================
 
       const tokenDecode =
@@ -286,96 +347,129 @@ export const optionalAuthMiddleware =
         );
 
 
-      if (!tokenDecode.id) {
+      // ==================================================
+      // INVALID PAYLOAD
+      // ==================================================
 
-        return res.status(401).json({
+      if (
+        !tokenDecode ||
+        typeof tokenDecode !== "object" ||
+        !tokenDecode.id
+      ) {
 
-          success: false,
+        req.userId = null;
 
-          message:
-            "Ogiltig inloggning."
+        req.user = null;
 
-        });
+        req.authStatus =
+          "invalid";
+
+
+        return next();
 
       }
 
 
       // ==================================================
-      // LOGGED-IN CUSTOMER
+      // VALID LOGGED-IN USER
       // ==================================================
 
       req.userId =
         tokenDecode.id;
 
 
-      req.user = {
-
-        id:
-          tokenDecode.id,
-
-        role:
-          tokenDecode.role || null,
-
-        email:
-          tokenDecode.email || null,
-
-        isAdmin:
-          tokenDecode.isAdmin || false
-
-      };
+      req.user =
+        createUserFromToken(
+          tokenDecode
+        );
 
 
-      next();
+      req.authStatus =
+        "authenticated";
+
+
+      return next();
 
     } catch (error) {
 
 
-      console.log(
-        "Optional auth middleware error:",
-        error.message
-      );
-
-
-      // If customer sends a broken/expired token,
-      // do not silently treat them as another person.
+      // ==================================================
+      // EXPIRED TOKEN
+      // ==================================================
+      //
+      // Important:
+      // optional authentication means checkout
+      // should still work as guest.
+      // ==================================================
 
       if (
         error.name ===
         "TokenExpiredError"
       ) {
 
-        return res.status(401).json({
+        console.log(
+          "Expired optional token - continuing as guest"
+        );
 
-          success: false,
 
-          message:
-            "Din session har gått ut. Logga in igen eller fortsätt som gäst."
+        req.userId = null;
 
-        });
+        req.user = null;
+
+        req.authStatus =
+          "expired";
+
+
+        return next();
 
       }
 
+
+      // ==================================================
+      // INVALID TOKEN
+      // ==================================================
 
       if (
         error.name ===
-        "JsonWebTokenError"
+          "JsonWebTokenError" ||
+        error.name ===
+          "NotBeforeError"
       ) {
 
-        return res.status(401).json({
+        console.log(
+          "Invalid optional token - continuing as guest"
+        );
 
-          success: false,
 
-          message:
-            "Ogiltig inloggning."
+        req.userId = null;
 
-        });
+        req.user = null;
+
+        req.authStatus =
+          "invalid";
+
+
+        return next();
 
       }
+
+
+      // ==================================================
+      // UNKNOWN ERROR
+      // ==================================================
+
+      console.error(
+        "Optional auth middleware error:",
+        error.message
+      );
 
 
       return res.status(500).json({
 
         success: false,
+
+        code:
+          "AUTH_ERROR",
 
         message:
           "Authentication error"
