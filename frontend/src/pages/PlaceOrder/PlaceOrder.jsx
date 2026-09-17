@@ -392,29 +392,21 @@ const PlaceOrder = () => {
   }
 
   // ======================================================
-// CLOSED DAY HELPERS
-// ======================================================
+  // CLOSED DAY HELPERS
+  // ======================================================
 
-const isMonday = (dateString) => {
+  const isClosedDay = (dateString) => {
+    if (!dateString) return false
 
-  if (!dateString) {
-    return false
+    const date = new Date(`${dateString}T12:00:00`)
+    const day = date.getDay()
+
+    // Monday + Tuesday
+    return day === 1 || day === 2
   }
 
-  const date =
-    new Date(`${dateString}T12:00:00`)
-
-  return date.getDay() === 1
-
-}
-
-
-const isTodayClosed =
-  isMonday(getTodayDate())
-
-
-const isTomorrowClosed =
-  isMonday(getTomorrowDate())
+  const isTodayClosed = isClosedDay(getTodayDate())
+  const isTomorrowClosed = isClosedDay(getTomorrowDate())
 
   // ======================================================
   // OPENING HOURS / AVAILABLE TIME SLOTS
@@ -453,8 +445,8 @@ const isTomorrowClosed =
     // ==================================================
     // MONDAY - CLOSED
     // ==================================================
-
-    if (day === 1) {
+    // Monday + Tuesday - closed
+    if (day === 1 || day === 2) {
       return []
     }
 
@@ -757,15 +749,10 @@ const isTomorrowClosed =
 
       }
 
-      if (isMonday(largeOrderDate)) {
-
-  alert(
-    "Manila Café har stängt på måndagar. Välj ett annat datum."
-  )
-
-  return
-
-}
+      if (isClosedDay(largeOrderDate)) {
+        alert("Manila Café har stängt på måndagar och tisdagar. Välj ett annat datum.")
+        return
+      }
 
     }
 
@@ -1271,75 +1258,75 @@ const isTomorrowClosed =
 
           <div className="delivery-options">
 
-      {/* SAME DAY */}
+            {/* SAME DAY */}
 
-<label
-  className={
-    `delivery-option ${fulfillmentType === "same-day"
-      ? "active"
-      : ""
-    } ${!sameDayAvailable ||
-      isLargeOrder ||
-      isTodayClosed
-      ? "disabled"
-      : ""
-    }`
-  }
->
+            <label
+              className={
+                `delivery-option ${fulfillmentType === "same-day"
+                  ? "active"
+                  : ""
+                } ${!sameDayAvailable ||
+                  isLargeOrder ||
+                  isTodayClosed
+                  ? "disabled"
+                  : ""
+                }`
+              }
+            >
 
-  <input
-    type="radio"
-    name="fulfillmentType"
-    value="same-day"
-    checked={
-      fulfillmentType === "same-day"
-    }
-    disabled={
-      !sameDayAvailable ||
-      isLargeOrder ||
-      isTodayClosed
-    }
-    onChange={(event) =>
-      setFulfillmentType(
-        event.target.value
-      )
-    }
-  />
+              <input
+                type="radio"
+                name="fulfillmentType"
+                value="same-day"
+                checked={
+                  fulfillmentType === "same-day"
+                }
+                disabled={
+                  !sameDayAvailable ||
+                  isLargeOrder ||
+                  isTodayClosed
+                }
+                onChange={(event) =>
+                  setFulfillmentType(
+                    event.target.value
+                  )
+                }
+              />
 
-  <div>
+              <div>
 
-    <strong>
-      Idag
-    </strong>
+                <strong>
+                  Idag
+                </strong>
 
-    <span>
-      {
-        isTodayClosed
-          ? "Stängt idag"
-          : sameDayAvailable
-            ? "Finns tillgängligt idag"
-            : "Inte tillgängligt idag"
-      }
-    </span>
+                <span>
+                  {
+                    isTodayClosed
+                      ? "Stängt idag"
+                      : sameDayAvailable
+                        ? "Finns tillgängligt idag"
+                        : "Inte tillgängligt idag"
+                  }
+                </span>
 
-  </div>
+              </div>
 
-</label>
+            </label>
 
 
             {/* NEXT DAY */}
 
             <label
               className={
-  `delivery-option ${fulfillmentType === "next-day"
-    ? "active"
-    : ""
-  } ${isLargeOrder ||
-    isTomorrowClosed
-    ? "disabled"
-    : ""
-  }`
-}
+                `delivery-option ${fulfillmentType === "next-day"
+                  ? "active"
+                  : ""
+                } ${isLargeOrder ||
+                  isTomorrowClosed
+                  ? "disabled"
+                  : ""
+                }`
+              }
             >
 
               <input
@@ -1351,9 +1338,9 @@ const isTomorrowClosed =
                   "next-day"
                 }
                 disabled={
-  isLargeOrder ||
-  isTomorrowClosed
-}
+                  isLargeOrder ||
+                  isTomorrowClosed
+                }
                 onChange={(event) =>
                   setFulfillmentType(
                     event.target.value
@@ -1368,11 +1355,11 @@ const isTomorrowClosed =
                   Imorgon
                 </strong>
 
-               <span>
-  {isTomorrowClosed
-    ? "Stängt imorgon"
-    : "Vårt vanligaste alternativ"}
-</span>
+                <span>
+                  {isTomorrowClosed
+                    ? "Stängt imorgon"
+                    : "Vårt vanligaste alternativ"}
+                </span>
 
               </div>
 

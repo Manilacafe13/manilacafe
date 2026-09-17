@@ -30,19 +30,16 @@ const ALLOWED_DELIVERY_METHODS = [
 ];
 
 const getAllowedTimeSlotsForDate = (dateString) => {
-
   const date =
     new Date(`${dateString}T12:00:00.000Z`);
 
   const day =
     date.getUTCDay();
 
-
-  // Monday - closed
-  if (day === 1) {
+  // Monday + Tuesday - closed
+  if (day === 1 || day === 2) {
     return [];
   }
-
 
   // Friday + Saturday: 16:00 - 23:00
   if (day === 5 || day === 6) {
@@ -57,8 +54,7 @@ const getAllowedTimeSlotsForDate = (dateString) => {
     ];
   }
 
-
-  // Tuesday - Thursday + Sunday: 15:00 - 21:00
+  // Wednesday + Thursday + Sunday: 15:00 - 21:00
   return [
     "15:00-16:00",
     "16:00-17:00",
@@ -68,7 +64,6 @@ const getAllowedTimeSlotsForDate = (dateString) => {
     "20:00-21:00"
   ];
 };
-
 const ALLOWED_ORDER_STATUSES = [
   "Beställning mottagen",
   "Förbereds",
