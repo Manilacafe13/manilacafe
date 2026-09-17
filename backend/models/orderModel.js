@@ -275,6 +275,24 @@ const orderSchema = new mongoose.Schema(
     // REQUESTED TIME / TIME WINDOW
     // ==================================================
 
+    /*
+      Alla möjliga tidsintervall som Manila Café
+      använder finns här.
+
+      Vilka tider som faktiskt är tillåtna för
+      respektive veckodag kontrolleras i
+      orderController.js.
+
+      Måndag:
+      stängt
+
+      Tisdag - torsdag + söndag:
+      15:00 - 21:00
+
+      Fredag + lördag:
+      16:00 - 23:00
+    */
+
     requestedTime: {
       type: String,
 
@@ -282,7 +300,11 @@ const orderSchema = new mongoose.Schema(
         "15:00-16:00",
         "16:00-17:00",
         "17:00-18:00",
-        "18:00-19:00"
+        "18:00-19:00",
+        "19:00-20:00",
+        "20:00-21:00",
+        "21:00-22:00",
+        "22:00-23:00"
       ],
 
       required: true,
@@ -421,27 +443,27 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
-    
+
 
     // ==================================================
-// ORDER CONFIRMATION EMAIL
-// ==================================================
+    // ORDER CONFIRMATION EMAIL
+    // ==================================================
 
-orderConfirmationEmailSent: {
-  type: Boolean,
-  default: false
-},
+    orderConfirmationEmailSent: {
+      type: Boolean,
+      default: false
+    },
 
-orderConfirmationEmailSentAt: {
-  type: Date,
-  default: null
-},
+    orderConfirmationEmailSentAt: {
+      type: Date,
+      default: null
+    },
 
-orderConfirmationEmailId: {
-  type: String,
-  default: undefined,
-  trim: true
-},
+    orderConfirmationEmailId: {
+      type: String,
+      default: undefined,
+      trim: true
+    },
 
 
     // ==================================================
