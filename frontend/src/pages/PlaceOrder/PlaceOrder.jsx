@@ -78,7 +78,7 @@ const PlaceOrder = () => {
 
 
   const [requestedTime, setRequestedTime] =
-    useState("16:00-17:00")
+    useState("")
 
 
   const [largeOrderDate, setLargeOrderDate] =
@@ -391,6 +391,123 @@ const PlaceOrder = () => {
 
   }
 
+  // ======================================================
+// CLOSED DAY HELPERS
+// ======================================================
+
+const isMonday = (dateString) => {
+
+  if (!dateString) {
+    return false
+  }
+
+  const date =
+    new Date(`${dateString}T12:00:00`)
+
+  return date.getDay() === 1
+
+}
+
+
+const isTodayClosed =
+  isMonday(getTodayDate())
+
+
+const isTomorrowClosed =
+  isMonday(getTomorrowDate())
+
+  // ======================================================
+  // OPENING HOURS / AVAILABLE TIME SLOTS
+  // ======================================================
+
+  const getAvailableTimeSlots = () => {
+
+    const requestedDate =
+      getRequestedDate()
+
+
+    if (!requestedDate) {
+      return []
+    }
+
+
+    // T12:00 förhindrar problem runt midnatt / timezone
+    const date =
+      new Date(`${requestedDate}T12:00:00`)
+
+
+    const day =
+      date.getDay()
+
+
+    // JavaScript:
+    // 0 = söndag
+    // 1 = måndag
+    // 2 = tisdag
+    // 3 = onsdag
+    // 4 = torsdag
+    // 5 = fredag
+    // 6 = lördag
+
+
+    // ==================================================
+    // MONDAY - CLOSED
+    // ==================================================
+
+    if (day === 1) {
+      return []
+    }
+
+
+    // ==================================================
+    // FRIDAY + SATURDAY
+    // 16:00 - 23:00
+    // ==================================================
+
+    if (day === 5 || day === 6) {
+
+      return [
+        "16:00-17:00",
+        "17:00-18:00",
+        "18:00-19:00",
+        "19:00-20:00",
+        "20:00-21:00",
+        "21:00-22:00",
+        "22:00-23:00"
+      ]
+
+    }
+
+
+    // ==================================================
+    // TUESDAY - THURSDAY + SUNDAY
+    // 15:00 - 21:00
+    // ==================================================
+
+    return [
+      "15:00-16:00",
+      "16:00-17:00",
+      "17:00-18:00",
+      "18:00-19:00",
+      "19:00-20:00",
+      "20:00-21:00"
+    ]
+
+  }
+
+  useEffect(() => {
+
+    setRequestedTime("")
+
+  }, [
+    fulfillmentType,
+    largeOrderDate
+  ])
+
+
+  const availableTimeSlots =
+    getAvailableTimeSlots()
+
 
   // ======================================================
   // FULFILLMENT LABEL
@@ -639,6 +756,16 @@ const PlaceOrder = () => {
         return
 
       }
+
+      if (isMonday(largeOrderDate)) {
+
+  alert(
+    "Manila Café har stängt på måndagar. Välj ett annat datum."
+  )
+
+  return
+
+}
 
     }
 
@@ -1144,75 +1271,75 @@ const PlaceOrder = () => {
 
           <div className="delivery-options">
 
+      {/* SAME DAY */}
 
-            {/* SAME DAY */}
+<label
+  className={
+    `delivery-option ${fulfillmentType === "same-day"
+      ? "active"
+      : ""
+    } ${!sameDayAvailable ||
+      isLargeOrder ||
+      isTodayClosed
+      ? "disabled"
+      : ""
+    }`
+  }
+>
 
-            <label
-              className={
-                `delivery-option ${fulfillmentType === "same-day"
-                  ? "active"
-                  : ""
-                } ${!sameDayAvailable ||
-                  isLargeOrder
-                  ? "disabled"
-                  : ""
-                }`
-              }
-            >
+  <input
+    type="radio"
+    name="fulfillmentType"
+    value="same-day"
+    checked={
+      fulfillmentType === "same-day"
+    }
+    disabled={
+      !sameDayAvailable ||
+      isLargeOrder ||
+      isTodayClosed
+    }
+    onChange={(event) =>
+      setFulfillmentType(
+        event.target.value
+      )
+    }
+  />
 
-              <input
-                type="radio"
-                name="fulfillmentType"
-                value="same-day"
-                checked={
-                  fulfillmentType ===
-                  "same-day"
-                }
-                disabled={
-                  !sameDayAvailable ||
-                  isLargeOrder
-                }
-                onChange={(event) =>
-                  setFulfillmentType(
-                    event.target.value
-                  )
-                }
-              />
+  <div>
 
+    <strong>
+      Idag
+    </strong>
 
-              <div>
+    <span>
+      {
+        isTodayClosed
+          ? "Stängt idag"
+          : sameDayAvailable
+            ? "Finns tillgängligt idag"
+            : "Inte tillgängligt idag"
+      }
+    </span>
 
-                <strong>
-                  Idag
-                </strong>
+  </div>
 
-                <span>
-
-                  {
-                    sameDayAvailable
-                      ? "Finns tillgängligt idag"
-                      : "Inte tillgängligt idag"
-                  }
-
-                </span>
-
-              </div>
-
-            </label>
+</label>
 
 
             {/* NEXT DAY */}
 
             <label
               className={
-                `delivery-option ${fulfillmentType === "next-day"
-                  ? "active"
-                  : ""
-                } ${isLargeOrder
-                  ? "disabled"
-                  : ""
-                }`
-              }
+  `delivery-option ${fulfillmentType === "next-day"
+    ? "active"
+    : ""
+  } ${isLargeOrder ||
+    isTomorrowClosed
+    ? "disabled"
+    : ""
+  }`
+}
             >
 
               <input
@@ -1224,8 +1351,9 @@ const PlaceOrder = () => {
                   "next-day"
                 }
                 disabled={
-                  isLargeOrder
-                }
+  isLargeOrder ||
+  isTomorrowClosed
+}
                 onChange={(event) =>
                   setFulfillmentType(
                     event.target.value
@@ -1240,9 +1368,11 @@ const PlaceOrder = () => {
                   Imorgon
                 </strong>
 
-                <span>
-                  Vårt vanligaste alternativ
-                </span>
+               <span>
+  {isTomorrowClosed
+    ? "Stängt imorgon"
+    : "Vårt vanligaste alternativ"}
+</span>
 
               </div>
 
@@ -1376,23 +1506,30 @@ const PlaceOrder = () => {
                 )
               }
               required
+              disabled={
+                availableTimeSlots.length === 0
+              }
             >
 
-              <option value="15:00-16:00">
-                15:00 – 16:00
+              <option value="">
+                {availableTimeSlots.length === 0
+                  ? "Stängt detta datum"
+                  : "Välj tid"}
               </option>
 
-              <option value="16:00-17:00">
-                16:00 – 17:00
-              </option>
 
-              <option value="17:00-18:00">
-                17:00 – 18:00
-              </option>
+              {availableTimeSlots.map(
+                (timeSlot) => (
 
-              <option value="18:00-19:00">
-                18:00 – 19:00
-              </option>
+                  <option
+                    key={timeSlot}
+                    value={timeSlot}
+                  >
+                    {timeSlot.replace("-", " – ")}
+                  </option>
+
+                )
+              )}
 
             </select>
 
