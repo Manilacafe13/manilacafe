@@ -1499,10 +1499,14 @@ const PlaceOrder = () => {
             >
 
               <option value="">
-                {availableTimeSlots.length === 0
-                  ? "Stängt detta datum"
-                  : "Välj tid"}
-              </option>
+  {!getRequestedDate()
+    ? "Välj datum först"
+    : isClosedDay(getRequestedDate())
+      ? "Stängt detta datum"
+      : availableTimeSlots.length === 0
+        ? "Ingen tid tillgänglig"
+        : "Välj tid"}
+</option>
 
 
               {availableTimeSlots.map(
