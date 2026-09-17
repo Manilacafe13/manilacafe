@@ -29,12 +29,45 @@ const ALLOWED_DELIVERY_METHODS = [
   "delivery"
 ];
 
-const ALLOWED_TIME_SLOTS = [
-  "15:00-16:00",
-  "16:00-17:00",
-  "17:00-18:00",
-  "18:00-19:00"
-];
+const getAllowedTimeSlotsForDate = (dateString) => {
+
+  const date =
+    new Date(`${dateString}T12:00:00.000Z`);
+
+  const day =
+    date.getUTCDay();
+
+
+  // Monday - closed
+  if (day === 1) {
+    return [];
+  }
+
+
+  // Friday + Saturday: 16:00 - 23:00
+  if (day === 5 || day === 6) {
+    return [
+      "16:00-17:00",
+      "17:00-18:00",
+      "18:00-19:00",
+      "19:00-20:00",
+      "20:00-21:00",
+      "21:00-22:00",
+      "22:00-23:00"
+    ];
+  }
+
+
+  // Tuesday - Thursday + Sunday: 15:00 - 21:00
+  return [
+    "15:00-16:00",
+    "16:00-17:00",
+    "17:00-18:00",
+    "18:00-19:00",
+    "19:00-20:00",
+    "20:00-21:00"
+  ];
+};
 
 const ALLOWED_ORDER_STATUSES = [
   "Beställning mottagen",
@@ -636,14 +669,20 @@ const placeOrder = async (req, res) => {
       });
     }
 
+    const allowedTimeSlots =
+      getAllowedTimeSlotsForDate(requestedDate);
+
     if (
-      !ALLOWED_TIME_SLOTS.includes(
+      !allowedTimeSlots.includes(
         requestedTime
       )
     ) {
       return res.status(400).json({
         success: false,
-        message: "Ogiltig vald tid."
+        message:
+          allowedTimeSlots.length === 0
+            ? "Manila Café har stängt på det valda datumet."
+            : "Ogiltig vald tid."
       });
     }
 
@@ -1176,9 +1215,9 @@ const stripeWebhook = async (req, res) => {
   try {
     if (
       event.type ===
-        "checkout.session.completed" ||
+      "checkout.session.completed" ||
       event.type ===
-        "checkout.session.async_payment_succeeded"
+      "checkout.session.async_payment_succeeded"
     ) {
       const stripeSession = event.data.object;
 
