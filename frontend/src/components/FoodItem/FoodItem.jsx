@@ -56,7 +56,7 @@ const FoodItem = ({
                 "Innehåller banan och kanel."
         },
 
-        "fruit salad": {
+        "fruit Cup": {
             ingredients:
                 "Eden cheese, Fiesta fruit cocktail, nata de coco, kokoskött, kokosgelé och kondenserad mjölk.",
             allergens:

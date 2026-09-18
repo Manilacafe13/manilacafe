@@ -551,8 +551,8 @@ if (
                 Floats
               </option>
 
-              <option value="Fruit salad">
-                Fruit salad
+              <option value="Fruit Cup">
+                Fruit cup
               </option>
 
             </select>

@@ -23,7 +23,7 @@ const FoodDisplay = ({ category }) => {
         <p>
           Upptäck Manila Cafés utbud av filippinska desserter,
           med favoriter som Mango Float, Ube Cake, Taho,
-          Fruit Salad och andra tropiska smaker.
+          Fruit Cup och andra tropiska smaker.
         </p>
 
       </div>

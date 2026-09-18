@@ -49,7 +49,7 @@ export const menu_list = [
         menu_image: menu_2
     },
     {
-        menu_name: "Fruit salad",
+        menu_name: "Fruit Cup",
         menu_image: menu_3
     },
     {
