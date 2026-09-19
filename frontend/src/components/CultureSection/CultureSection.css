@@ -1,59 +1,97 @@
-.culture-section{
-    margin: 120px 0;
+/* =========================================================
+   MANILA CAFÉ — CULTURE SECTION
+   ========================================================= */
+
+.culture-section {
+    width: 100%;
+    margin: 110px 0;
 }
 
 
-/* ============================= */
-/* HEADING */
-/* ============================= */
+/* =========================================================
+   HEADING
+   ========================================================= */
 
-.culture-heading{
-    max-width: 720px;
+.culture-heading {
+    max-width: 760px;
+
     margin: 0 auto 50px;
+
     text-align: center;
 }
 
-.culture-heading h2{
-    color: #262626;
-    font-size: 40px;
-    line-height: 1.2;
-    font-weight: 600;
-    margin-bottom: 18px;
+
+.culture-heading .section-eyebrow {
+    margin-bottom: 14px;
 }
 
-.culture-heading h2 span{
+
+.culture-heading h2 {
+    margin: 0 0 18px;
+
+    color: #262626;
+
+    font-size: clamp(32px, 3.5vw, 44px);
+    font-weight: 600;
+
+    line-height: 1.15;
+    letter-spacing: -0.7px;
+}
+
+
+.culture-heading h2 span {
     color: rgb(36, 146, 24);
 }
 
-.culture-heading > p{
-    color: #777;
+
+.culture-heading > p {
+    max-width: 720px;
+
+    margin: 0 auto;
+
+    color: #6f6f6f;
+
     font-size: 15px;
+
     line-height: 1.8;
 }
 
 
-/* ============================= */
-/* GRID */
-/* ============================= */
+/* =========================================================
+   GRID
+   6 cards = 3 + 3 on desktop
+   ========================================================= */
 
-.culture-grid{
+.culture-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 22px;
+
+    align-items: stretch;
 }
 
 
-/* ============================= */
-/* CARD */
-/* ============================= */
+/* =========================================================
+   CARD
+   ========================================================= */
 
-.culture-card{
+.culture-card {
     position: relative;
+
+    min-width: 0;
+    min-height: 320px;
+
+    display: flex;
+    flex-direction: column;
+
+    box-sizing: border-box;
+
+    padding: 30px 26px;
+
     overflow: hidden;
-
-    min-height: 300px;
-
-    padding: 28px 24px;
 
     background:
         linear-gradient(
@@ -65,30 +103,49 @@
     border: 1px solid #e8eee6;
     border-radius: 20px;
 
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease,
-        border-color 0.3s ease;
-}
-
-.culture-card:hover{
-    transform: translateY(-6px);
-
-    border-color:
-        rgba(36, 146, 24, 0.25);
-
     box-shadow:
-        0 18px 45px rgba(40, 78, 43, 0.10);
+        0 5px 18px rgba(40, 78, 43, 0.035);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
 }
 
 
-/* ============================= */
-/* ICON */
-/* ============================= */
+/* =========================================================
+   CARD HOVER
+   ========================================================= */
 
-.culture-icon{
+@media (hover: hover) {
+
+    .culture-card:hover {
+        transform: translateY(-5px);
+
+        border-color:
+            rgba(36, 146, 24, 0.24);
+
+        box-shadow:
+            0 18px 42px rgba(40, 78, 43, 0.10);
+    }
+
+
+    .culture-card:hover .culture-card-line {
+        transform: scaleX(1);
+    }
+
+}
+
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+.culture-icon {
     width: 58px;
     height: 58px;
+
+    flex: 0 0 58px;
 
     display: flex;
     align-items: center;
@@ -96,7 +153,7 @@
 
     margin-bottom: 22px;
 
-    border-radius: 18px;
+    border-radius: 17px;
 
     background:
         linear-gradient(
@@ -106,51 +163,77 @@
         );
 
     font-size: 28px;
+
+    line-height: 1;
 }
 
 
-/* ============================= */
-/* TEXT */
-/* ============================= */
+/* =========================================================
+   SUBTITLE
+   ========================================================= */
 
-.culture-subtitle{
+.culture-subtitle {
     display: block;
 
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 
     color: rgb(36, 146, 24);
 
     font-size: 11px;
     font-weight: 700;
+
+    line-height: 1.3;
+
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 
-.culture-card h3{
+
+/* =========================================================
+   CARD TITLE
+   ========================================================= */
+
+.culture-card h3 {
+    margin: 0 0 13px;
+
     color: #292929;
+
     font-size: 21px;
     font-weight: 600;
-    margin-bottom: 13px;
+
+    line-height: 1.25;
 }
 
-.culture-card p{
-    color: #777;
+
+/* =========================================================
+   CARD TEXT
+   ========================================================= */
+
+.culture-card p {
+    margin: 0;
+
+    color: #737373;
+
     font-size: 14px;
+
     line-height: 1.7;
 }
 
 
-/* ============================= */
-/* CARD LINE */
-/* ============================= */
+/* =========================================================
+   CARD ACCENT LINE
+   ========================================================= */
 
-.culture-card-line{
+.culture-card-line {
     position: absolute;
-    left: 24px;
-    right: 24px;
+
+    left: 25px;
+    right: 25px;
     bottom: 0;
 
     height: 3px;
+
+    border-radius: 3px 3px 0 0;
 
     background:
         linear-gradient(
@@ -162,26 +245,31 @@
     transform: scaleX(0);
     transform-origin: left;
 
-    transition: 0.3s;
-}
-
-.culture-card:hover .culture-card-line{
-    transform: scaleX(1);
+    transition: transform 0.3s ease;
 }
 
 
-/* ============================= */
-/* CULTURE FACT */
-/* ============================= */
+/* =========================================================
+   CULTURE FACT
+   ========================================================= */
 
-.culture-fact{
+.culture-fact {
     display: grid;
-    grid-template-columns: 180px 1fr;
+
+    grid-template-columns: 180px minmax(0, 1fr);
+
+    align-items: center;
+
     gap: 35px;
 
     margin-top: 45px;
 
     padding: 32px 38px;
+
+    box-sizing: border-box;
+
+    border: 1px solid
+        rgba(36, 146, 24, 0.12);
 
     border-radius: 20px;
 
@@ -191,86 +279,247 @@
             #eef8ed,
             #fff9e9
         );
-
-    border: 1px solid
-        rgba(36, 146, 24, 0.12);
 }
 
-.culture-fact-label{
+
+/* =========================================================
+   FACT LABEL
+   ========================================================= */
+
+.culture-fact-label {
+    min-height: 90px;
+
     display: flex;
     align-items: center;
     justify-content: center;
 
-    min-height: 90px;
+    padding: 15px;
+
+    box-sizing: border-box;
 
     border-radius: 15px;
 
-    color: #267333;
+    background:
+        rgba(255, 255, 255, 0.78);
 
-    background-color:
-        rgba(255,255,255,0.75);
+    color: #267333;
 
     font-size: 15px;
     font-weight: 700;
+
+    text-align: center;
 }
 
-.culture-fact h3{
+
+/* =========================================================
+   FACT CONTENT
+   ========================================================= */
+
+.culture-fact h3 {
+    margin: 0 0 8px;
+
     color: #2d2d2d;
+
     font-size: 21px;
-    margin-bottom: 8px;
+    font-weight: 600;
+
+    line-height: 1.3;
 }
 
-.culture-fact p{
+
+.culture-fact p {
+    margin: 0;
+
+    max-width: 800px;
+
     color: #6e6e6e;
+
     font-size: 14px;
+
     line-height: 1.75;
 }
 
 
-/* ============================= */
-/* RESPONSIVE */
-/* ============================= */
+/* =========================================================
+   TABLET
+   ========================================================= */
 
-@media (max-width: 1050px){
+@media (max-width: 1050px) {
 
-    .culture-grid{
+    .culture-section {
+        margin: 95px 0;
+    }
+
+
+    .culture-grid {
         grid-template-columns:
-            repeat(2, 1fr);
+            repeat(2, minmax(0, 1fr));
+
+        gap: 20px;
+    }
+
+
+    .culture-card {
+        min-height: 300px;
     }
 
 }
 
 
-@media (max-width: 700px){
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
-    .culture-section{
-        margin: 80px 0;
+@media (max-width: 700px) {
+
+    .culture-section {
+        margin: 75px 0;
     }
 
-    .culture-heading{
+
+    .culture-heading {
+        max-width: 100%;
+
         margin-bottom: 35px;
     }
 
-    .culture-heading h2{
+
+    .culture-heading h2 {
         font-size: 32px;
+
+        letter-spacing: -0.4px;
     }
 
-    .culture-grid{
+
+    .culture-heading > p {
+        font-size: 14px;
+
+        line-height: 1.7;
+    }
+
+
+    .culture-grid {
         grid-template-columns: 1fr;
+
+        gap: 16px;
     }
 
-    .culture-card{
+
+    .culture-card {
         min-height: auto;
+
+        padding: 25px 22px;
     }
 
-    .culture-fact{
+
+    .culture-icon {
+        width: 52px;
+        height: 52px;
+
+        flex-basis: 52px;
+
+        margin-bottom: 18px;
+
+        font-size: 25px;
+    }
+
+
+    .culture-card h3 {
+        font-size: 20px;
+    }
+
+
+    .culture-card p {
+        font-size: 13.5px;
+    }
+
+
+    .culture-fact {
         grid-template-columns: 1fr;
+
         gap: 20px;
+
+        margin-top: 30px;
+
         padding: 25px;
     }
 
-    .culture-fact-label{
+
+    .culture-fact-label {
         min-height: 65px;
+    }
+
+
+    .culture-fact h3 {
+        font-size: 20px;
+    }
+
+
+    .culture-fact p {
+        font-size: 13.5px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+    .culture-section {
+        margin: 65px 0;
+    }
+
+
+    .culture-heading h2 {
+        font-size: 29px;
+    }
+
+
+    .culture-heading > p {
+        font-size: 13.5px;
+    }
+
+
+    .culture-card {
+        padding: 23px 20px;
+
+        border-radius: 17px;
+    }
+
+
+    .culture-subtitle {
+        font-size: 10px;
+    }
+
+
+    .culture-card h3 {
+        font-size: 19px;
+    }
+
+
+    .culture-card p {
+        font-size: 13px;
+    }
+
+
+    .culture-card-line {
+        left: 20px;
+        right: 20px;
+    }
+
+
+    .culture-fact {
+        padding: 21px;
+
+        border-radius: 17px;
+    }
+
+
+    .culture-fact h3 {
+        font-size: 19px;
     }
 
 }

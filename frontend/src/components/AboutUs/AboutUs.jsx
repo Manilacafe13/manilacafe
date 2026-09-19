@@ -1,6 +1,7 @@
 import React from 'react'
 import './AboutUs.css'
 
+
 const AboutUs = () => {
 
   return (
@@ -8,14 +9,20 @@ const AboutUs = () => {
     <section
       className="about-us"
       id="about-us"
+      aria-labelledby="about-us-title"
     >
 
       <div className="about-us-inner">
 
 
-        {/* LEFT SIDE */}
+        {/* =================================================
+            LEFT SIDE
+        ================================================= */}
 
-        <div className="about-us-visual">
+        <div
+          className="about-us-visual"
+          aria-hidden="true"
+        >
 
           <div className="about-us-decoration decoration-one">
           </div>
@@ -36,8 +43,8 @@ const AboutUs = () => {
             </h2>
 
             <p>
-              Desserter skapade för att delas,
-              upptäckas och njutas tillsammans.
+              Filippinska desserter skapade för att
+              delas, upptäckas och njutas tillsammans.
             </p>
 
 
@@ -83,7 +90,9 @@ const AboutUs = () => {
         </div>
 
 
-        {/* RIGHT SIDE */}
+        {/* =================================================
+            RIGHT SIDE
+        ================================================= */}
 
         <div className="about-us-content">
 
@@ -91,53 +100,67 @@ const AboutUs = () => {
             VÅR HISTORIA
           </span>
 
-          <h2>
-            Välkommen till
-            <span> Manila Café</span>
+
+          <h2 id="about-us-title">
+            Manila Café –
+            <span> filippinska smaker i Göteborg</span>
           </h2>
 
 
           <p className="about-us-lead">
             För oss handlar dessert om mer än
-            något sött efter maten.
+            bara något sött efter maten.
           </p>
 
 
           <p>
-            Manila Café vill dela med sig av
-            filippinska smaker, traditioner och
-            den värme som kan uppstå när människor
-            samlas runt matbordet.
+            Manila Café skapades för att göra det enklare
+            att upptäcka filippinska desserter och smaker
+            här i Göteborg. Vi vill dela med oss av både
+            klassiska favoriter och tropiska kombinationer
+            som betyder mycket inom den filippinska
+            matkulturen.
           </p>
 
 
           <p>
-            Mat är en viktig del av gemenskapen.
-            Den delas med familj, vänner och gäster
-            och blir ofta en del av både vardag,
-            firanden och minnen.
+            Hos oss möter du smaker som mango, ube och
+            kokos i desserter som Mango Float, Ube Cake,
+            Fruit Cup och andra Filipino-favoriter.
+            Desserterna kan beställas online för
+            avhämtning eller leverans.
           </p>
 
 
           <p>
-            Genom våra desserter vill vi ge dig
-            möjlighet att upptäcka smaker som
-            mango, kokos och ube – samtidigt som
-            du får lära känna lite mer av kulturen
-            bakom dem.
+            Mat är en viktig del av gemenskapen i
+            Filippinerna. Den delas med familj, vänner
+            och gäster och blir en del av både vardag,
+            firanden och minnen. Den känslan vill vi
+            ta med oss till Manila Café.
+          </p>
+
+
+          <p>
+            Oavsett om du redan älskar filippinska
+            smaker eller letar efter en ny och annorlunda
+            dessert att testa, vill vi ge dig möjlighet
+            att upptäcka något nytt.
           </p>
 
 
           <div className="about-us-quote">
 
-            <span className="quote-mark">
+            <span
+              className="quote-mark"
+              aria-hidden="true"
+            >
               “
             </span>
 
             <p>
-              Vår förhoppning är att varje dessert
-              ska ge dig både en god smak och en
-              liten berättelse att ta med dig.
+              En liten smak av Filippinerna,
+              mitt i Göteborg.
             </p>
 
           </div>
@@ -152,5 +175,6 @@ const AboutUs = () => {
   )
 
 }
+
 
 export default AboutUs

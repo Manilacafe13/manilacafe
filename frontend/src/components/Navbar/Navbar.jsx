@@ -11,7 +11,8 @@ import {
 
 import {
   Link,
-  useNavigate
+  useNavigate,
+  useLocation
 } from 'react-router-dom'
 
 import {
@@ -44,6 +45,10 @@ const Navbar = ({
 
   const navigate =
     useNavigate()
+
+
+  const location =
+    useLocation()
 
 
   // ======================================================
@@ -85,6 +90,89 @@ const Navbar = ({
 
     setShowProfileMenu(
       false
+    )
+
+  }
+
+
+  // ======================================================
+  // LOGO / HOME
+  // ======================================================
+
+  const handleLogoClick = () => {
+
+    setMenu(
+      "home"
+    )
+
+    setShowProfileMenu(
+      false
+    )
+
+
+    // If already on homepage,
+    // scroll back to the top.
+    if (
+      location.pathname === "/"
+    ) {
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      })
+
+    }
+
+  }
+
+
+  // ======================================================
+  // SECTION NAVIGATION
+  // Makes menu links work from product pages too
+  // ======================================================
+
+  const goToSection = (
+    sectionId,
+    menuName
+  ) => {
+
+    setMenu(
+      menuName
+    )
+
+    setShowProfileMenu(
+      false
+    )
+
+
+    // Already on homepage
+    if (
+      location.pathname === "/"
+    ) {
+
+      const section =
+        document.getElementById(
+          sectionId
+        )
+
+
+      if (section) {
+
+        section.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        })
+
+      }
+
+      return
+
+    }
+
+
+    // Coming from another page
+    navigate(
+      `/#${sectionId}`
     )
 
   }
@@ -141,12 +229,9 @@ const Navbar = ({
 
       <Link
         to="/"
-        onClick={() =>
-          handleMenuClick(
-            "home"
-          )
-        }
+        onClick={handleLogoClick}
         className="navbar-logo-link"
+        aria-label="Manila Café – gå till startsidan"
       >
 
         <img
@@ -169,11 +254,7 @@ const Navbar = ({
 
         <Link
           to="/"
-          onClick={() =>
-            handleMenuClick(
-              "home"
-            )
-          }
+          onClick={handleLogoClick}
           className={
             menu === "home"
               ? "active"
@@ -186,10 +267,11 @@ const Navbar = ({
 
         {/* PRODUCTS */}
 
-        <a
-          href="#explore-menu"
+        <button
+          type="button"
           onClick={() =>
-            handleMenuClick(
+            goToSection(
+              "explore-menu",
               "menu"
             )
           }
@@ -200,15 +282,16 @@ const Navbar = ({
           }
         >
           Meny
-        </a>
+        </button>
 
 
         {/* ABOUT */}
 
-        <a
-          href="#about-us"
+        <button
+          type="button"
           onClick={() =>
-            handleMenuClick(
+            goToSection(
+              "about-us",
               "about-us"
             )
           }
@@ -219,15 +302,16 @@ const Navbar = ({
           }
         >
           Om oss
-        </a>
+        </button>
 
 
         {/* CONTACT */}
 
-        <a
-          href="#footer"
+        <button
+          type="button"
           onClick={() =>
-            handleMenuClick(
+            goToSection(
+              "footer",
               "contact-us"
             )
           }
@@ -238,7 +322,7 @@ const Navbar = ({
           }
         >
           Kontakta oss
-        </a>
+        </button>
 
 
       </div>
@@ -275,11 +359,13 @@ const Navbar = ({
                 false
               )
             }
+            aria-label="Öppna varukorgen"
           >
 
             <img
               src={assets.basket_icon}
-              alt="Varukorg"
+              alt=""
+              aria-hidden="true"
             />
 
           </Link>
@@ -344,7 +430,8 @@ const Navbar = ({
 
               <img
                 src={assets.profile_icon}
-                alt="Profil"
+                alt=""
+                aria-hidden="true"
                 className="profile-icon"
               />
 
@@ -368,7 +455,10 @@ const Navbar = ({
                   }
                 >
 
-                  <span className="profile-dropdown-icon">
+                  <span
+                    className="profile-dropdown-icon"
+                    aria-hidden="true"
+                  >
                     📦
                   </span>
 
@@ -393,7 +483,10 @@ const Navbar = ({
                   }
                 >
 
-                  <span className="profile-dropdown-icon">
+                  <span
+                    className="profile-dropdown-icon"
+                    aria-hidden="true"
+                  >
                     ↪
                   </span>
 

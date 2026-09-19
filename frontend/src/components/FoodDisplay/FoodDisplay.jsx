@@ -1,64 +1,84 @@
 import React, { useContext } from 'react'
 import './FoodDisplay.css'
+
 import { StoreContext } from '../../context/StoreContext'
 import FoodItem from '../FoodItem/FoodItem'
+
 
 const FoodDisplay = ({ category }) => {
 
   const { food_list } = useContext(StoreContext)
 
+  const filteredFoods = food_list.filter((item) =>
+    category === "All" || category === item.category
+  )
+
+
   return (
     <section
-      className='food-display'
-      id='food-display'
-      aria-labelledby='food-display-title'
+      className="food-display"
+      id="food-display"
+      aria-labelledby="food-display-title"
     >
 
-      <div className='food-display-intro'>
+      {/* INTRO */}
 
-        <h2 id='food-display-title'>
-          Filippinska desserter i Göteborg
+      <div className="food-display-intro">
+
+        <h2 id="food-display-title">
+          Våra desserter
         </h2>
 
         <p>
-          Upptäck Manila Cafés utbud av filippinska desserter,
-          med favoriter som Mango Float, Ube Cake, Taho,
-          Fruit Cup och andra tropiska smaker.
+          Hitta din nästa favorit hos Manila Café.
+          Välj bland filippinska desserter och tropiska sötsaker
+          som Mango Float, Ube Cake, Fruit Cup, Taho och fler
+          smaker att upptäcka i Göteborg.
         </p>
 
       </div>
 
 
-      <div className='food-display-list'>
+      {/* PRODUCTS */}
 
-        {food_list.map((item) => {
+      <div
+        className="food-display-list"
+        aria-live="polite"
+      >
 
-          if (
-            category === "All" ||
-            category === item.category
-          ) {
+        {filteredFoods.length > 0 ? (
 
-            return (
-              <FoodItem
-                key={item._id}
-                id={item._id}
-                name={item.name}
-                description={item.description}
-                price={item.price}
-                image={item.image}
-              />
-            )
+          filteredFoods.map((item) => (
 
-          }
+            <FoodItem
+              key={item._id}
+              id={item._id}
+              name={item.name}
+              description={item.description}
+              price={item.price}
+              image={item.image}
+              category={item.category}
+            />
 
-          return null
+          ))
 
-        })}
+        ) : (
+
+          <div className="food-display-empty">
+
+            <p>
+              Inga desserter hittades i den här kategorin just nu.
+            </p>
+
+          </div>
+
+        )}
 
       </div>
 
     </section>
   )
 }
+
 
 export default FoodDisplay

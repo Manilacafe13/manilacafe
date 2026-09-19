@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
+
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
-import { Route, Routes } from 'react-router-dom'
+import LoginPopup from './components/LoginPopup/LoginPopup'
 
 import Home from './pages/Home/Home'
 import Cart from './pages/Cart/Cart'
 import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
-import LoginPopup from './components/LoginPopup/LoginPopup'
 import Verify from './pages/Verify/Verify'
 import MyOrders from './pages/MyOrders/MyOrders'
+import ProductPage from './pages/Product/ProductPage'
 
 import {
   TermsPage,
@@ -21,8 +23,7 @@ import {
 
 const App = () => {
 
-  const [showLogin, setShowLogin] =
-    useState(false)
+  const [showLogin, setShowLogin] = useState(false)
 
 
   return (
@@ -44,10 +45,20 @@ const App = () => {
 
         <Routes>
 
+          {/* HOME */}
+
           <Route
             path="/"
             element={<Home />}
           />
+
+          <Route
+            path="/dessert/:slug"
+            element={<ProductPage />}
+          />
+
+
+          {/* ORDER */}
 
           <Route
             path="/cart"
@@ -69,6 +80,8 @@ const App = () => {
             element={<MyOrders />}
           />
 
+
+          {/* INFORMATION */}
 
           <Route
             path="/kopvillkor"
@@ -93,6 +106,37 @@ const App = () => {
           <Route
             path="/kontakt"
             element={<ContactPage />}
+          />
+
+
+          {/* 404 */}
+
+          <Route
+            path="*"
+            element={
+              <main
+                style={{
+                  minHeight: "60vh",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "40px 20px"
+                }}
+              >
+                <div>
+                  <h1>Sidan hittades inte</h1>
+
+                  <p>
+                    Sidan du letar efter verkar inte finnas.
+                  </p>
+
+                  <a href="/">
+                    Tillbaka till Manila Café
+                  </a>
+                </div>
+              </main>
+            }
           />
 
         </Routes>

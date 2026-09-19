@@ -1,144 +1,365 @@
-.header{
+/* =========================================================
+   MANILA CAFÉ — HEADER / HERO
+   ========================================================= */
+
+.header {
+    width: 100%;
     height: 34vw;
+    min-height: 360px;
+    max-height: 620px;
+
     margin: 30px auto;
-    background: url('/header_img.png') no-repeat;
-    background-size: contain;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.55) 0%,
+            rgba(0, 0, 0, 0.30) 45%,
+            rgba(0, 0, 0, 0.05) 100%
+        ),
+        url('/header_img.png') no-repeat;
+
+    background-size: cover;
     background-position: center;
+
     position: relative;
+    overflow: hidden;
+
+    border-radius: 18px;
 }
 
-.header-contents{
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.header-contents {
     position: absolute;
+
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1.5vw;
-    max-width: 55%;
-    bottom: 10%;
-    left: 6vw;
-    animation: fadeIn 5s;
+
+    gap: 18px;
+
+    width: 88%;
+    max-width: 720px;
+
+    left: 6%;
+    bottom: 12%;
+
+    z-index: 2;
+
+    animation: fadeIn 1.2s ease;
 }
 
-.header-contents h1{
-    font-weight: 500;
-    color: white;
-    font-size: max(3.2vw, 26px);
-    line-height: 1.1;
+
+/* =========================================================
+   MAIN HEADING
+   ========================================================= */
+
+.header-contents h1 {
     margin: 0;
+
+    max-width: 720px;
+
+    color: #ffffff;
+
+    font-size: clamp(32px, 4vw, 58px);
+    font-weight: 700;
+
+    line-height: 1.08;
+    letter-spacing: -1px;
+
+    text-shadow:
+        0 2px 15px rgba(0, 0, 0, 0.25);
 }
 
-.header-contents p{
-    color: white;
-    font-size: max(1vw, 14px);
-    line-height: 1.5;
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.header-contents p {
     margin: 0;
+
     max-width: 650px;
+
+    color: rgba(255, 255, 255, 0.96);
+
+    font-size: clamp(15px, 1.2vw, 18px);
+    font-weight: 400;
+
+    line-height: 1.6;
+
+    text-shadow:
+        0 1px 10px rgba(0, 0, 0, 0.25);
 }
 
-.header-contents button{
+
+/* =========================================================
+   CTA BUTTON
+   ========================================================= */
+
+.header-order-btn {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 3px;
+
+    padding: 14px 27px;
+
     border: none;
-    color: #747474;
-    font-weight: 500;
-    padding: 1vw 2.3vw;
-    background-color: white;
-    font-size: max(1vw, 13px);
     border-radius: 50px;
+
+    background: #ffffff;
+    color: #55356c;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    text-decoration: none;
+
     cursor: pointer;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.15);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
 }
 
 
-/* ============================= */
-/* TABLET */
-/* ============================= */
+/* =========================================================
+   CTA HOVER
+   ========================================================= */
 
-@media (max-width:1050px) {
+@media (hover: hover) {
 
-    .header-contents{
-        max-width: 60%;
+    .header-order-btn:hover {
+        transform: translateY(-2px);
+
+        background: #faf7fc;
+
+        box-shadow:
+            0 12px 30px rgba(0, 0, 0, 0.22);
     }
 
-    .header-contents h1{
-        font-size: max(3.5vw, 24px);
+}
+
+
+/* =========================================================
+   CTA ACTIVE
+   ========================================================= */
+
+.header-order-btn:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   CTA KEYBOARD ACCESSIBILITY
+   ========================================================= */
+
+.header-order-btn:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 4px;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1050px) {
+
+    .header {
+        height: 460px;
+        min-height: 0;
+
+        background-position: center;
     }
 
-    .header-contents p{
+
+    .header-contents {
+        width: 84%;
+        max-width: 650px;
+
+        left: 6%;
+        bottom: 11%;
+
+        gap: 15px;
+    }
+
+
+    .header-contents h1 {
+        max-width: 620px;
+
+        font-size: clamp(32px, 5vw, 48px);
+    }
+
+
+    .header-contents p {
+        max-width: 570px;
+
+        font-size: 15px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 750px) {
+
+    .header {
+        width: 100%;
+
+        height: 430px;
+
+        margin: 20px auto;
+
+        border-radius: 14px;
+
+        background:
+            linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.68) 0%,
+                rgba(0, 0, 0, 0.35) 52%,
+                rgba(0, 0, 0, 0.08) 100%
+            ),
+            url('/header_img.png') no-repeat;
+
+        background-size: cover;
+        background-position: center;
+    }
+
+
+    .header-contents {
+        width: 88%;
+        max-width: none;
+
+        left: 6%;
+        bottom: 8%;
+
+        gap: 12px;
+    }
+
+
+    .header-contents h1 {
+        max-width: 100%;
+
+        font-size: 32px;
+
+        line-height: 1.12;
+
+        letter-spacing: -0.5px;
+    }
+
+
+    .header-contents p {
+        max-width: 100%;
+
+        font-size: 14px;
+
+        line-height: 1.5;
+    }
+
+
+    .header-order-btn {
+        margin-top: 3px;
+
+        padding: 12px 22px;
+
         font-size: 14px;
     }
 
 }
 
 
-/* ============================= */
-/* MOBILE */
-/* ============================= */
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
 
-@media (max-width:750px) {
+@media (max-width: 480px) {
 
-    .header{
-        height: 300px;
-        margin: 20px auto;
-        background-size: cover;
-        background-position: center;
+    .header {
+        height: 400px;
+
+        margin: 15px auto;
+
         border-radius: 12px;
-        overflow: hidden;
     }
 
-    .header-contents{
-        max-width: 88%;
-        left: 5vw;
-        bottom: 12%;
+
+    .header-contents {
+        width: 90%;
+
+        left: 5%;
+        bottom: 7%;
+
         gap: 10px;
     }
 
-    .header-contents h1{
-        font-size: 28px;
-        line-height: 1.15;
+
+    .header-contents h1 {
+        font-size: 27px;
+
+        line-height: 1.14;
+
+        letter-spacing: -0.3px;
     }
 
-    .header-contents p{
-        font-size: 14px;
-        line-height: 1.4;
-        max-width: 95%;
+
+    .header-contents p {
+        font-size: 13px;
+
+        line-height: 1.45;
     }
 
-    .header-contents button{
-        padding: 10px 20px;
+
+    .header-order-btn {
+        padding: 11px 20px;
+
         font-size: 13px;
     }
 
 }
 
 
-/* ============================= */
-/* SMALL MOBILE */
-/* ============================= */
+/* =========================================================
+   VERY SMALL MOBILE
+   ========================================================= */
 
-@media (max-width:480px) {
+@media (max-width: 360px) {
 
-    .header{
-        height: 280px;
-        margin: 15px auto;
+    .header {
+        height: 380px;
     }
 
-    .header-contents{
-        max-width: 90%;
-        left: 5%;
-        bottom: 10%;
+
+    .header-contents h1 {
+        font-size: 24px;
     }
 
-    .header-contents h1{
-        font-size: 23px;
-        line-height: 1.15;
+
+    .header-contents p {
+        font-size: 12.5px;
     }
 
-    .header-contents p{
-        font-size: 13px;
-        line-height: 1.35;
-    }
 
-    .header-contents button{
-        padding: 9px 18px;
-        font-size: 12px;
+    .header-order-btn {
+        padding: 10px 18px;
+
+        font-size: 12.5px;
     }
 
 }

@@ -1,16 +1,32 @@
-.about-us{
+/* =========================================================
+   MANILA CAFÉ — ABOUT US
+   ========================================================= */
+
+.about-us {
     position: relative;
-    margin: 110px 0;
-    padding: 80px 0;
+
+    margin: 100px 0;
+    padding: 85px 0;
+
+    isolation: isolate;
 }
 
-.about-us::before{
+
+/* =========================================================
+   FULL WIDTH BACKGROUND
+   ========================================================= */
+
+.about-us::before {
     content: "";
+
     position: absolute;
     inset: 0;
     left: 50%;
+
     width: 100vw;
+
     transform: translateX(-50%);
+
     background:
         radial-gradient(
             circle at 10% 20%,
@@ -27,117 +43,192 @@
             #fffdf7,
             #f8fff6
         );
+
     z-index: -1;
 }
 
-.about-us-inner{
+
+/* =========================================================
+   INNER LAYOUT
+   ========================================================= */
+
+.about-us-inner {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
     align-items: center;
-    gap: 80px;
+
+    gap: clamp(50px, 7vw, 90px);
 }
 
 
-/* ============================= */
-/* VISUAL */
-/* ============================= */
+/* =========================================================
+   LEFT — VISUAL
+   ========================================================= */
 
-.about-us-visual{
+.about-us-visual {
     position: relative;
-    min-height: 450px;
+
+    min-height: 460px;
+
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.about-us-main-card{
+
+/* =========================================================
+   MAIN CARD
+   ========================================================= */
+
+.about-us-main-card {
     position: relative;
-    width: 85%;
+
+    width: 86%;
     min-height: 350px;
+
+    box-sizing: border-box;
+
     padding: 55px 45px;
-    border-radius: 30px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,0.95),
-            rgba(246,255,243,0.95)
-        );
-
-    border: 1px solid rgba(36, 146, 24, 0.13);
-
-    box-shadow:
-        0 25px 60px rgba(46, 79, 47, 0.10);
 
     display: flex;
     flex-direction: column;
     justify-content: center;
 
+    border: 1px solid rgba(36, 146, 24, 0.12);
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.97),
+            rgba(246, 255, 243, 0.96)
+        );
+
+    box-shadow:
+        0 24px 60px rgba(46, 79, 47, 0.10);
+
     z-index: 2;
 }
 
-.about-us-small-title{
+
+/* =========================================================
+   SMALL BRAND TITLE
+   ========================================================= */
+
+.about-us-small-title {
+    display: inline-block;
+
+    margin-bottom: 17px;
+
     color: rgb(36, 146, 24);
-    font-size: 13px;
-    font-weight: 600;
+
+    font-size: 12px;
+    font-weight: 700;
+
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 18px;
 }
 
-.about-us-main-card h2{
+
+/* =========================================================
+   VISUAL HEADING
+   ========================================================= */
+
+.about-us-main-card h2 {
+    margin: 0 0 20px;
+
     color: #262626;
-    font-size: 42px;
-    line-height: 1.1;
+
+    font-size: clamp(32px, 3.4vw, 44px);
     font-weight: 600;
-    margin-bottom: 20px;
+
+    line-height: 1.1;
+
+    letter-spacing: -0.7px;
 }
 
-.about-us-main-card h2 span{
+
+.about-us-main-card h2 span {
     color: rgb(36, 146, 24);
 }
 
-.about-us-main-card > p{
+
+/* =========================================================
+   VISUAL DESCRIPTION
+   ========================================================= */
+
+.about-us-main-card > p {
+    max-width: 400px;
+
+    margin: 0;
+
     color: #6e6e6e;
+
     font-size: 16px;
+
     line-height: 1.7;
-    max-width: 390px;
 }
 
-.about-us-flavours{
+
+/* =========================================================
+   FLAVOUR TAGS
+   ========================================================= */
+
+.about-us-flavours {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 30px;
+
+    gap: 9px;
+
+    margin-top: 28px;
 }
 
-.about-us-flavours span{
+
+.about-us-flavours span {
     padding: 8px 15px;
+
+    border: 1px solid rgba(36, 146, 24, 0.08);
     border-radius: 30px;
-    font-size: 13px;
-    font-weight: 500;
+
+    background: #edf7ed;
+
     color: #47604b;
-    background-color: #edf7ed;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1;
 }
 
 
-/* ============================= */
-/* MINI CARD */
-/* ============================= */
+/* =========================================================
+   MINI CARD
+   ========================================================= */
 
-.about-us-mini-card{
+.about-us-mini-card {
     position: absolute;
-    bottom: 15px;
+
     right: 0;
+    bottom: 10px;
 
     display: flex;
     align-items: center;
+
     gap: 12px;
+
+    max-width: 280px;
 
     padding: 16px 20px;
 
-    background-color: #fff;
+    box-sizing: border-box;
 
+    background: #ffffff;
+
+    border: 1px solid rgba(0, 0, 0, 0.04);
     border-radius: 16px;
 
     box-shadow:
@@ -146,9 +237,12 @@
     z-index: 3;
 }
 
-.about-us-mini-card > span{
+
+.about-us-mini-card > span {
     width: 40px;
     height: 40px;
+
+    flex: 0 0 40px;
 
     display: flex;
     align-items: center;
@@ -156,42 +250,61 @@
 
     border-radius: 50%;
 
+    background: #edf8ee;
     color: rgb(36, 146, 24);
-    background-color: #edf8ee;
 
     font-size: 20px;
 }
 
-.about-us-mini-card div{
+
+.about-us-mini-card div {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+
+    gap: 3px;
 }
 
-.about-us-mini-card strong{
-    color: #333;
+
+.about-us-mini-card strong {
+    color: #333333;
+
     font-size: 14px;
+    font-weight: 600;
+
+    line-height: 1.3;
 }
 
-.about-us-mini-card p{
-    color: #888;
+
+.about-us-mini-card p {
+    margin: 0;
+
+    color: #888888;
+
     font-size: 12px;
+
+    line-height: 1.4;
 }
 
 
-/* ============================= */
-/* DECORATION */
-/* ============================= */
+/* =========================================================
+   DECORATIONS
+   ========================================================= */
 
-.about-us-decoration{
+.about-us-decoration {
     position: absolute;
+
     border-radius: 50%;
+
+    pointer-events: none;
+
     z-index: 1;
 }
 
-.decoration-one{
+
+.decoration-one {
     width: 170px;
     height: 170px;
+
     top: 0;
     left: 0;
 
@@ -203,11 +316,13 @@
         );
 }
 
-.decoration-two{
+
+.decoration-two {
     width: 140px;
     height: 140px;
-    right: 20px;
+
     top: 30px;
+    right: 20px;
 
     background:
         radial-gradient(
@@ -218,160 +333,325 @@
 }
 
 
-/* ============================= */
-/* CONTENT */
-/* ============================= */
+/* =========================================================
+   RIGHT — CONTENT
+   ========================================================= */
 
-.about-us-content{
-    max-width: 580px;
+.about-us-content {
+    width: 100%;
+    max-width: 590px;
 }
 
-.section-eyebrow{
+
+/* =========================================================
+   EYEBROW
+   ========================================================= */
+
+.section-eyebrow {
     display: inline-block;
-    margin-bottom: 15px;
+
+    margin-bottom: 14px;
 
     color: rgb(36, 146, 24);
 
     font-size: 12px;
     font-weight: 700;
+
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
-.about-us-content h2{
+
+/* =========================================================
+   CONTENT HEADING
+   ========================================================= */
+
+.about-us-content h2 {
+    margin: 0 0 24px;
+
     color: #262626;
-    font-size: 42px;
-    line-height: 1.15;
+
+    font-size: clamp(32px, 3.4vw, 44px);
     font-weight: 600;
-    margin-bottom: 25px;
+
+    line-height: 1.15;
+
+    letter-spacing: -0.7px;
 }
 
-.about-us-content h2 span{
+
+.about-us-content h2 span {
     color: rgb(36, 146, 24);
 }
 
-.about-us-content > p{
+
+/* =========================================================
+   CONTENT TEXT
+   ========================================================= */
+
+.about-us-content > p {
+    margin: 0 0 16px;
+
     color: #6f6f6f;
+
     font-size: 15px;
-    line-height: 1.85;
-    margin-bottom: 16px;
+
+    line-height: 1.8;
 }
 
-.about-us-content .about-us-lead{
+
+.about-us-content .about-us-lead {
+    margin-bottom: 18px;
+
     color: #3d3d3d;
+
     font-size: 18px;
     font-weight: 500;
+
+    line-height: 1.6;
 }
 
 
-/* ============================= */
-/* QUOTE */
-/* ============================= */
+/* =========================================================
+   QUOTE
+   ========================================================= */
 
-.about-us-quote{
+.about-us-quote {
     position: relative;
+
     margin-top: 28px;
+
     padding: 22px 25px 22px 55px;
 
     border-left: 3px solid rgb(36, 146, 24);
-
-    background-color: rgba(255,255,255,0.65);
-
     border-radius: 0 12px 12px 0;
+
+    background: rgba(255, 255, 255, 0.72);
 }
 
-.about-us-quote .quote-mark{
+
+.about-us-quote .quote-mark {
     position: absolute;
+
     left: 20px;
     top: 7px;
 
     color: rgba(36, 146, 24, 0.35);
 
     font-size: 50px;
+
     line-height: 1;
 }
 
-.about-us-quote p{
-    color: #555;
+
+.about-us-quote p {
+    margin: 0;
+
+    color: #555555;
+
     font-size: 14px;
+
     line-height: 1.7;
 }
 
 
-/* ============================= */
-/* RESPONSIVE */
-/* ============================= */
+/* =========================================================
+   TABLET
+   ========================================================= */
 
-@media (max-width: 950px){
+@media (max-width: 950px) {
 
-    .about-us-inner{
+    .about-us {
+        margin: 85px 0;
+        padding: 70px 0;
+    }
+
+
+    .about-us-inner {
         grid-template-columns: 1fr;
-        gap: 50px;
+
+        gap: 55px;
     }
 
-    .about-us-content{
-        max-width: 100%;
+
+    .about-us-content {
+        max-width: 720px;
     }
 
-    .about-us-visual{
-        min-height: 400px;
+
+    .about-us-visual {
+        min-height: 420px;
+    }
+
+
+    .about-us-main-card {
+        width: 90%;
     }
 
 }
 
 
-@media (max-width: 650px){
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
-    .about-us{
-        margin: 70px 0;
+@media (max-width: 650px) {
+
+    .about-us {
+        margin: 65px 0;
         padding: 55px 0;
     }
 
-    .about-us-inner{
-        gap: 35px;
+
+    .about-us-inner {
+        gap: 40px;
     }
 
-    .about-us-visual{
+
+    .about-us-visual {
         min-height: auto;
+
         padding-bottom: 65px;
     }
 
-    .about-us-main-card{
+
+    .about-us-main-card {
         width: 100%;
         min-height: 320px;
-        padding: 40px 28px;
+
+        padding: 38px 27px;
+
         border-radius: 22px;
     }
 
-    .about-us-main-card h2{
-        font-size: 34px;
+
+    .about-us-main-card h2 {
+        font-size: 32px;
+
+        letter-spacing: -0.4px;
     }
 
-    .about-us-content h2{
-        font-size: 34px;
+
+    .about-us-main-card > p {
+        font-size: 14px;
     }
 
-    .about-us-mini-card{
-        right: 10px;
-        bottom: 10px;
+
+    .about-us-flavours {
+        margin-top: 24px;
+    }
+
+
+    .about-us-flavours span {
+        padding: 7px 13px;
+
+        font-size: 12px;
+    }
+
+
+    .about-us-mini-card {
+        right: 8px;
+        bottom: 8px;
+    }
+
+
+    .about-us-content h2 {
+        font-size: 32px;
+
+        letter-spacing: -0.4px;
+    }
+
+
+    .about-us-content > p {
+        font-size: 14px;
+
+        line-height: 1.7;
+    }
+
+
+    .about-us-content .about-us-lead {
+        font-size: 17px;
+    }
+
+
+    .about-us-quote {
+        margin-top: 24px;
+
+        padding:
+            20px
+            20px
+            20px
+            48px;
+    }
+
+
+    .about-us-quote .quote-mark {
+        left: 16px;
+
+        font-size: 44px;
     }
 
 }
 
 
-@media (max-width: 420px){
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+    .about-us {
+        margin: 55px 0;
+        padding: 48px 0;
+    }
+
+
+    .about-us-main-card {
+        min-height: 300px;
+
+        padding: 34px 21px;
+    }
+
 
     .about-us-main-card h2,
-    .about-us-content h2{
-        font-size: 30px;
+    .about-us-content h2 {
+        font-size: 29px;
     }
 
-    .about-us-main-card{
-        padding: 35px 22px;
+
+    .about-us-main-card > p {
+        font-size: 13.5px;
     }
 
-    .about-us-mini-card{
-        left: 15px;
-        right: 15px;
+
+    .about-us-visual {
+        padding-bottom: 72px;
+    }
+
+
+    .about-us-mini-card {
+        left: 12px;
+        right: 12px;
+        bottom: 5px;
+
+        max-width: none;
+
+        padding: 14px 16px;
+    }
+
+
+    .about-us-content > p {
+        font-size: 13.5px;
+    }
+
+
+    .about-us-content .about-us-lead {
+        font-size: 16px;
+    }
+
+
+    .about-us-quote p {
+        font-size: 13px;
     }
 
 }

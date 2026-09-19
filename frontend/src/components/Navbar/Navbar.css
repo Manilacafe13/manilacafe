@@ -1,5 +1,6 @@
-.navbar{
+.navbar {
     padding: 20px 0px;
+
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -10,9 +11,19 @@
 /* LOGGA */
 /* ============================= */
 
-.navbar .logo{
+.navbar-logo-link {
+    display: flex;
+    align-items: center;
+
+    text-decoration: none;
+}
+
+
+.navbar .logo {
     width: 150px;
     display: block;
+
+    cursor: pointer;
 }
 
 
@@ -20,33 +31,75 @@
 /* NAVIGATION */
 /* ============================= */
 
-.navbar-menu{
+.navbar-menu {
     display: flex;
     align-items: center;
+
     list-style: none;
+
     gap: 20px;
+
     color: #49557e;
+
     font-size: 18px;
 }
 
 
-.navbar-menu a{
+/* LÄNKAR + KNAPPAR */
+
+.navbar-menu a,
+.navbar-menu button {
+    margin: 0;
+    padding: 0;
+
+    border: none;
+    background: transparent;
+
     color: #49557e;
+
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+
     text-decoration: none;
+
     cursor: pointer;
 
-    transition: 0.2s;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 
-.navbar-menu a:hover{
+.navbar-menu a:hover,
+.navbar-menu button:hover {
     color: rgb(36, 146, 24);
 }
 
 
-.navbar .active{
+/* AKTIV NAVIGATION */
+
+.navbar-menu a.active,
+.navbar-menu button.active {
     padding-bottom: 2px;
-    border-bottom: 2px solid #49557e;
+
+    border-bottom:
+        2px solid #49557e;
+}
+
+
+/* KEYBOARD ACCESSIBILITY */
+
+.navbar-menu a:focus-visible,
+.navbar-menu button:focus-visible,
+.navbar-logo-link:focus-visible {
+    outline:
+        2px solid rgb(36, 146, 24);
+
+    outline-offset: 4px;
+
+    border-radius: 3px;
 }
 
 
@@ -54,9 +107,10 @@
 /* HÖGER SIDA */
 /* ============================= */
 
-.navbar-right{
+.navbar-right {
     display: flex;
     align-items: center;
+
     gap: 40px;
 }
 
@@ -65,15 +119,16 @@
 /* SÖK */
 /* ============================= */
 
-.navbar-search{
+.navbar-search {
     width: 24px;
+
     cursor: pointer;
 
     transition: 0.2s;
 }
 
 
-.navbar-search:hover{
+.navbar-search:hover {
     opacity: 0.7;
 }
 
@@ -82,7 +137,7 @@
 /* VARUKORG */
 /* ============================= */
 
-.navbar-search-icon{
+.navbar-search-icon {
     position: relative;
 
     display: flex;
@@ -91,22 +146,23 @@
 }
 
 
-.navbar-search-icon a{
+.navbar-search-icon a {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 
-.navbar-search-icon img{
+.navbar-search-icon img {
     width: 25px;
+
     cursor: pointer;
 
     transition: 0.2s;
 }
 
 
-.navbar-search-icon img:hover{
+.navbar-search-icon img:hover {
     opacity: 0.75;
 }
 
@@ -115,7 +171,7 @@
 /* VARUKORG ANTAL */
 /* ============================= */
 
-.navbar-search-icon .dot{
+.navbar-search-icon .dot {
     position: absolute;
 
     min-width: 18px;
@@ -123,7 +179,9 @@
 
     padding: 0 4px;
 
-    background-color: rgb(3, 149, 44);
+    background-color:
+        rgb(3, 149, 44);
+
     color: white;
 
     border-radius: 50px;
@@ -148,17 +206,16 @@
 /* LOGGA IN */
 /* ============================= */
 
-/*
-    Samma grunddesign som du hade tidigare
-*/
-
-.login-button{
+.login-button {
     background: transparent;
 
+    font-family: inherit;
     font-size: 16px;
+
     color: #49557e;
 
-    border: 1px solid rgb(36, 146, 24);
+    border:
+        1px solid rgb(36, 146, 24);
 
     padding: 10px 30px;
 
@@ -166,12 +223,22 @@
 
     cursor: pointer;
 
-    transition: 0.3s;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
 }
 
 
-.login-button:hover{
+.login-button:hover {
     background-color: #fff4f2;
+}
+
+
+.login-button:focus-visible {
+    outline:
+        2px solid rgb(36, 146, 24);
+
+    outline-offset: 3px;
 }
 
 
@@ -179,7 +246,7 @@
 /* PROFIL */
 /* ============================= */
 
-.navbar-profile{
+.navbar-profile {
     position: relative;
 
     display: flex;
@@ -192,7 +259,7 @@
 /* PROFILKNAPP */
 /* ============================= */
 
-.profile-button{
+.profile-button {
     width: 38px;
     height: 38px;
 
@@ -213,8 +280,16 @@
 }
 
 
-.profile-button:hover{
+.profile-button:hover {
     background-color: #f4f4f4;
+}
+
+
+.profile-button:focus-visible {
+    outline:
+        2px solid rgb(36, 146, 24);
+
+    outline-offset: 3px;
 }
 
 
@@ -222,7 +297,7 @@
 /* PROFILIKON */
 /* ============================= */
 
-.profile-icon{
+.profile-icon {
     width: 30px;
     height: 30px;
 
@@ -236,7 +311,7 @@
 /* PROFIL DROPDOWN */
 /* ============================= */
 
-.nav-profile-dropdown{
+.nav-profile-dropdown {
     position: absolute;
 
     top: 48px;
@@ -246,18 +321,21 @@
 
     background-color: white;
 
-    border: 1px solid #e7e7e7;
+    border:
+        1px solid #e7e7e7;
 
     border-radius: 10px;
 
     padding: 8px;
 
     box-shadow:
-        0px 8px 20px rgba(0, 0, 0, 0.08);
+        0px 8px 20px
+        rgba(0, 0, 0, 0.08);
 
     z-index: 1000;
 
-    animation: profileDropdown 0.18s ease;
+    animation:
+        profileDropdown 0.18s ease;
 }
 
 
@@ -265,16 +343,20 @@
 /* DROPDOWN ANIMATION */
 /* ============================= */
 
-@keyframes profileDropdown{
+@keyframes profileDropdown {
 
-    from{
+    from {
         opacity: 0;
-        transform: translateY(-5px);
+
+        transform:
+            translateY(-5px);
     }
 
-    to{
+    to {
         opacity: 1;
-        transform: translateY(0);
+
+        transform:
+            translateY(0);
     }
 
 }
@@ -284,7 +366,7 @@
 /* DROPDOWN ALTERNATIV */
 /* ============================= */
 
-.profile-dropdown-item{
+.profile-dropdown-item {
     width: 100%;
 
     background: transparent;
@@ -302,20 +384,32 @@
 
     color: #49557e;
 
+    font-family: inherit;
     font-size: 15px;
 
     cursor: pointer;
 
     text-align: left;
 
-    transition: 0.2s;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 
-.profile-dropdown-item:hover{
+.profile-dropdown-item:hover {
     background-color: #f5f5f5;
 
-    color: rgb(36, 146, 24);
+    color:
+        rgb(36, 146, 24);
+}
+
+
+.profile-dropdown-item:focus-visible {
+    outline:
+        2px solid rgb(36, 146, 24);
+
+    outline-offset: 1px;
 }
 
 
@@ -323,7 +417,7 @@
 /* DROPDOWN IKON */
 /* ============================= */
 
-.profile-dropdown-icon{
+.profile-dropdown-icon {
     width: 22px;
 
     display: flex;
@@ -338,7 +432,7 @@
 /* LINJE */
 /* ============================= */
 
-.profile-dropdown-line{
+.profile-dropdown-line {
     width: 100%;
     height: 1px;
 
@@ -352,7 +446,7 @@
 /* LOGGA UT */
 /* ============================= */
 
-.logout-button:hover{
+.logout-button:hover {
     background-color: #fff5f5;
 
     color: #d84545;
@@ -363,35 +457,36 @@
 /* 1050PX */
 /* ============================= */
 
-@media (max-width:1050px){
+@media (max-width: 1050px) {
 
-    .navbar .logo{
+    .navbar .logo {
         width: 140px;
     }
 
 
-    .navbar-menu{
+    .navbar-menu {
         gap: 20px;
+
         font-size: 17px;
     }
 
 
-    .navbar-right{
+    .navbar-right {
         gap: 30px;
     }
 
 
-    .navbar-right img{
+    .navbar-right img {
         width: 22px;
     }
 
 
-    .login-button{
+    .login-button {
         padding: 8px 25px;
     }
 
 
-    .profile-icon{
+    .profile-icon {
         width: 29px !important;
         height: 29px;
     }
@@ -403,47 +498,49 @@
 /* 900PX */
 /* ============================= */
 
-@media (max-width:900px){
+@media (max-width: 900px) {
 
-    .navbar .logo{
+    .navbar .logo {
         width: 140px;
     }
 
 
-    .navbar-menu{
+    .navbar-menu {
         gap: 15px;
+
         font-size: 16px;
     }
 
 
-    .navbar-right{
+    .navbar-right {
         gap: 20px;
     }
 
 
-    .navbar-search{
+    .navbar-search {
         width: 20px;
     }
 
 
-    .navbar-search-icon img{
+    .navbar-search-icon img {
         width: 20px;
     }
 
 
-    .login-button{
+    .login-button {
         padding: 7px 20px;
+
         font-size: 15px;
     }
 
 
-    .profile-button{
+    .profile-button {
         width: 36px;
         height: 36px;
     }
 
 
-    .profile-icon{
+    .profile-icon {
         width: 27px !important;
         height: 27px;
     }
@@ -455,30 +552,31 @@
 /* MOBIL */
 /* ============================= */
 
-@media (max-width:750px){
+@media (max-width: 750px) {
 
-    .navbar-menu{
+    .navbar-menu {
         display: none;
     }
 
 
-    .navbar-right{
+    .navbar-right {
         gap: 18px;
     }
 
 
-    .navbar .logo{
+    .navbar .logo {
         width: 125px;
     }
 
 
-    .login-button{
+    .login-button {
         padding: 7px 18px;
+
         font-size: 14px;
     }
 
 
-    .nav-profile-dropdown{
+    .nav-profile-dropdown {
         width: 195px;
 
         top: 45px;
@@ -492,34 +590,34 @@
 /* LITEN MOBIL */
 /* ============================= */
 
-@media (max-width:480px){
+@media (max-width: 480px) {
 
-    .navbar{
+    .navbar {
         padding: 15px 0;
     }
 
 
-    .navbar .logo{
+    .navbar .logo {
         width: 110px;
     }
 
 
-    .navbar-right{
+    .navbar-right {
         gap: 14px;
     }
 
 
-    .navbar-search{
+    .navbar-search {
         width: 19px;
     }
 
 
-    .navbar-search-icon img{
+    .navbar-search-icon img {
         width: 20px;
     }
 
 
-    .navbar-search-icon .dot{
+    .navbar-search-icon .dot {
         min-width: 16px;
         height: 16px;
 
@@ -530,26 +628,26 @@
     }
 
 
-    .login-button{
+    .login-button {
         padding: 7px 14px;
 
         font-size: 13px;
     }
 
 
-    .profile-button{
+    .profile-button {
         width: 34px;
         height: 34px;
     }
 
 
-    .profile-icon{
+    .profile-icon {
         width: 26px !important;
         height: 26px;
     }
 
 
-    .nav-profile-dropdown{
+    .nav-profile-dropdown {
         width: 185px;
     }
 

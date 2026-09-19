@@ -1,15 +1,27 @@
 import React, { useContext, useState } from 'react'
 import './FoodItem.css'
+
 import { assets } from '../../assets/assets'
 import { StoreContext } from '../../context/StoreContext'
+import { Link } from 'react-router-dom'
 
+
+const createSlug = (name = "") =>
+    String(name)
+        .toLowerCase()
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
 
 const FoodItem = ({
     id,
     name,
     price,
     description,
-    image
+    image,
+    category
 }) => {
 
     const {
@@ -19,8 +31,7 @@ const FoodItem = ({
         url
     } = useContext(StoreContext)
 
-    const [showAllergens, setShowAllergens] =
-        useState(false)
+    const [showAllergens, setShowAllergens] = useState(false)
 
 
     // ======================================================
@@ -56,7 +67,7 @@ const FoodItem = ({
                 "Innehåller banan och kanel."
         },
 
-        "fruit Cup": {
+        "fruit cup": {
             ingredients:
                 "Eden cheese, Fiesta fruit cocktail, nata de coco, kokoskött, kokosgelé och kondenserad mjölk.",
             allergens:
@@ -86,6 +97,10 @@ const FoodItem = ({
     }
 
 
+    // ======================================================
+    // NORMALIZE PRODUCT NAME
+    // ======================================================
+
     const normalizedName =
         String(name || "")
             .trim()
@@ -107,9 +122,7 @@ const FoodItem = ({
 
 
         if (!imageValue) {
-
             return assets.upload_area || ""
-
         }
 
 
@@ -117,28 +130,22 @@ const FoodItem = ({
             imageValue.startsWith("https://") ||
             imageValue.startsWith("http://")
         ) {
-
             return imageValue
-
         }
 
 
-        if (
-            imageValue.startsWith("//")
-        ) {
-
+        if (imageValue.startsWith("//")) {
             return `https:${imageValue}`
-
         }
 
 
         return `${url}/images/${imageValue}`
-
     }
 
 
-    const imageUrl =
-        getImageUrl()
+    const imageUrl = getImageUrl()
+
+    const quantity = cartItems[id] || 0
 
 
     // ======================================================
@@ -149,11 +156,12 @@ const FoodItem = ({
 
         <article
             className="food-item"
-            aria-label={name}
+            aria-labelledby={`food-title-${id}`}
         >
 
-
-            {/* PRODUCT IMAGE */}
+            {/* =================================================
+                PRODUCT IMAGE
+            ================================================= */}
 
             <div className="food-item-img-container">
 
@@ -166,42 +174,70 @@ const FoodItem = ({
                 />
 
 
-                {!cartItems[id] ? (
+                {/* ADD TO CART */}
 
-                    <img
-                        className="add"
-                        onClick={() =>
-                            addToCart(id)
-                        }
-                        src={assets.add_icon_white}
-                        alt={`Lägg till ${name} i varukorgen`}
-                    />
+                {quantity === 0 ? (
+
+                    <button
+                        type="button"
+                        className="food-item-add-button"
+                        onClick={() => addToCart(id)}
+                        aria-label={`Lägg till ${name} i varukorgen`}
+                    >
+
+                        <img
+                            src={assets.add_icon_white}
+                            alt=""
+                            aria-hidden="true"
+                        />
+
+                    </button>
 
                 ) : (
 
-                    <div className="food-item-counter">
+                    <div
+                        className="food-item-counter"
+                        aria-label={`${quantity} ${name} i varukorgen`}
+                    >
 
-                        <img
-                            onClick={() =>
-                                removeFromCart(id)
-                            }
-                            src={assets.remove_icon_red}
-                            alt={`Minska antal ${name}`}
-                        />
+                        <button
+                            type="button"
+                            className="food-item-counter-button"
+                            onClick={() => removeFromCart(id)}
+                            aria-label={`Minska antal ${name}`}
+                        >
+
+                            <img
+                                src={assets.remove_icon_red}
+                                alt=""
+                                aria-hidden="true"
+                            />
+
+                        </button>
 
 
-                        <p>
-                            {cartItems[id]}
-                        </p>
+                        <span
+                            className="food-item-quantity"
+                            aria-live="polite"
+                        >
+                            {quantity}
+                        </span>
 
 
-                        <img
-                            onClick={() =>
-                                addToCart(id)
-                            }
-                            src={assets.add_icon_green}
-                            alt={`Lägg till en ${name}`}
-                        />
+                        <button
+                            type="button"
+                            className="food-item-counter-button"
+                            onClick={() => addToCart(id)}
+                            aria-label={`Lägg till en ${name}`}
+                        >
+
+                            <img
+                                src={assets.add_icon_green}
+                                alt=""
+                                aria-hidden="true"
+                            />
+
+                        </button>
 
                     </div>
 
@@ -210,29 +246,51 @@ const FoodItem = ({
             </div>
 
 
-            {/* PRODUCT INFO */}
+            {/* =================================================
+                PRODUCT INFORMATION
+            ================================================= */}
 
             <div className="food-item-info">
 
+
+                {/* CATEGORY */}
+
+                {category && (
+
+                    <span className="food-item-category">
+                        {category}
+                    </span>
+
+                )}
+
+
+                {/* =================================================
+    PRODUCT NAME
+================================================= */}
+
                 <div className="food-item-name-rating">
 
-                    <h3>
-                        {name}
+                    <h3 id={`food-title-${id}`}>
+                        <Link
+                            to={`/dessert/${createSlug(name)}`}
+                            className="food-item-product-link"
+                            aria-label={`Läs mer om ${name}`}
+                        >
+                            {name}
+                        </Link>
                     </h3>
-
-                    <img
-                        src={assets.rating_starts}
-                        alt=""
-                        aria-hidden="true"
-                    />
 
                 </div>
 
+
+                {/* DESCRIPTION */}
 
                 <p className="food-item-desc">
                     {description}
                 </p>
 
+
+                {/* INGREDIENTS & ALLERGENS */}
 
                 {productInfo && (
 
@@ -242,15 +300,20 @@ const FoodItem = ({
                             type="button"
                             className="food-item-allergen-button"
                             onClick={() =>
-                                setShowAllergens(
-                                    (prev) => !prev
-                                )
+                                setShowAllergens(prev => !prev)
                             }
                             aria-expanded={showAllergens}
+                            aria-controls={`allergens-${id}`}
                         >
-                            Ingredienser & allergener
 
                             <span>
+                                Ingredienser & allergener
+                            </span>
+
+                            <span
+                                className="food-item-allergen-icon"
+                                aria-hidden="true"
+                            >
                                 {showAllergens ? "−" : "+"}
                             </span>
 
@@ -259,28 +322,23 @@ const FoodItem = ({
 
                         {showAllergens && (
 
-                            <div className="food-item-allergen-content">
+                            <div
+                                className="food-item-allergen-content"
+                                id={`allergens-${id}`}
+                            >
 
                                 <p>
-                                    <strong>
-                                        Ingredienser:
-                                    </strong>{" "}
+                                    <strong>Ingredienser:</strong>{" "}
                                     {productInfo.ingredients}
                                 </p>
 
-
                                 <p>
-                                    <strong>
-                                        Allergener:
-                                    </strong>{" "}
+                                    <strong>Allergener:</strong>{" "}
                                     {productInfo.allergens}
                                 </p>
 
-
                                 <p>
-                                    <strong>
-                                        Övrig information:
-                                    </strong>{" "}
+                                    <strong>Övrig information:</strong>{" "}
                                     {productInfo.extra}
                                 </p>
 
@@ -293,12 +351,27 @@ const FoodItem = ({
                 )}
 
 
-                <p
-                    className="food-item-price"
-                    aria-label={`Pris ${price} kronor`}
-                >
-                    {price} kr
-                </p>
+                {/* BOTTOM */}
+
+                <div className="food-item-bottom">
+
+                    <p
+                        className="food-item-price"
+                        aria-label={`Pris ${price} kronor`}
+                    >
+                        {price} kr
+                    </p>
+
+
+                    {quantity > 0 && (
+
+                        <span className="food-item-in-cart">
+                            {quantity} i varukorgen
+                        </span>
+
+                    )}
+
+                </div>
 
             </div>
 
