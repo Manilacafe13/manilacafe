@@ -10,6 +10,7 @@ import userRouter from "./routes/userRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import futureProductRouter from "./routes/futureProductRoute.js";
+import adminRouter from "./routes/adminRoute.js";
 
 import {
   stripeWebhook
@@ -282,6 +283,10 @@ app.use(
   orderRouter
 );
 
+app.use(
+  "/api/admin",
+  adminRouter
+);
 
 // ======================================================
 // FUTURE PRODUCTS / CUSTOMER VOTING

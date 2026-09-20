@@ -33,3 +33,5 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 backend/mongodb-backup/
 backend/mongodb-backup-manilacafe/
+.vercel
+.env*

@@ -121,7 +121,7 @@ const Login = () => {
       const response =
         await axios.post(
 
-          `${url}/api/user/login`,
+          `${url}/api/admin/login`,
 
           {
             email,
