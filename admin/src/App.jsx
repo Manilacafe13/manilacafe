@@ -1,4 +1,10 @@
-import React from 'react'
+import React, {
+  useEffect,
+  useState
+} from 'react'
+
+import axios from 'axios'
+
 import Navbar from './components/Navbar/Navbar'
 import Sidebar from './components/Sidebar/Sidebar'
 
@@ -39,19 +45,124 @@ const App = () => {
     useLocation()
 
 
-  const token =
-    localStorage.getItem("token")
-
-
   const isLoginPage =
     location.pathname === "/login"
+
+
+  // ======================================================
+  // SESSION STATE
+  // ======================================================
+
+  const [authStatus, setAuthStatus] =
+    useState("checking")
+
+
+  // ======================================================
+  // VERIFY ADMIN SESSION
+  // ======================================================
+
+  useEffect(() => {
+
+    let active = true
+
+
+    const verifyAdmin = async () => {
+
+      const token =
+        localStorage.getItem("token")
+
+
+      // No token
+      if (!token) {
+
+        if (active) {
+          setAuthStatus("unauthenticated")
+        }
+
+        return
+
+      }
+
+
+      try {
+
+        const response =
+          await axios.get(
+            `${url}/api/admin/verify`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          )
+
+
+        if (
+          active &&
+          response.data.success
+        ) {
+
+          setAuthStatus("authenticated")
+
+        }
+
+
+      } catch (error) {
+
+        localStorage.removeItem("token")
+
+        if (active) {
+          setAuthStatus("unauthenticated")
+        }
+
+      }
+
+    }
+
+
+    verifyAdmin()
+
+
+    return () => {
+      active = false
+    }
+
+  }, [url])
+
+
+  // ======================================================
+  // CHECKING SESSION
+  // ======================================================
+
+  if (authStatus === "checking") {
+
+    return (
+
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "Arial, sans-serif"
+        }}
+      >
+        Kontrollerar adminsession...
+      </div>
+
+    )
+
+  }
 
 
   // ======================================================
   // NOT LOGGED IN
   // ======================================================
 
-  if (!token && !isLoginPage) {
+  if (
+    authStatus === "unauthenticated" &&
+    !isLoginPage
+  ) {
 
     return (
       <Navigate
@@ -68,6 +179,18 @@ const App = () => {
   // ======================================================
 
   if (isLoginPage) {
+
+    if (authStatus === "authenticated") {
+
+      return (
+        <Navigate
+          to="/orders"
+          replace
+        />
+      )
+
+    }
+
 
     return (
       <>
@@ -95,6 +218,18 @@ const App = () => {
   // ADMIN PANEL
   // ======================================================
 
+  if (authStatus !== "authenticated") {
+
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    )
+
+  }
+
+
   return (
 
     <div>
@@ -102,8 +237,12 @@ const App = () => {
       <ToastContainer />
 
 
-      <Navbar />
-
+      <Navbar
+        onLogout={() => {
+          localStorage.removeItem("token")
+          setAuthStatus("unauthenticated")
+        }}
+      />
       <hr />
 
 
@@ -113,7 +252,6 @@ const App = () => {
 
 
         <Routes>
-
 
           <Route
             path="/"
@@ -167,7 +305,6 @@ const App = () => {
               />
             }
           />
-
 
         </Routes>
 
