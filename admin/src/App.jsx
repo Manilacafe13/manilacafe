@@ -202,7 +202,12 @@ const App = () => {
           <Route
             path="/login"
             element={
-              <Login />
+              <Login
+                url={url}
+                onLogin={() => {
+                  setAuthStatus("authenticated")
+                }}
+              />
             }
           />
 

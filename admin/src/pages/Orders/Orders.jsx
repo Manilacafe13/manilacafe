@@ -1,11 +1,13 @@
 import React, {
   useCallback,
   useEffect,
+  useRef,
   useState
 } from 'react'
 
 import './Orders.css'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 
 const Orders = ({ url }) => {
@@ -36,6 +38,12 @@ const Orders = ({ url }) => {
 
   const [updatingOrder, setUpdatingOrder] =
     useState(null)
+
+  const knownOrderIds =
+    useRef(new Set())
+
+  const initialOrdersLoaded =
+    useRef(false)
 
 
   // ======================================================
@@ -129,9 +137,11 @@ const Orders = ({ url }) => {
 
       try {
 
-        setLoading(true)
+  if (!initialOrdersLoaded.current) {
+    setLoading(true)
+  }
 
-        setError("")
+  setError("")
 
 
         const response =
@@ -152,15 +162,140 @@ const Orders = ({ url }) => {
           response.data.success
         ) {
 
-          setOrders(
-
-            Array.isArray(
-              response.data.data
-            )
+          const fetchedOrders =
+            Array.isArray(response.data.data)
               ? response.data.data
               : []
 
-          )
+
+          // ================================================
+          // FIRST LOAD
+          // ================================================
+
+          if (!initialOrdersLoaded.current) {
+
+            fetchedOrders.forEach((order) => {
+
+              if (order._id) {
+                knownOrderIds.current.add(order._id)
+              }
+
+            })
+
+            initialOrdersLoaded.current = true
+
+          } else {
+
+            // ==============================================
+            // FIND NEW ORDERS
+            // ==============================================
+
+            const newOrders =
+              fetchedOrders.filter((order) => {
+
+                return (
+                  order._id &&
+                  !knownOrderIds.current.has(order._id)
+                )
+
+              })
+
+
+            // ==============================================
+            // NOTIFY ADMIN
+            // ==============================================
+
+            if (newOrders.length > 0) {
+
+              if (newOrders.length === 1) {
+
+                toast.success(
+                  `🔔 Ny beställning! ${getOrderNumber(
+                    newOrders[0]._id
+                  )}`,
+                  {
+                    autoClose: 10000
+                  }
+                )
+
+              } else {
+
+                toast.success(
+                  `🔔 ${newOrders.length} nya beställningar!`,
+                  {
+                    autoClose: 10000
+                  }
+                )
+
+              }
+
+
+              // ============================================
+              // SOUND
+              // ============================================
+
+              try {
+
+                const audioContext =
+                  new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                  )()
+
+                const oscillator =
+                  audioContext.createOscillator()
+
+                const gain =
+                  audioContext.createGain()
+
+                oscillator.connect(gain)
+                gain.connect(audioContext.destination)
+
+                oscillator.frequency.value = 880
+
+                gain.gain.setValueAtTime(
+                  0.15,
+                  audioContext.currentTime
+                )
+
+                gain.gain.exponentialRampToValueAtTime(
+                  0.001,
+                  audioContext.currentTime + 0.5
+                )
+
+                oscillator.start()
+
+                oscillator.stop(
+                  audioContext.currentTime + 0.5
+                )
+
+              } catch (error) {
+
+                console.warn(
+                  "Order notification sound unavailable."
+                )
+
+              }
+
+            }
+
+
+            // ==============================================
+            // REMEMBER ORDERS
+            // ==============================================
+
+            fetchedOrders.forEach((order) => {
+
+              if (order._id) {
+                knownOrderIds.current.add(order._id)
+              }
+
+            })
+
+          }
+
+
+          setOrders(fetchedOrders)
 
         } else {
 
@@ -220,12 +355,24 @@ const Orders = ({ url }) => {
   // LOAD ORDERS
   // ======================================================
 
-  useEffect(() => {
+   useEffect(() => {
 
-    fetchAllOrders()
+  fetchAllOrders()
 
-  }, [fetchAllOrders])
 
+  const interval =
+    setInterval(() => {
+
+      fetchAllOrders()
+
+    }, 15000)
+
+
+  return () => {
+    clearInterval(interval)
+  }
+
+}, [fetchAllOrders])
 
   // ======================================================
   // UPDATE ORDER STATUS

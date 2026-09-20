@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
 
-const Login = () => {
+const Login = ({ onLogin }) => {
 
   // ======================================================
   // BACKEND URL
@@ -172,6 +172,11 @@ const Login = () => {
         "token",
         response.data.token
       )
+
+
+      if (onLogin) {
+        onLogin()
+      }
 
 
       toast.success(
