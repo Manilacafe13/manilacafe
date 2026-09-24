@@ -4,6 +4,7 @@ import search_icon from './search_icon.png'
 import menu_2 from './menu_2.png'
 import menu_3 from './menu_3.png'
 import menu_8 from './menu_8.png'
+import menu_5 from './menu_5.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
@@ -55,5 +56,10 @@ export const menu_list = [
     {
         menu_name: "Ube cake",
         menu_image: menu_8
+    },
+    {
+        menu_name: "Turon",
+        menu_image: menu_5
     }
+
 ]

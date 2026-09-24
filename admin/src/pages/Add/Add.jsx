@@ -39,7 +39,7 @@ const Add = ({ url }) => {
       name: "",
       description: "",
       price: "",
-      category: "Halo-Halo",
+      category: "Turon",
       sameDayStock: 0
     })
 
@@ -345,7 +345,7 @@ if (
           name: "",
           description: "",
           price: "",
-          category: "Halo-Halo",
+          category: "Turon",
           sameDayStock: 0
         })
 
@@ -539,8 +539,8 @@ if (
               value={data.category}
             >
 
-              <option value="Halo-Halo">
-                Halo-Halo
+              <option value="Turon">
+                Turon
               </option>
 
               <option value="Ube cake">
