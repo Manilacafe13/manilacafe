@@ -44,22 +44,21 @@ export const assets = {
 }
 
 export const menu_list = [
-    
     {
         menu_name: "Floats",
         menu_image: menu_2
     },
     {
-        menu_name: "Fruit cup",
+        menu_name: "Fruit Cup",
         menu_image: menu_3
     },
     {
-        menu_name: "Ube cake",
+        menu_name: "Ube Cake",
         menu_image: menu_8
     },
     {
         menu_name: "Turon",
         menu_image: menu_5
     }
-
 ]
+
