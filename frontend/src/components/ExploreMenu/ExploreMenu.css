@@ -37,7 +37,6 @@
 
 .explore-menu-text {
     max-width: 760px;
-
     margin: 0;
 
     color: #6f6f6f;
@@ -62,7 +61,6 @@
     width: 100%;
 
     margin: 16px 0 10px;
-
     padding: 4px 2px 10px;
 
     overflow-x: auto;
@@ -112,17 +110,34 @@
    ========================================================= */
 
 .explore-menu-list-item img {
+    /* Force every category image to the exact same shape */
     width: clamp(82px, 7.5vw, 112px);
+    height: clamp(82px, 7.5vw, 112px);
+
+    min-width: clamp(82px, 7.5vw, 112px);
+    min-height: clamp(82px, 7.5vw, 112px);
+
+    max-width: clamp(82px, 7.5vw, 112px);
+    max-height: clamp(82px, 7.5vw, 112px);
 
     aspect-ratio: 1 / 1;
 
-    object-fit: cover;
+    display: block;
 
-    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+
+    border-radius: 50% !important;
 
     border: 3px solid transparent;
 
     padding: 2px;
+
+    box-sizing: border-box;
+
+    overflow: hidden;
+
+    flex-shrink: 0;
 
     transition:
         transform 0.2s ease,
@@ -164,6 +179,8 @@
 
     padding: 3px;
 
+    border-radius: 50% !important;
+
     box-shadow:
         0 5px 18px rgba(111, 76, 134, 0.18);
 }
@@ -184,6 +201,8 @@
     .explore-menu-list-item:hover img {
         transform: translateY(-3px) scale(1.03);
 
+        border-radius: 50% !important;
+
         box-shadow:
             0 8px 22px rgba(0, 0, 0, 0.10);
     }
@@ -192,7 +211,6 @@
     .explore-menu-list-item:hover span {
         color: #6f4c86;
     }
-
 }
 
 
@@ -203,6 +221,8 @@
 .explore-menu-list-item:focus-visible img {
     outline: 3px solid #6f4c86;
     outline-offset: 4px;
+
+    border-radius: 50% !important;
 }
 
 
@@ -253,8 +273,16 @@
 
     .explore-menu-list-item img {
         width: 88px;
-    }
+        height: 88px;
 
+        min-width: 88px;
+        min-height: 88px;
+
+        max-width: 88px;
+        max-height: 88px;
+
+        border-radius: 50% !important;
+    }
 }
 
 
@@ -305,6 +333,15 @@
 
     .explore-menu-list-item img {
         width: 78px;
+        height: 78px;
+
+        min-width: 78px;
+        min-height: 78px;
+
+        max-width: 78px;
+        max-height: 78px;
+
+        border-radius: 50% !important;
     }
 
 
@@ -315,7 +352,6 @@
 
         font-size: 13px;
     }
-
 }
 
 
@@ -352,6 +388,15 @@
 
     .explore-menu-list-item img {
         width: 70px;
+        height: 70px;
+
+        min-width: 70px;
+        min-height: 70px;
+
+        max-width: 70px;
+        max-height: 70px;
+
+        border-radius: 50% !important;
     }
 
 
@@ -360,5 +405,4 @@
 
         font-size: 12.5px;
     }
-
 }
