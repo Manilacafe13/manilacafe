@@ -12,14 +12,13 @@ const ExploreMenu = ({ category, setCategory }) => {
     >
 
       <h2 id='explore-menu-title'>
-        Upptäck våra desserter
+        Upptäck våra filippinska favoriter
       </h2>
 
       <p className='explore-menu-text'>
-        Utforska Manila Cafés filippinska desserter i Göteborg.
-        Upptäck tropiska smaker och favoriter som Mango Float,
-        Ube Cake, Fruit Cup och fler sötsaker för avhämtning
-        eller leverans.
+        Utforska Manila Cafés filippinska maträtter och desserter i Göteborg.
+        Upptäck traditionella smaker, tropiska favoriter och hemlagade rätter
+        för avhämtning eller leverans.
       </p>
 
       <div className="explore-menu-list">
@@ -29,7 +28,6 @@ const ExploreMenu = ({ category, setCategory }) => {
           const isActive = category === item.menu_name
 
           return (
-
             <button
               type="button"
               onClick={() =>
@@ -48,7 +46,7 @@ const ExploreMenu = ({ category, setCategory }) => {
               <img
                 className={isActive ? "active" : ""}
                 src={item.menu_image}
-                alt={`${item.menu_name} – dessert från Manila Café`}
+                alt={`${item.menu_name} från Manila Café`}
                 loading="lazy"
               />
 
@@ -57,7 +55,6 @@ const ExploreMenu = ({ category, setCategory }) => {
               </span>
 
             </button>
-
           )
 
         })}

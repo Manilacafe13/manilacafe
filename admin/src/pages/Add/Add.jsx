@@ -39,7 +39,7 @@ const Add = ({ url }) => {
       name: "",
       description: "",
       price: "",
-      category: "Turon",
+      category: "Maträtter",
       sameDayStock: 0
     })
 
@@ -167,68 +167,68 @@ const Add = ({ url }) => {
     // ==================================================
 
     if (
-  !data.name.trim() ||
-  !data.description.trim() ||
-  !data.category.trim()
-) {
+      !data.name.trim() ||
+      !data.description.trim() ||
+      !data.category.trim()
+    ) {
 
-  toast.error(
-    "Alla produktuppgifter måste fyllas i."
-  )
+      toast.error(
+        "Alla produktuppgifter måste fyllas i."
+      )
 
-  return
-}
-
-
-if (
-  data.name.trim().length >
-  MAX_NAME_LENGTH
-) {
-
-  toast.error(
-    `Produktnamnet får vara högst ${MAX_NAME_LENGTH} tecken.`
-  )
-
-  return
-}
+      return
+    }
 
 
-if (
-  data.description.trim().length >
-  MAX_DESCRIPTION_LENGTH
-) {
+    if (
+      data.name.trim().length >
+      MAX_NAME_LENGTH
+    ) {
 
-  toast.error(
-    `Produktbeskrivningen får vara högst ${MAX_DESCRIPTION_LENGTH} tecken.`
-  )
+      toast.error(
+        `Produktnamnet får vara högst ${MAX_NAME_LENGTH} tecken.`
+      )
 
-  return
-}
+      return
+    }
+
+
+    if (
+      data.description.trim().length >
+      MAX_DESCRIPTION_LENGTH
+    ) {
+
+      toast.error(
+        `Produktbeskrivningen får vara högst ${MAX_DESCRIPTION_LENGTH} tecken.`
+      )
+
+      return
+    }
 
 
 
     // ==================================================
-// PRICE
-// ==================================================
+    // PRICE
+    // ==================================================
 
-const price =
-  Number(
-    data.price
-  )
+    const price =
+      Number(
+        data.price
+      )
 
 
-if (
-  !Number.isFinite(price) ||
-  price < 0 ||
-  price > MAX_PRICE
-) {
+    if (
+      !Number.isFinite(price) ||
+      price < 0 ||
+      price > MAX_PRICE
+    ) {
 
-  toast.error(
-    `Priset måste vara mellan 0 och ${MAX_PRICE} kr.`
-  )
+      toast.error(
+        `Priset måste vara mellan 0 och ${MAX_PRICE} kr.`
+      )
 
-  return
-}
+      return
+    }
 
 
     // ==================================================
@@ -242,20 +242,20 @@ if (
 
 
     if (
-  !Number.isInteger(
-    sameDayStock
-  ) ||
-  sameDayStock < 0 ||
-  sameDayStock >
-    MAX_SAME_DAY_STOCK
-) {
+      !Number.isInteger(
+        sameDayStock
+      ) ||
+      sameDayStock < 0 ||
+      sameDayStock >
+      MAX_SAME_DAY_STOCK
+    ) {
 
-  toast.error(
-    `Dagslagret måste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
-  )
+      toast.error(
+        `Dagslagret måste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
+      )
 
-  return
-}
+      return
+    }
 
 
     try {
@@ -345,7 +345,7 @@ if (
           name: "",
           description: "",
           price: "",
-          category: "Turon",
+          category: "Maträtter",
           sameDayStock: 0
         })
 
@@ -450,8 +450,8 @@ if (
               src={
                 image
                   ? URL.createObjectURL(
-                      image
-                    )
+                    image
+                  )
                   : assets.upload_area
               }
               alt="Ladda upp produkt"
@@ -483,14 +483,14 @@ if (
           </p>
 
           <input
-  onChange={onChangeHandler}
-  value={data.name}
-  type="text"
-  name="name"
-  maxLength={MAX_NAME_LENGTH}
-  placeholder="Exempel: Mango Float"
-  required
-/>
+            onChange={onChangeHandler}
+            value={data.name}
+            type="text"
+            name="name"
+            maxLength={MAX_NAME_LENGTH}
+            placeholder="Exempel: Mango Float"
+            required
+          />
 
         </div>
 
@@ -505,15 +505,15 @@ if (
             Produktbeskrivning
           </p>
 
-         <textarea
-  onChange={onChangeHandler}
-  value={data.description}
-  name="description"
-  rows="6"
-  maxLength={MAX_DESCRIPTION_LENGTH}
-  placeholder="Beskriv produkten..."
-  required
-/>
+          <textarea
+            onChange={onChangeHandler}
+            value={data.description}
+            name="description"
+            rows="6"
+            maxLength={MAX_DESCRIPTION_LENGTH}
+            placeholder="Beskriv produkten..."
+            required
+          />
 
         </div>
 
@@ -539,6 +539,10 @@ if (
               value={data.category}
             >
 
+              <option value="Maträtter">
+                Maträtter
+              </option>
+
               <option value="Turon">
                 Turon
               </option>
@@ -552,7 +556,7 @@ if (
               </option>
 
               <option value="Fruit Cup">
-                Fruit cup
+                Fruit Cup
               </option>
 
             </select>
@@ -569,16 +573,16 @@ if (
             </p>
 
             <input
-  onChange={onChangeHandler}
-  value={data.price}
-  type="number"
-  name="price"
-  min="0"
-  max={MAX_PRICE}
-  step="0.01"
-  placeholder="45"
-  required
-/>
+              onChange={onChangeHandler}
+              value={data.price}
+              type="number"
+              name="price"
+              min="0"
+              max={MAX_PRICE}
+              step="0.01"
+              placeholder="45"
+              required
+            />
 
           </div>
 
@@ -592,16 +596,16 @@ if (
             </p>
 
             <input
-  onChange={onChangeHandler}
-  value={data.sameDayStock}
-  type="number"
-  name="sameDayStock"
-  min="0"
-  max={MAX_SAME_DAY_STOCK}
-  step="1"
-  placeholder="0"
-  required
-/>
+              onChange={onChangeHandler}
+              value={data.sameDayStock}
+              type="number"
+              name="sameDayStock"
+              min="0"
+              max={MAX_SAME_DAY_STOCK}
+              step="1"
+              placeholder="0"
+              required
+            />
 
             <span className="stock-help">
               Antal portioner som kan beställas samma dag.

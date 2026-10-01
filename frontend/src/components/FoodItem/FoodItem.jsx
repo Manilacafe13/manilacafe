@@ -15,6 +15,7 @@ const createSlug = (name = "") =>
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "")
 
+
 const FoodItem = ({
     id,
     name,
@@ -32,6 +33,17 @@ const FoodItem = ({
     } = useContext(StoreContext)
 
     const [showAllergens, setShowAllergens] = useState(false)
+
+
+    // ======================================================
+    // PRODUCT TYPE
+    // ======================================================
+
+    const isMeal = category === "Maträtter"
+
+    const productType = isMeal
+        ? "filippinsk maträtt"
+        : "filippinsk dessert"
 
 
     // ======================================================
@@ -106,7 +118,6 @@ const FoodItem = ({
             .trim()
             .toLowerCase()
 
-
     const productInfo =
         productInformation[normalizedName]
 
@@ -120,11 +131,9 @@ const FoodItem = ({
         const imageValue =
             String(image || "").trim()
 
-
         if (!imageValue) {
             return assets.upload_area || ""
         }
-
 
         if (
             imageValue.startsWith("https://") ||
@@ -133,11 +142,9 @@ const FoodItem = ({
             return imageValue
         }
 
-
         if (imageValue.startsWith("//")) {
             return `https:${imageValue}`
         }
-
 
         return `${url}/images/${imageValue}`
     }
@@ -147,6 +154,10 @@ const FoodItem = ({
 
     const quantity = cartItems[id] || 0
 
+    const productPath =
+        category === "Maträtter"
+            ? `/matratt/${createSlug(name)}`
+            : `/dessert/${createSlug(name)}`
 
     // ======================================================
     // JSX
@@ -159,16 +170,14 @@ const FoodItem = ({
             aria-labelledby={`food-title-${id}`}
         >
 
-            {/* =================================================
-                PRODUCT IMAGE
-            ================================================= */}
+            {/* PRODUCT IMAGE */}
 
             <div className="food-item-img-container">
 
                 <img
                     className="food-item-image"
                     src={imageUrl}
-                    alt={`${name} – filippinsk dessert från Manila Café`}
+                    alt={`${name} – ${productType} från Manila Café`}
                     loading="lazy"
                     decoding="async"
                 />
@@ -246,9 +255,7 @@ const FoodItem = ({
             </div>
 
 
-            {/* =================================================
-                PRODUCT INFORMATION
-            ================================================= */}
+            {/* PRODUCT INFORMATION */}
 
             <div className="food-item-info">
 
@@ -264,20 +271,22 @@ const FoodItem = ({
                 )}
 
 
-                {/* =================================================
-    PRODUCT NAME
-================================================= */}
+                {/* PRODUCT NAME */}
 
                 <div className="food-item-name-rating">
 
                     <h3 id={`food-title-${id}`}>
+
                         <Link
-                            to={`/dessert/${createSlug(name)}`}
+                            to={productPath}
                             className="food-item-product-link"
                             aria-label={`Läs mer om ${name}`}
                         >
+
                             {name}
+
                         </Link>
+
                     </h3>
 
                 </div>
@@ -379,6 +388,5 @@ const FoodItem = ({
 
     )
 }
-
 
 export default FoodItem

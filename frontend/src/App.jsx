@@ -52,8 +52,16 @@ const App = () => {
             element={<Home />}
           />
 
+
+          {/* PRODUCTS */}
+
           <Route
             path="/dessert/:slug"
+            element={<ProductPage />}
+          />
+
+          <Route
+            path="/matratt/:slug"
             element={<ProductPage />}
           />
 
@@ -125,7 +133,10 @@ const App = () => {
                 }}
               >
                 <div>
-                  <h1>Sidan hittades inte</h1>
+
+                  <h1>
+                    Sidan hittades inte
+                  </h1>
 
                   <p>
                     Sidan du letar efter verkar inte finnas.
@@ -134,6 +145,7 @@ const App = () => {
                   <a href="/">
                     Tillbaka till Manila Café
                   </a>
+
                 </div>
               </main>
             }

@@ -4,7 +4,6 @@ import './FoodDisplay.css'
 import { StoreContext } from '../../context/StoreContext'
 import FoodItem from '../FoodItem/FoodItem'
 
-
 const FoodDisplay = ({ category }) => {
 
   const { food_list } = useContext(StoreContext)
@@ -12,7 +11,6 @@ const FoodDisplay = ({ category }) => {
   const filteredFoods = food_list.filter((item) =>
     category === "All" || category === item.category
   )
-
 
   return (
     <section
@@ -26,14 +24,14 @@ const FoodDisplay = ({ category }) => {
       <div className="food-display-intro">
 
         <h2 id="food-display-title">
-          Våra desserter
+          Våra maträtter & desserter
         </h2>
 
         <p>
-          Hitta din nästa favorit hos Manila Café.
-          Välj bland filippinska desserter och tropiska sötsaker
-          som Mango Float, Ube Cake, Fruit Cup, Taho och fler
-          smaker att upptäcka i Göteborg.
+          Upptäck Manila Cafés filippinska smaker i Göteborg.
+          Välj bland klassiska maträtter som Sinigang och tropiska
+          desserter som Mango Float, Ube Cake, Fruit Cup och fler
+          favoriter för avhämtning eller leverans.
         </p>
 
       </div>
@@ -67,7 +65,7 @@ const FoodDisplay = ({ category }) => {
           <div className="food-display-empty">
 
             <p>
-              Inga desserter hittades i den här kategorin just nu.
+              Inga produkter hittades i den här kategorin just nu.
             </p>
 
           </div>
@@ -79,6 +77,5 @@ const FoodDisplay = ({ category }) => {
     </section>
   )
 }
-
 
 export default FoodDisplay
