@@ -14,66 +14,133 @@ const Home = () => {
 
   const [category, setCategory] = useState("All")
 
+
   return (
+
     <main className="home">
 
+
+      {/* ============================================== */}
+      {/* HERO */}
+      {/* ============================================== */}
+
       <Header />
+
+
+      {/* ============================================== */}
+      {/* ERBJUDANDEN */}
+      {/* ============================================== */}
+
+      <section
+        className="home-offers-section"
+        id="erbjudanden"
+        aria-labelledby="offers-title"
+      >
+
+        <div className="home-section-heading">
+
+          <span className="home-section-eyebrow">
+            MANILA CAFÉ
+          </span>
+
+          <h2 id="offers-title">
+            Erbjudanden
+          </h2>
+
+          <p>
+            Upptäck aktuella erbjudanden, limited editions
+            och utvalda favoriter från Manila Café.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      {/* ============================================== */}
+      {/* MATRÄTTER */}
+      {/* ============================================== */}
+
+      <FoodDisplay
+        type="meals"
+      />
+
+
+      {/* ============================================== */}
+      {/* DESSERT FILTER */}
+      {/* ============================================== */}
 
       <ExploreMenu
         category={category}
         setCategory={setCategory}
       />
 
+
+      {/* ============================================== */}
+      {/* DESSERTER */}
+      {/* ============================================== */}
+
       <FoodDisplay
         category={category}
+        type="desserts"
       />
 
 
-      {/* SEO / DISCOVERY SECTION */}
+      {/* ============================================== */}
+      {/* SEO / DISCOVERY */}
+      {/* ============================================== */}
 
       <section className="home-seo-section">
 
         <h2>
-          Filippinska desserter i Göteborg
+          Filippinska maträtter & desserter i Göteborg
         </h2>
 
         <h3>
-          Sugen på något sött?
+          En smak av Filippinerna
         </h3>
 
         <p>
-          Upptäck Manila Café – filippinska desserter och tropiska
-          sötsaker i Göteborg. Här hittar du bland annat Mango Float,
-          Ube Cake, Fruit Cup och andra Filipino-favoriter.
-          Beställ dessert online för avhämtning eller leverans i Göteborg.
+          Upptäck Manila Café och filippinska smaker i Göteborg.
+          Här hittar du både klassiska maträtter som Sinigang
+          och populära desserter som Mango Float, Ube Cake,
+          Fruit Cup och andra filippinska favoriter.
         </p>
 
         <p>
-          Oavsett om du letar efter något sött till fikat,
-          vill testa en asiatisk dessert eller är sugen på mango,
-          ube och filippinska smaker hittar du något annorlunda
-          hos Manila Café.
+          Beställ online för avhämtning eller leverans i Göteborg
+          och upptäck både traditionella maträtter och tropiska
+          desserter inspirerade av Filippinerna.
         </p>
 
       </section>
 
 
+      {/* ============================================== */}
       {/* VÅR HISTORIA */}
+      {/* ============================================== */}
 
       <AboutUs />
 
 
+      {/* ============================================== */}
       {/* FILIPPINSK KULTUR */}
+      {/* ============================================== */}
 
       <CultureSection />
 
 
-      {/* CUSTOMER VOTING */}
+      {/* ============================================== */}
+      {/* FRAMTIDA PRODUKTER */}
+      {/* ============================================== */}
 
       <FutureProducts />
 
+
     </main>
+
   )
 }
+
 
 export default Home

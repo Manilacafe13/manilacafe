@@ -4,40 +4,130 @@ import './FoodDisplay.css'
 import { StoreContext } from '../../context/StoreContext'
 import FoodItem from '../FoodItem/FoodItem'
 
-const FoodDisplay = ({ category }) => {
 
-  const { food_list } = useContext(StoreContext)
+const FoodDisplay = ({
+  category = "All",
+  type = "desserts"
+}) => {
 
-  const filteredFoods = food_list.filter((item) =>
-    category === "All" || category === item.category
-  )
+  const {
+    food_list = []
+  } = useContext(StoreContext)
+
+
+  // ======================================================
+  // PRODUCT TYPE
+  // ======================================================
+
+  const isMeals = type === "meals"
+
+
+  // ======================================================
+  // FILTER PRODUCTS
+  // ======================================================
+
+  const filteredFoods = food_list.filter((item) => {
+
+    // MATRÄTTER
+    if (isMeals) {
+      return item.category === "Maträtter"
+    }
+
+
+    // DESSERTER
+    if (item.category === "Maträtter") {
+      return false
+    }
+
+
+    // SHOW ALL DESSERTS
+    if (category === "All") {
+      return true
+    }
+
+
+    // FILTER DESSERT CATEGORY
+    return item.category === category
+
+  })
+
+
+  // ======================================================
+  // SECTION INFORMATION
+  // ======================================================
+
+  const sectionId = isMeals
+    ? "meals-display"
+    : "food-display"
+
+  const titleId = isMeals
+    ? "meals-display-title"
+    : "food-display-title"
+
+
+  // ======================================================
+  // JSX
+  // ======================================================
 
   return (
+
     <section
-      className="food-display"
-      id="food-display"
-      aria-labelledby="food-display-title"
+      className={`food-display ${isMeals ? "food-display-meals" : "food-display-desserts"}`}
+      id={sectionId}
+      aria-labelledby={titleId}
     >
 
+
+      {/* ============================================== */}
       {/* INTRO */}
+      {/* ============================================== */}
 
       <div className="food-display-intro">
 
-        <h2 id="food-display-title">
-          Våra maträtter & desserter
-        </h2>
+        {isMeals ? (
 
-        <p>
-          Upptäck Manila Cafés filippinska smaker i Göteborg.
-          Välj bland klassiska maträtter som Sinigang och tropiska
-          desserter som Mango Float, Ube Cake, Fruit Cup och fler
-          favoriter för avhämtning eller leverans.
-        </p>
+          <>
+            <span className="food-display-eyebrow">
+              FILIPINO FOOD
+            </span>
+
+            <h2 id={titleId}>
+              Maträtter
+            </h2>
+
+            <p>
+              Upptäck våra filippinska maträtter i Göteborg.
+              Från klassiska favoriter som Sinigang till fler
+              traditionella smaker från Filippinerna.
+            </p>
+          </>
+
+        ) : (
+
+          <>
+            <span className="food-display-eyebrow">
+              FILIPINO DESSERTS
+            </span>
+
+            <h2 id={titleId}>
+              Desserter
+            </h2>
+
+            <p>
+              Upptäck Manila Cafés filippinska desserter och
+              tropiska favoriter som Mango Float, Ube Cake,
+              Fruit Cup, Turon och fler söta smaker.
+            </p>
+          </>
+
+        )}
 
       </div>
 
 
+      {/* ============================================== */}
       {/* PRODUCTS */}
+      {/* ============================================== */}
 
       <div
         className="food-display-list"
@@ -65,7 +155,11 @@ const FoodDisplay = ({ category }) => {
           <div className="food-display-empty">
 
             <p>
-              Inga produkter hittades i den här kategorin just nu.
+              {
+                isMeals
+                  ? "Inga maträtter finns tillgängliga just nu."
+                  : "Inga desserter hittades i den här kategorin just nu."
+              }
             </p>
 
           </div>
@@ -75,7 +169,9 @@ const FoodDisplay = ({ category }) => {
       </div>
 
     </section>
+
   )
 }
+
 
 export default FoodDisplay

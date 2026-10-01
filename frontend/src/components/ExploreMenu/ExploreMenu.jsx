@@ -6,19 +6,20 @@ const ExploreMenu = ({ category, setCategory }) => {
 
   return (
     <section
-      className='explore-menu'
-      id='explore-menu'
-      aria-labelledby='explore-menu-title'
+      className="explore-menu"
+      id="explore-menu"
+      aria-labelledby="explore-menu-title"
     >
 
-      <h2 id='explore-menu-title'>
-        Upptäck våra filippinska favoriter
+      <h2 id="explore-menu-title">
+        Upptäck våra desserter
       </h2>
 
-      <p className='explore-menu-text'>
-        Utforska Manila Cafés filippinska maträtter och desserter i Göteborg.
-        Upptäck traditionella smaker, tropiska favoriter och hemlagade rätter
-        för avhämtning eller leverans.
+      <p className="explore-menu-text">
+        Utforska Manila Cafés filippinska desserter i Göteborg.
+        Välj bland tropiska favoriter som Mango Float, Ube Cake,
+        Fruit Cup, Turon och fler söta smaker för avhämtning
+        eller leverans.
       </p>
 
       <div className="explore-menu-list">
@@ -46,7 +47,7 @@ const ExploreMenu = ({ category, setCategory }) => {
               <img
                 className={isActive ? "active" : ""}
                 src={item.menu_image}
-                alt={`${item.menu_name} från Manila Café`}
+                alt={`${item.menu_name} – dessert från Manila Café`}
                 loading="lazy"
               />
 
