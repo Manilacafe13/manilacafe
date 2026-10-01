@@ -6,7 +6,6 @@ import menu_2 from './menu_2.png'
 import menu_3 from './menu_3.png'
 import menu_8 from './menu_8.png'
 import menu_5 from './menu_5.png'
-import sinigang from './sinigang.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
@@ -48,7 +47,7 @@ export const assets = {
 export const menu_list = [
     {
         menu_name: "Maträtter",
-        menu_image: sinigang
+        menu_image: menu_2
     },
     {
         menu_name: "Floats",
