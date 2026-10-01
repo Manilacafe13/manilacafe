@@ -12,7 +12,8 @@ import FutureProducts from '../../components/FutureProducts/FutureProducts'
 
 const Home = () => {
 
-  const [category, setCategory] = useState("All")
+  const [mealCategory, setMealCategory] = useState("All")
+  const [dessertCategory, setDessertCategory] = useState("All")
 
   return (
     <main className="home">
@@ -28,18 +29,15 @@ const Home = () => {
       {/* MATRÄTTER */}
       {/* ============================================== */}
 
-      <FoodDisplay
+      <ExploreMenu
+        category={mealCategory}
+        setCategory={setMealCategory}
         type="meals"
       />
 
-
-      {/* ============================================== */}
-      {/* DESSERT FILTER */}
-      {/* ============================================== */}
-
-      <ExploreMenu
-        category={category}
-        setCategory={setCategory}
+      <FoodDisplay
+        category={mealCategory}
+        type="meals"
       />
 
 
@@ -47,8 +45,14 @@ const Home = () => {
       {/* DESSERTER */}
       {/* ============================================== */}
 
+      <ExploreMenu
+        category={dessertCategory}
+        setCategory={setDessertCategory}
+        type="desserts"
+      />
+
       <FoodDisplay
-        category={category}
+        category={dessertCategory}
         type="desserts"
       />
 

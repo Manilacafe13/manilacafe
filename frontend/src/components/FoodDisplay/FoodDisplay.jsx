@@ -23,28 +23,63 @@ const FoodDisplay = ({
 
 
   // ======================================================
+  // NORMALIZE TEXT
+  // ======================================================
+
+  const normalizeText = (value = "") =>
+    String(value)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      // Tillfällig kompatibilitet med produktnamnet "Siningang"
+      .replace(/siningang/g, "sinigang")
+
+
+  // ======================================================
   // FILTER PRODUCTS
   // ======================================================
 
   const filteredFoods = food_list.filter((item) => {
 
+    // ==================================================
     // MATRÄTTER
+    // ==================================================
+
     if (isMeals) {
-      return item.category === "Maträtter"
+
+      // Produkten måste vara en maträtt
+      if (item.category !== "Maträtter") {
+        return false
+      }
+
+      // Visa alla maträtter
+      if (category === "All") {
+        return true
+      }
+
+      // Filtrera efter maträttens namn
+      return normalizeText(item.name).includes(
+        normalizeText(category)
+      )
     }
 
+
+    // ==================================================
     // DESSERTER
-    // Dölj alla maträtter från dessertsektionen
+    // ==================================================
+
+    // Maträtter ska aldrig visas bland desserterna
     if (item.category === "Maträtter") {
       return false
     }
 
-    // VISA ALLA DESSERTER
+    // Visa alla desserter
     if (category === "All") {
       return true
     }
 
-    // FILTRERA DESSERTKATEGORI
+    // Filtrera dessertkategori
     return item.category === category
 
   })
@@ -54,7 +89,11 @@ const FoodDisplay = ({
   // HIDE EMPTY MEALS SECTION
   // ======================================================
 
-  if (isMeals && filteredFoods.length === 0) {
+  if (
+    isMeals &&
+    category === "All" &&
+    filteredFoods.length === 0
+  ) {
     return null
   }
 
@@ -106,8 +145,8 @@ const FoodDisplay = ({
 
             <p>
               Upptäck våra filippinska maträtter i Göteborg.
-              Klassiska smaker från Filippinerna, lagade för
-              avhämtning eller leverans.
+              Klassiska smaker från Filippinerna för avhämtning
+              eller leverans.
             </p>
           </>
 
@@ -165,7 +204,11 @@ const FoodDisplay = ({
           <div className="food-display-empty">
 
             <p>
-              Inga desserter hittades i den här kategorin just nu.
+              {
+                isMeals
+                  ? "Ingen maträtt hittades i den här kategorin just nu."
+                  : "Inga desserter hittades i den här kategorin just nu."
+              }
             </p>
 
           </div>
