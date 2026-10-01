@@ -52,61 +52,89 @@ const FoodItem = ({
 
     const productInformation = {
 
-        "mango float": {
-            ingredients:
-                "Mango, kondenserad mjölk, grädde, Graham crackers och Philadelphia.",
-            allergens:
-                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
-            extra:
-                "Innehåller mango."
-        },
+    "siningang med räkor": {
+        ingredients:
+            "Räkor, syrlig sinigang-buljong, grönsaker och ris.",
+        allergens:
+            "Innehåller KRÄFTDJUR (räkor). Kontrollera även aktuell produktinformation för sinigang-mix och buljong.",
+        extra:
+            "Serveras med ris."
+    },
 
-        "cinnamon banana float": {
-            ingredients:
-                "Banan, kondenserad mjölk, grädde, Graham crackers, Philadelphia och kanel.",
-            allergens:
-                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
-            extra:
-                "Innehåller banan och kanel."
-        },
+    "sinigang med räkor": {
+        ingredients:
+            "Räkor, syrlig sinigang-buljong, grönsaker och ris.",
+        allergens:
+            "Innehåller KRÄFTDJUR (räkor). Kontrollera även aktuell produktinformation för sinigang-mix och buljong.",
+        extra:
+            "Serveras med ris."
+    },
 
-        "banana float": {
-            ingredients:
-                "Banan, kondenserad mjölk, grädde, Graham crackers, Philadelphia och kanel.",
-            allergens:
-                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
-            extra:
-                "Innehåller banan och kanel."
-        },
+    "mango float": {
+        ingredients:
+            "Mango, kondenserad mjölk, grädde, Graham crackers och Philadelphia.",
+        allergens:
+            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+        extra:
+            "Innehåller mango."
+    },
 
-        "fruit cup": {
-            ingredients:
-                "Eden cheese, Fiesta fruit cocktail, nata de coco, kokoskött, kokosgelé och kondenserad mjölk.",
-            allergens:
-                "Innehåller MJÖLK (mjölkprotein och laktos).",
-            extra:
-                "Innehåller blandad frukt och kokos. Kokosgelén innehåller inte gelatin från gris."
-        },
+    "apple crisp float": {
+        ingredients:
+            "Äpple, kondenserad mjölk, grädde, Philadelphia, kex, kanel och karamelliserat äpple.",
+        allergens:
+            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+        extra:
+            "Innehåller äpple och kanel."
+    },
 
-        "ube cake": {
-            ingredients:
-                "Gräddfil, strösocker, kokosflingor, Graham crackers, kokosgrädde, ube jam, Philadelphia, smör och salt.",
-            allergens:
-                "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
-            extra:
-                "Innehåller kokos."
-        },
+    "ube cake": {
+        ingredients:
+            "Gräddfil, strösocker, kokosflingor, Graham crackers, kokosgrädde, ube jam, Philadelphia, smör och salt.",
+        allergens:
+            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+        extra:
+            "Innehåller kokos."
+    },
 
-        "taho": {
-            ingredients:
-                "Silkestofu, söt sirap och sagopärlor.",
-            allergens:
-                "Kontrollera aktuell produktinformation vid beställning.",
-            extra:
-                "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
-        }
+    "fruit cup": {
+        ingredients:
+            "Eden cheese, Fiesta fruit cocktail, nata de coco, kokoskött, kokosgelé och kondenserad mjölk.",
+        allergens:
+            "Innehåller MJÖLK (mjölkprotein och laktos).",
+        extra:
+            "Innehåller blandad frukt och kokos. Kokosgelén innehåller inte gelatin från gris."
+    },
 
+    "golden turon & ube ice cream": {
+        ingredients:
+            "Banan, vårrulleark, socker och ube-glass.",
+        allergens:
+            "Innehåller VETE (gluten) och MJÖLK. Kontrollera aktuell produktinformation för ube-glass och vårrulleark.",
+        extra:
+            "Krispig filippinsk turon serverad med ube-glass."
+    },
+
+    "biscoff cinnamon banana float": {
+        ingredients:
+            "Banan, kondenserad mjölk, grädde, Philadelphia, Biscoff-kex och kanel.",
+        allergens:
+            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+        extra:
+            "Innehåller banan och kanel."
+    },
+
+
+    "taho": {
+        ingredients:
+            "Silkestofu, söt sirap och sagopärlor.",
+        allergens:
+            "Innehåller SOJA.",
+        extra:
+            "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
     }
+
+}
 
 
     // ======================================================

@@ -6,6 +6,7 @@ import menu_2 from './menu_2.png'
 import menu_3 from './menu_3.png'
 import menu_8 from './menu_8.png'
 import menu_5 from './menu_5.png'
+import menu_7 from './menu_7.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
@@ -22,6 +23,7 @@ import profile_icon from './profile_icon.png'
 import bag_icon from './bag_icon.png'
 import logout_icon from './logout_icon.png'
 import parcel_icon from './parcel_icon.png'
+
 
 export const assets = {
     logo,
@@ -44,8 +46,24 @@ export const assets = {
     parcel_icon
 }
 
+
+// ======================================================
+// MATRÄTTER
+// ======================================================
+
+export const meal_list = [
+    {
+        menu_name: "Sinigang",
+        menu_image: menu_7
+    }
+]
+
+
+// ======================================================
+// DESSERTER
+// ======================================================
+
 export const menu_list = [
-    
     {
         menu_name: "Floats",
         menu_image: menu_2
