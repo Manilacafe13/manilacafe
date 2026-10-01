@@ -14,47 +14,14 @@ const Home = () => {
 
   const [category, setCategory] = useState("All")
 
-
   return (
-
     <main className="home">
 
-
       {/* ============================================== */}
-      {/* HERO */}
+      {/* HEADER */}
       {/* ============================================== */}
 
       <Header />
-
-
-      {/* ============================================== */}
-      {/* ERBJUDANDEN */}
-      {/* ============================================== */}
-
-      <section
-        className="home-offers-section"
-        id="erbjudanden"
-        aria-labelledby="offers-title"
-      >
-
-        <div className="home-section-heading">
-
-          <span className="home-section-eyebrow">
-            MANILA CAFÉ
-          </span>
-
-          <h2 id="offers-title">
-            Erbjudanden
-          </h2>
-
-          <p>
-            Upptäck aktuella erbjudanden, limited editions
-            och utvalda favoriter från Manila Café.
-          </p>
-
-        </div>
-
-      </section>
 
 
       {/* ============================================== */}
@@ -102,14 +69,14 @@ const Home = () => {
 
         <p>
           Upptäck Manila Café och filippinska smaker i Göteborg.
-          Här hittar du både klassiska maträtter som Sinigang
-          och populära desserter som Mango Float, Ube Cake,
-          Fruit Cup och andra filippinska favoriter.
+          Här hittar du både klassiska maträtter och populära
+          desserter som Mango Float, Ube Cake, Fruit Cup
+          och andra filippinska favoriter.
         </p>
 
         <p>
           Beställ online för avhämtning eller leverans i Göteborg
-          och upptäck både traditionella maträtter och tropiska
+          och upptäck traditionella maträtter och tropiska
           desserter inspirerade av Filippinerna.
         </p>
 
@@ -136,9 +103,7 @@ const Home = () => {
 
       <FutureProducts />
 
-
     </main>
-
   )
 }
 

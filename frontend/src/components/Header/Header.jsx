@@ -3,22 +3,25 @@ import './Header.css'
 
 const Header = () => {
   return (
-    <header className='header'>
+    <header className="header">
 
       <div className="header-contents">
 
         <h1>
-          Dessert i Göteborg – upptäck Manila Café
+          Filippinska maträtter & desserter i Göteborg
         </h1>
 
         <p>
-          Upptäck filippinska desserter och tropiska smaker i Göteborg.
-          Beställ Mango Float, Ube Cake, Fruit Cup och andra Filipino-favoriter
-          online för avhämtning eller leverans.
+          Upptäck filippinska smaker hos Manila Café.
+          Beställ klassiska maträtter och populära desserter
+          för avhämtning eller leverans i Göteborg.
         </p>
 
-        <a href="#explore-menu" className="header-order-btn">
-          Se våra desserter
+        <a
+          href="#food-display"
+          className="header-order-btn"
+        >
+          Se våra erbjudanden
         </a>
 
       </div>

@@ -33,23 +33,30 @@ const FoodDisplay = ({
       return item.category === "Maträtter"
     }
 
-
     // DESSERTER
+    // Dölj alla maträtter från dessertsektionen
     if (item.category === "Maträtter") {
       return false
     }
 
-
-    // SHOW ALL DESSERTS
+    // VISA ALLA DESSERTER
     if (category === "All") {
       return true
     }
 
-
-    // FILTER DESSERT CATEGORY
+    // FILTRERA DESSERTKATEGORI
     return item.category === category
 
   })
+
+
+  // ======================================================
+  // HIDE EMPTY MEALS SECTION
+  // ======================================================
+
+  if (isMeals && filteredFoods.length === 0) {
+    return null
+  }
 
 
   // ======================================================
@@ -70,13 +77,15 @@ const FoodDisplay = ({
   // ======================================================
 
   return (
-
     <section
-      className={`food-display ${isMeals ? "food-display-meals" : "food-display-desserts"}`}
+      className={`food-display ${
+        isMeals
+          ? "food-display-meals"
+          : "food-display-desserts"
+      }`}
       id={sectionId}
       aria-labelledby={titleId}
     >
-
 
       {/* ============================================== */}
       {/* INTRO */}
@@ -97,8 +106,8 @@ const FoodDisplay = ({
 
             <p>
               Upptäck våra filippinska maträtter i Göteborg.
-              Från klassiska favoriter som Sinigang till fler
-              traditionella smaker från Filippinerna.
+              Klassiska smaker från Filippinerna, lagade för
+              avhämtning eller leverans.
             </p>
           </>
 
@@ -110,13 +119,14 @@ const FoodDisplay = ({
             </span>
 
             <h2 id={titleId}>
-              Desserter
+              Våra desserter
             </h2>
 
             <p>
-              Upptäck Manila Cafés filippinska desserter och
-              tropiska favoriter som Mango Float, Ube Cake,
-              Fruit Cup, Turon och fler söta smaker.
+              Hitta din nästa favorit hos Manila Café.
+              Välj bland filippinska desserter och tropiska
+              favoriter som Mango Float, Ube Cake, Fruit Cup,
+              Turon och fler söta smaker.
             </p>
           </>
 
@@ -155,11 +165,7 @@ const FoodDisplay = ({
           <div className="food-display-empty">
 
             <p>
-              {
-                isMeals
-                  ? "Inga maträtter finns tillgängliga just nu."
-                  : "Inga desserter hittades i den här kategorin just nu."
-              }
+              Inga desserter hittades i den här kategorin just nu.
             </p>
 
           </div>
@@ -169,7 +175,6 @@ const FoodDisplay = ({
       </div>
 
     </section>
-
   )
 }
 
