@@ -2330,7 +2330,7 @@ const placeOrder = async (req, res) => {
           currency: "sek",
           product_data: {
             name: deliveryZone?.label
-              ? `Leverans â€“ ${deliveryZone.label}`
+              ? `Leverans avgift“ ${deliveryZone.label}`
               : "Leverans"
           },
           unit_amount: Math.round(
