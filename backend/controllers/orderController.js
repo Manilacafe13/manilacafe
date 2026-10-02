@@ -336,7 +336,9 @@ const getDeliveryZone = ({
 
   const eastPrefixes = [
     "415",
-    "416"
+    "416",
+    "424",
+
   ];
 
   if (
