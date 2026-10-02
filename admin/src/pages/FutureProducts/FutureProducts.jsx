@@ -20,33 +20,18 @@ const FutureProducts = ({
   // STATE
   // ======================================================
 
-  const [products, setProducts] =
-    useState([])
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [image, setImage] = useState(null)
+  const [preview, setPreview] = useState("")
 
-  const [loading, setLoading] =
-    useState(true)
-
-  const [submitting, setSubmitting] =
-    useState(false)
-
-  const [image, setImage] =
-    useState(null)
-
-  const [preview, setPreview] =
-    useState("")
-
-  const [formData, setFormData] =
-    useState({
-
-      name: "",
-
-      description: "",
-
-      emoji: "🍰",
-
-      category: "Dessert"
-
-    })
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    emoji: "🇵🇭",
+    category: "Filippinsk favorit"
+  })
 
 
   // ======================================================
@@ -69,38 +54,25 @@ const FutureProducts = ({
       return ""
     }
 
-
     const value =
       String(
         imageValue
       ).trim()
 
-
     if (
-      value.startsWith(
-        "https://"
-      ) ||
-      value.startsWith(
-        "http://"
-      )
+      value.startsWith("https://") ||
+      value.startsWith("http://")
     ) {
-
       return value
-
     }
-
 
     if (
       value.startsWith("//")
     ) {
-
       return `https:${value}`
-
     }
 
-
     return `${url}/images/${value}`
-
   }
 
 
@@ -113,26 +85,17 @@ const FutureProducts = ({
 
       try {
 
-        setLoading(
-          true
-        )
-
+        setLoading(true)
 
         const response =
           await axios.get(
-
             `${url}/api/future-product/admin/list`,
-
             {
-
               headers: {
                 token
               }
-
             }
-
           )
-
 
         if (
           response.data.success
@@ -148,13 +111,9 @@ const FutureProducts = ({
             response.data.message ||
             "Produkterna kunde inte hämtas."
           )
-
         }
 
-
       } catch (error) {
-
-
 
         if (
           error.response?.status === 401 ||
@@ -166,24 +125,17 @@ const FutureProducts = ({
           )
 
           return
-
         }
-
 
         toast.error(
           error.response?.data?.message ||
           "Produkterna kunde inte hämtas."
         )
 
-
       } finally {
 
-        setLoading(
-          false
-        )
-
+        setLoading(false)
       }
-
     }
 
 
@@ -193,9 +145,7 @@ const FutureProducts = ({
 
   useEffect(
     () => {
-
       fetchProducts()
-
     },
     []
   )
@@ -215,18 +165,13 @@ const FutureProducts = ({
     } =
       event.target
 
-
     setFormData(
       (previous) => ({
-
         ...previous,
-
         [name]:
           value
-
       })
     )
-
   }
 
 
@@ -241,33 +186,25 @@ const FutureProducts = ({
     const file =
       event.target.files?.[0]
 
-
     if (!file) {
 
       setImage(null)
-
       setPreview("")
-
       return
-
     }
-
 
     setImage(
       file
     )
-
 
     const objectUrl =
       URL.createObjectURL(
         file
       )
 
-
     setPreview(
       objectUrl
     )
-
   }
 
 
@@ -282,7 +219,6 @@ const FutureProducts = ({
 
       event.preventDefault()
 
-
       if (
         !formData.name.trim() ||
         !formData.description.trim()
@@ -293,20 +229,14 @@ const FutureProducts = ({
         )
 
         return
-
       }
-
 
       try {
 
-        setSubmitting(
-          true
-        )
-
+        setSubmitting(true)
 
         const data =
           new FormData()
-
 
         data.append(
           "name",
@@ -320,14 +250,13 @@ const FutureProducts = ({
 
         data.append(
           "emoji",
-          formData.emoji.trim() || "🍰"
+          formData.emoji.trim() || "🇵🇭"
         )
 
         data.append(
           "category",
-          formData.category.trim() || "Dessert"
+          formData.category.trim() || "Filippinsk favorit"
         )
-
 
         if (image) {
 
@@ -335,27 +264,18 @@ const FutureProducts = ({
             "image",
             image
           )
-
         }
-
 
         const response =
           await axios.post(
-
             `${url}/api/future-product/add`,
-
             data,
-
             {
-
               headers: {
                 token
               }
-
             }
-
           )
-
 
         if (
           response.data.success
@@ -365,52 +285,36 @@ const FutureProducts = ({
             "Framtida produkt tillagd."
           )
 
-
           setFormData({
-
             name: "",
-
             description: "",
-
-            emoji: "🍰",
-
-            category: "Dessert"
-
+            emoji: "🇵🇭",
+            category: "Filippinsk favorit"
           })
-
 
           setImage(
             null
           )
-
 
           if (preview) {
 
             URL.revokeObjectURL(
               preview
             )
-
           }
-
 
           setPreview(
             ""
           )
-
 
           const fileInput =
             document.getElementById(
               "future-product-image"
             )
 
-
           if (fileInput) {
-
-            fileInput.value =
-              ""
-
+            fileInput.value = ""
           }
-
 
           await fetchProducts()
 
@@ -420,28 +324,21 @@ const FutureProducts = ({
             response.data.message ||
             "Produkten kunde inte läggas till."
           )
-
         }
 
-
       } catch (error) {
-
-
 
         toast.error(
           error.response?.data?.message ||
           "Produkten kunde inte läggas till."
         )
 
-
       } finally {
 
         setSubmitting(
           false
         )
-
       }
-
     }
 
 
@@ -458,29 +355,20 @@ const FutureProducts = ({
 
         const response =
           await axios.post(
-
             `${url}/api/future-product/status`,
-
             {
-
               productId:
                 product._id,
 
               active:
                 !product.active
-
             },
-
             {
-
               headers: {
                 token
               }
-
             }
-
           )
-
 
         if (
           response.data.success
@@ -488,10 +376,8 @@ const FutureProducts = ({
 
           setProducts(
             (previous) =>
-
               previous.map(
                 (item) =>
-
                   item._id === product._id
                     ? {
                         ...item,
@@ -499,10 +385,8 @@ const FutureProducts = ({
                           !product.active
                       }
                     : item
-
               )
           )
-
 
           toast.success(
             !product.active
@@ -516,21 +400,15 @@ const FutureProducts = ({
             response.data.message ||
             "Status kunde inte ändras."
           )
-
         }
 
-
       } catch (error) {
-
-
 
         toast.error(
           error.response?.data?.message ||
           "Status kunde inte ändras."
         )
-
       }
-
     }
 
 
@@ -548,33 +426,24 @@ const FutureProducts = ({
           "Är du säker på att du vill ta bort den här produkten?"
         )
 
-
       if (!confirmed) {
         return
       }
-
 
       try {
 
         const response =
           await axios.post(
-
             `${url}/api/future-product/remove`,
-
             {
               productId
             },
-
             {
-
               headers: {
                 token
               }
-
             }
-
           )
-
 
         if (
           response.data.success
@@ -582,14 +451,11 @@ const FutureProducts = ({
 
           setProducts(
             (previous) =>
-
               previous.filter(
                 (product) =>
                   product._id !== productId
               )
-
           )
-
 
           toast.success(
             "Produkten har tagits bort."
@@ -601,21 +467,15 @@ const FutureProducts = ({
             response.data.message ||
             "Produkten kunde inte tas bort."
           )
-
         }
 
-
       } catch (error) {
-
-
 
         toast.error(
           error.response?.data?.message ||
           "Produkten kunde inte tas bort."
         )
-
       }
-
     }
 
 
@@ -636,7 +496,8 @@ const FutureProducts = ({
           </h1>
 
           <p>
-            Lägg till produkter som kunder kan rösta på.
+            Lägg till framtida maträtter, desserter och andra
+            filippinska favoriter som kunder kan rösta på.
           </p>
 
         </div>
@@ -672,7 +533,7 @@ const FutureProducts = ({
               name="name"
               value={formData.name}
               onChange={onChangeHandler}
-              placeholder="Exempel: Ube Cheesecake"
+              placeholder="Exempel: Chicken Adobo"
               maxLength={100}
               required
             />
@@ -686,13 +547,23 @@ const FutureProducts = ({
               Kategori
             </label>
 
-            <input
-              type="text"
+            <select
               name="category"
               value={formData.category}
               onChange={onChangeHandler}
-              placeholder="Dessert"
-            />
+            >
+              <option value="Filippinsk favorit">
+                Filippinsk favorit
+              </option>
+
+              <option value="Maträtt">
+                Maträtt
+              </option>
+
+              <option value="Dessert">
+                Dessert
+              </option>
+            </select>
 
           </div>
 
@@ -708,7 +579,7 @@ const FutureProducts = ({
               name="emoji"
               value={formData.emoji}
               onChange={onChangeHandler}
-              placeholder="🍰"
+              placeholder="🇵🇭"
               maxLength={10}
             />
 
@@ -854,12 +725,10 @@ const FutureProducts = ({
                                 : (
 
                                   <div className="future-card-emoji">
-
                                     {
                                       product.emoji ||
-                                      "🍰"
+                                      "🇵🇭"
                                     }
-
                                   </div>
 
                                 )
@@ -896,7 +765,7 @@ const FutureProducts = ({
                               <span>
                                 {
                                   product.emoji ||
-                                  "🍰"
+                                  "🇵🇭"
                                 }
                               </span>
 
@@ -904,21 +773,17 @@ const FutureProducts = ({
 
 
                             <p className="future-category">
-
                               {
                                 product.category ||
-                                "Dessert"
+                                "Filippinsk favorit"
                               }
-
                             </p>
 
 
                             <p className="future-description">
-
                               {
                                 product.description
                               }
-
                             </p>
 
 
@@ -996,7 +861,6 @@ const FutureProducts = ({
     </div>
 
   )
-
 }
 
 
