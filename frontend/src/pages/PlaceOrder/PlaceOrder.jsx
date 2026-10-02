@@ -74,43 +74,43 @@ const DELIVERY_ZONES = {
   south: {
     id: "south",
     label: "Södra Göteborg / Mölndal",
-    fee: 79
+    fee: 49
   },
 
   east: {
     id: "east",
     label: "Östra Göteborg",
-    fee: 79
+    fee: 69
   },
 
   northeast: {
     id: "northeast",
     label: "Nordöstra Göteborg / Angered",
-    fee: 99
+    fee: 79
   },
 
   partilleLerum: {
     id: "partille-lerum",
     label: "Partille / Lerum",
-    fee: 99
+    fee: 109
   },
 
   lindome: {
     id: "lindome",
     label: "Lindome",
-    fee: 99
+    fee: 109
   },
 
   kungsbacka: {
     id: "kungsbacka",
     label: "Kungsbacka / Hede",
-    fee: 109
+    fee: 130
   },
 
   grabo: {
     id: "grabo",
     label: "Gråbo",
-    fee: 109
+    fee: 150
   }
 
 }
