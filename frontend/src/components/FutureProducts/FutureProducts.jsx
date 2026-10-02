@@ -20,34 +20,22 @@ const FutureProducts = () => {
     token
   } = useContext(StoreContext)
 
-
-  const [products, setProducts] =
-    useState([])
-
-  const [loading, setLoading] =
-    useState(true)
-
-  const [error, setError] =
-    useState("")
-
-  const [updatingProduct, setUpdatingProduct] =
-    useState(null)
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [updatingProduct, setUpdatingProduct] = useState(null)
 
 
   // ======================================================
   // SORT PRODUCTS BY VOTES
   // ======================================================
 
-  const sortProducts = (
-    productList
-  ) => {
-
+  const sortProducts = (productList) => {
     return [...productList].sort(
       (a, b) =>
         Number(b.voteCount || 0) -
         Number(a.voteCount || 0)
     )
-
   }
 
 
@@ -55,29 +43,20 @@ const FutureProducts = () => {
   // GET IMAGE URL
   // ======================================================
 
-  const getImageUrl = (
-    image
-  ) => {
+  const getImageUrl = (image) => {
 
     if (!image) {
-
       return ""
-
     }
-
 
     if (
       image.startsWith("http://") ||
       image.startsWith("https://")
     ) {
-
       return image
-
     }
 
-
     return `${url}/images/${image}`
-
   }
 
 
@@ -85,83 +64,64 @@ const FutureProducts = () => {
   // FETCH FUTURE PRODUCTS
   // ======================================================
 
-  const fetchFutureProducts =
-    useCallback(async () => {
+  const fetchFutureProducts = useCallback(async () => {
 
-      try {
+    try {
 
-        setLoading(true)
+      setLoading(true)
+      setError("")
 
-        setError("")
-
-
-        const config =
-          token
-            ? {
-                headers: {
-                  token
-                }
+      const config =
+        token
+          ? {
+              headers: {
+                token
               }
-            : {}
+            }
+          : {}
 
+      const response = await axios.get(
+        `${url}/api/future-product/list`,
+        config
+      )
 
-        const response =
-          await axios.get(
+      if (response.data.success) {
 
-            `${url}/api/future-product/list`,
+        const productData =
+          Array.isArray(response.data.data)
+            ? response.data.data
+            : []
 
-            config
-
-          )
-
-
-        if (
-          response.data.success
-        ) {
-
-          const productData =
-            Array.isArray(
-              response.data.data
-            )
-              ? response.data.data
-              : []
-
-
-          setProducts(
-            sortProducts(
-              productData
-            )
-          )
-
-        } else {
-
-          setProducts([])
-
-          setError(
-            response.data.message ||
-            "Kunde inte hämta produkterna."
-          )
-
-        }
-
-
-      } catch (error) {
-        setError(
-          error.response?.data?.message ||
-          "Något gick fel när produkterna skulle hämtas."
+        setProducts(
+          sortProducts(productData)
         )
 
+      } else {
 
-      } finally {
+        setProducts([])
 
-        setLoading(false)
-
+        setError(
+          response.data.message ||
+          "Kunde inte hämta produkterna."
+        )
       }
 
-    }, [
-      url,
-      token
-    ])
+    } catch (error) {
+
+      setError(
+        error.response?.data?.message ||
+        "Något gick fel när produkterna skulle hämtas."
+      )
+
+    } finally {
+
+      setLoading(false)
+    }
+
+  }, [
+    url,
+    token
+  ])
 
 
   // ======================================================
@@ -169,9 +129,7 @@ const FutureProducts = () => {
   // ======================================================
 
   useEffect(() => {
-
     fetchFutureProducts()
-
   }, [fetchFutureProducts])
 
 
@@ -185,44 +143,24 @@ const FutureProducts = () => {
     hasVoted
   ) => {
 
-    setProducts(
-      (currentProducts) => {
+    setProducts((currentProducts) => {
 
-        const updated =
-          currentProducts.map(
-            (product) => {
+      const updated =
+        currentProducts.map((product) => {
 
-              if (
-                product._id !==
-                productId
-              ) {
+          if (product._id !== productId) {
+            return product
+          }
 
-                return product
+          return {
+            ...product,
+            voteCount,
+            hasVoted
+          }
+        })
 
-              }
-
-
-              return {
-
-                ...product,
-
-                voteCount,
-
-                hasVoted
-
-              }
-
-            }
-          )
-
-
-        return sortProducts(
-          updated
-        )
-
-      }
-    )
-
+      return sortProducts(updated)
+    })
   }
 
 
@@ -230,70 +168,48 @@ const FutureProducts = () => {
   // VOTE / REMOVE VOTE
   // ======================================================
 
-  const handleVote = async (
-    product
-  ) => {
+  const handleVote = async (product) => {
 
     if (!token) {
 
       alert(
-        "Logga in för att rösta på vilken dessert du vill se härnäst."
+        "Logga in för att rösta på vilken filippinsk favorit du vill se härnäst."
       )
 
       return
-
     }
-
 
     try {
 
-      setUpdatingProduct(
-        product._id
-      )
-
+      setUpdatingProduct(product._id)
 
       const endpoint =
         product.hasVoted
           ? "unvote"
           : "vote"
 
-
-      const response =
-        await axios.post(
-
-          `${url}/api/future-product/${endpoint}`,
-
-          {
-            productId:
-              product._id
-          },
-
-          {
-            headers: {
-              token
-            }
+      const response = await axios.post(
+        `${url}/api/future-product/${endpoint}`,
+        {
+          productId: product._id
+        },
+        {
+          headers: {
+            token
           }
+        }
+      )
 
-        )
-
-
-      if (
-        response.data.success
-      ) {
+      if (response.data.success) {
 
         updateProductLocally(
-
           product._id,
-
           Number(
-            response.data.data?.voteCount ||
-            0
+            response.data.data?.voteCount || 0
           ),
-
           Boolean(
             response.data.data?.hasVoted
           )
-
         )
 
       } else {
@@ -302,49 +218,34 @@ const FutureProducts = () => {
           response.data.message ||
           "Rösten kunde inte registreras."
         )
-
       }
 
-
     } catch (error) {
-      if (
-        error.response?.status === 401
-      ) {
+
+      if (error.response?.status === 401) {
 
         alert(
           "Din inloggning har gått ut. Logga in igen för att rösta."
         )
 
         return
-
       }
 
-
-      if (
-        error.response?.status === 409
-      ) {
+      if (error.response?.status === 409) {
 
         await fetchFutureProducts()
-
         return
-
       }
-
 
       alert(
         error.response?.data?.message ||
         "Något gick fel när din röst skulle registreras."
       )
 
-
     } finally {
 
-      setUpdatingProduct(
-        null
-      )
-
+      setUpdatingProduct(null)
     }
-
   }
 
 
@@ -355,7 +256,6 @@ const FutureProducts = () => {
   if (loading) {
 
     return (
-
       <section className="future-products">
 
         <div className="future-products-loading">
@@ -364,15 +264,13 @@ const FutureProducts = () => {
           </div>
 
           <p>
-            Hämtar framtida desserter...
+            Hämtar framtida favoriter...
           </p>
 
         </div>
 
       </section>
-
     )
-
   }
 
 
@@ -383,7 +281,6 @@ const FutureProducts = () => {
   if (error) {
 
     return (
-
       <section className="future-products">
 
         <div className="future-products-message">
@@ -410,9 +307,7 @@ const FutureProducts = () => {
         </div>
 
       </section>
-
     )
-
   }
 
 
@@ -427,7 +322,6 @@ const FutureProducts = () => {
       id="future-products"
     >
 
-
       {/* ================================================ */}
       {/* HEADER */}
       {/* ================================================ */}
@@ -438,19 +332,16 @@ const FutureProducts = () => {
           DU BESTÄMMER • VI SKAPAR
         </span>
 
-
         <h2>
           Vad vill du smaka
           <span> härnäst?</span>
         </h2>
 
-
         <p>
-          Vi har många idéer på nya filippinska
-          favoriter och vill gärna låta dig vara
-          med och påverka vårt sortiment.
-          Rösta på den dessert du helst vill se
-          hos Manila Café.
+          Vi har många idéer på nya filippinska maträtter,
+          desserter och favoriter och vill gärna låta dig
+          vara med och påverka vårt sortiment.
+          Rösta på det du helst vill se hos Manila Café.
         </p>
 
       </div>
@@ -473,9 +364,8 @@ const FutureProducts = () => {
           </h3>
 
           <p>
-            Vi arbetar på nya filippinska
-            desserter. Snart kan du vara med
-            och rösta på vad som ska komma
+            Vi arbetar på nya filippinska maträtter och desserter.
+            Snart kan du vara med och rösta på vad som ska komma
             till menyn härnäst.
           </p>
 
@@ -485,231 +375,174 @@ const FutureProducts = () => {
 
         <>
 
-
           {/* ============================================ */}
           {/* PRODUCT GRID */}
           {/* ============================================ */}
 
           <div className="future-products-grid">
 
-            {products.map(
-              (
-                product,
-                index
-              ) => {
+            {products.map((product, index) => {
 
-                const isTopProduct =
-                  index === 0 &&
-                  Number(
-                    product.voteCount
-                  ) > 0
+              const isTopProduct =
+                index === 0 &&
+                Number(product.voteCount) > 0
+
+              return (
+
+                <article
+                  className={`future-product-card ${
+                    product.hasVoted
+                      ? "voted"
+                      : ""
+                  }`}
+                  key={product._id}
+                >
+
+                  {/* ================================== */}
+                  {/* TOP BADGE */}
+                  {/* ================================== */}
+
+                  {isTopProduct && (
+
+                    <div className="future-product-popular">
+                      🔥 Mest efterfrågad
+                    </div>
+
+                  )}
 
 
-                return (
+                  {/* ================================== */}
+                  {/* IMAGE */}
+                  {/* ================================== */}
 
-                  <article
-                    className={
-                      `future-product-card ${
-                        product.hasVoted
-                          ? "voted"
-                          : ""
-                      }`
-                    }
-                    key={product._id}
-                  >
+                  <div className="future-product-image">
 
+                    {product.image ? (
 
-                    {/* ================================== */}
-                    {/* TOP BADGE */}
-                    {/* ================================== */}
+                      <img
+                        src={getImageUrl(product.image)}
+                        alt={product.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
 
-                    {isTopProduct && (
+                    ) : (
 
-                      <div className="future-product-popular">
-
-                        🔥 Mest efterfrågad
-
+                      <div className="future-product-emoji">
+                        {product.emoji || "🇵🇭"}
                       </div>
 
                     )}
 
-
-                    {/* ================================== */}
-                    {/* IMAGE */}
-                    {/* ================================== */}
-
-                    <div className="future-product-image">
-
-                      {product.image ? (
-
-                        <img
-                          src={
-                            getImageUrl(
-                              product.image
-                            )
-                          }
-                          alt={
-                            product.name
-                          }
-                        />
-
-                      ) : (
-
-                        <div className="future-product-emoji">
-
-                          {product.emoji ||
-                            "🍰"}
-
-                        </div>
-
-                      )}
-
-
-                      <div className="future-product-category">
-
-                        {product.category ||
-                          "Filippinsk dessert"}
-
-                      </div>
-
+                    <div className="future-product-category">
+                      {product.category || "Filippinsk favorit"}
                     </div>
 
-
-                    {/* ================================== */}
-                    {/* CONTENT */}
-                    {/* ================================== */}
-
-                    <div className="future-product-content">
-
-                      <h3>
-                        {product.name}
-                      </h3>
+                  </div>
 
 
-                      <p className="future-product-description">
+                  {/* ================================== */}
+                  {/* CONTENT */}
+                  {/* ================================== */}
 
-                        {product.description}
+                  <div className="future-product-content">
 
-                      </p>
+                    <h3>
+                      {product.name}
+                    </h3>
 
-
-                      {/* ================================ */}
-                      {/* VOTES */}
-                      {/* ================================ */}
-
-                      <div className="future-product-votes">
-
-                        <div className="future-product-vote-count">
-
-                          <span className="vote-heart">
-                            ♥
-                          </span>
-
-                          <strong>
-                            {product.voteCount || 0}
-                          </strong>
-
-                          <span>
-
-                            {
-                              Number(
-                                product.voteCount
-                              ) === 1
-                                ? "röst"
-                                : "röster"
-                            }
-
-                          </span>
-
-                        </div>
+                    <p className="future-product-description">
+                      {product.description}
+                    </p>
 
 
-                        {product.hasVoted && (
+                    {/* ================================ */}
+                    {/* VOTES */}
+                    {/* ================================ */}
 
-                          <span className="your-vote">
+                    <div className="future-product-votes">
 
-                            Din röst ✓
+                      <div className="future-product-vote-count">
 
-                          </span>
+                        <span className="vote-heart">
+                          ♥
+                        </span>
 
-                        )}
+                        <strong>
+                          {product.voteCount || 0}
+                        </strong>
+
+                        <span>
+                          {
+                            Number(product.voteCount) === 1
+                              ? "röst"
+                              : "röster"
+                          }
+                        </span>
 
                       </div>
-
-
-                      {/* ================================ */}
-                      {/* BUTTON */}
-                      {/* ================================ */}
-
-                      <button
-
-                        type="button"
-
-                        className={
-                          product.hasVoted
-                            ? "future-vote-button voted"
-                            : "future-vote-button"
-                        }
-
-                        disabled={
-                          updatingProduct ===
-                          product._id
-                        }
-
-                        onClick={() =>
-                          handleVote(
-                            product
-                          )
-                        }
-
-                      >
-
-                        {
-                          updatingProduct ===
-                          product._id
-
-                            ? "Sparar..."
-
-                            : product.hasVoted
-
-                              ? "♥ Du har röstat"
-
-                              : "♡ Rösta på denna"
-                        }
-
-                      </button>
-
 
                       {product.hasVoted && (
 
-                        <button
-                          type="button"
-                          className="remove-vote-button"
-                          disabled={
-                            updatingProduct ===
-                            product._id
-                          }
-                          onClick={() =>
-                            handleVote(
-                              product
-                            )
-                          }
-                        >
-                          Ta bort min röst
-                        </button>
+                        <span className="your-vote">
+                          Din röst ✓
+                        </span>
 
                       )}
-
 
                     </div>
 
 
-                  </article>
+                    {/* ================================ */}
+                    {/* BUTTON */}
+                    {/* ================================ */}
 
-                )
+                    <button
+                      type="button"
+                      className={
+                        product.hasVoted
+                          ? "future-vote-button voted"
+                          : "future-vote-button"
+                      }
+                      disabled={
+                        updatingProduct === product._id
+                      }
+                      onClick={() =>
+                        handleVote(product)
+                      }
+                    >
+                      {
+                        updatingProduct === product._id
+                          ? "Sparar..."
+                          : product.hasVoted
+                            ? "♥ Du har röstat"
+                            : "♡ Rösta på denna"
+                      }
+                    </button>
 
-              }
-            )}
+
+                    {product.hasVoted && (
+
+                      <button
+                        type="button"
+                        className="remove-vote-button"
+                        disabled={
+                          updatingProduct === product._id
+                        }
+                        onClick={() =>
+                          handleVote(product)
+                        }
+                      >
+                        Ta bort min röst
+                      </button>
+
+                    )}
+
+                  </div>
+
+                </article>
+              )
+            })}
 
           </div>
 
@@ -731,8 +564,8 @@ const FutureProducts = () => {
               </strong>
 
               <p>
-                Dina röster hjälper oss förstå vilka
-                smaker och desserter ni helst vill
+                Dina röster hjälper oss förstå vilka maträtter,
+                desserter och filippinska smaker ni helst vill
                 se hos Manila Café i framtiden.
               </p>
 
@@ -744,24 +577,18 @@ const FutureProducts = () => {
           {!token && (
 
             <p className="future-products-login-note">
-
               Du kan se resultatet utan konto.
               Logga in för att lägga din röst.
-
             </p>
 
           )}
-
 
         </>
 
       )}
 
-
     </section>
-
   )
-
 }
 
 
