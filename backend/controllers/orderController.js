@@ -2345,17 +2345,12 @@ const placeOrder = async (req, res) => {
 
 
 
-    const frontendUrl = (
-
-      process.env.FRONTEND_URL ||
-
-      "http://localhost:5173"
-
-    )
-
-      .trim()
-
-      .replace(/\\/+$/ "");
+   const frontendUrl = (
+  process.env.FRONTEND_URL ||
+  "http://localhost:5173"
+)
+  .trim()
+  .replace(/\/+$/, "");
 
 
 
