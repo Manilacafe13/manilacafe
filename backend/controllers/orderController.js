@@ -41,33 +41,85 @@ const LARGE_ORDER_LIMIT = 10;
 
 const FREE_DELIVERY_THRESHOLD = 600;
 
+
+// ======================================================
+// DELIVERY ZONES
+// ======================================================
+
 const DELIVERY_ZONES = {
+
   frolunda: {
-    id: "frölunda",
+    id: "frolunda",
     label: "Frölunda",
     fee: 0
   },
-  nearby: {
-    id: "nearby",
-    label: "Göteborg â€“ näliggande områden",
+
+  west: {
+    id: "west",
+    label: "Västra Göteborg",
     fee: 39
   },
-  hisingen: {
-    id: "hisingen",
-    label: "Hisingen / Backa",
+
+  central: {
+    id: "central",
+    label: "Centrala Göteborg",
     fee: 59
   },
-  outer: {
-    id: "outer",
-    label: "Yttre Göteborg/ Partille / Lerum",
+
+  hisingen: {
+    id: "hisingen",
+    label: "Hisingen / Norra Göteborg",
+    fee: 59
+  },
+
+  south: {
+    id: "south",
+    label: "Södra Göteborg / Mölndal",
     fee: 79
   },
-  grabo: {
-    id: "gråbo",
-    label: "Gråbo",
+
+  east: {
+    id: "east",
+    label: "Östra Göteborg",
+    fee: 79
+  },
+
+  northeast: {
+    id: "northeast",
+    label: "Nordöstra Göteborg / Angered",
     fee: 99
+  },
+
+  partilleLerum: {
+    id: "partille-lerum",
+    label: "Partille / Lerum",
+    fee: 99
+  },
+
+  lindome: {
+    id: "lindome",
+    label: "Lindome",
+    fee: 99
+  },
+
+  kungsbacka: {
+    id: "kungsbacka",
+    label: "Kungsbacka / Hede",
+    fee: 109
+  },
+
+  grabo: {
+    id: "grabo",
+    label: "Gråbo",
+    fee: 109
   }
+
 };
+
+
+// ======================================================
+// NORMALIZE LOCATION
+// ======================================================
 
 const normalizeLocationText = (value = "") =>
   String(value)
@@ -76,72 +128,142 @@ const normalizeLocationText = (value = "") =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
+
 const normalizeZipcode = (value = "") =>
   String(value)
     .replace(/\D/g, "")
     .slice(0, 5);
 
+
+// ======================================================
+// GRÅBO POSTCODES
+//
+// Viktigt:
+// 443 används även av Lerum och Stenkullen.
+// Därför kontrollerar vi Gråbo EXAKT innan 443-zonen.
+// ======================================================
+
+const GRABO_ZIPCODES = [
+  "44304",
+  "44311",
+  "44312",
+  "44313",
+  "44314",
+  "44315",
+  "44340",
+  "44341",
+  "44342",
+  "44343",
+  "44370",
+  "44371",
+  "44372",
+  "44373"
+];
+
+
+// ======================================================
+// GET DELIVERY ZONE
+// ======================================================
+
 const getDeliveryZone = ({
   city = "",
   zipcode = ""
 }) => {
+
   const normalizedCity =
     normalizeLocationText(city);
 
   const normalizedZip =
     normalizeZipcode(zipcode);
 
-  if (
-    !normalizedCity &&
-    normalizedZip.length < 3
-  ) {
+
+  // Vi behöver ett riktigt postnummer för säker zonberäkning
+  if (normalizedZip.length !== 5) {
     return null;
   }
 
+
+  // ====================================================
+  // 1. FRÖLUNDA
+  // GRATIS
+  // ====================================================
+
   if (
-    normalizedCity.includes("frölunda") ||
     normalizedZip.startsWith("421")
   ) {
     return DELIVERY_ZONES.frolunda;
   }
 
-  const graboZipcodes = [
-    "44304",
-    "44311",
-    "44312",
-    "44313",
-    "44314",
-    "44315",
-    "44340",
-    "44341",
-    "44342",
-    "44343",
-    "44370",
-    "44371",
-    "44372",
-    "44373"
-  ];
+
+  // ====================================================
+  // 2. GRÅBO
+  // Kontrollera före Lerum eftersom båda använder 443
+  // ====================================================
 
   if (
-    normalizedCity.includes("grabo") ||
-    graboZipcodes.includes(normalizedZip)
+    GRABO_ZIPCODES.includes(normalizedZip)
   ) {
     return DELIVERY_ZONES.grabo;
   }
 
-  const hisingenCityNames = [
-    "hisingen",
-    "hisings backa",
-    "backa",
-    "torslanda",
-    "hisings kärra",
-    "kärra",
-    "tuve",
-    "säve",
-    "björklanda"
-  ];
 
-  const hisingenZipPrefixes = [
+  // ====================================================
+  // 3. KUNGSBACKA / HEDE
+  //
+  // Kungsbacka = 434-serien.
+  // Hedeområdet i Kungsbacka fångas därför här också.
+  // ====================================================
+
+  if (
+    normalizedZip.startsWith("434")
+  ) {
+    return DELIVERY_ZONES.kungsbacka;
+  }
+
+
+  // ====================================================
+  // 4. LINDOME
+  // ====================================================
+
+  if (
+    normalizedZip.startsWith("437")
+  ) {
+    return DELIVERY_ZONES.lindome;
+  }
+
+
+  // ====================================================
+  // 5. PARTILLE / LERUM
+  // ====================================================
+
+  if (
+    normalizedZip.startsWith("433")
+  ) {
+    return DELIVERY_ZONES.partilleLerum;
+  }
+
+
+  // 443 som INTE redan matchats som Gråbo
+  if (
+    normalizedZip.startsWith("443")
+  ) {
+    return DELIVERY_ZONES.partilleLerum;
+  }
+
+
+  // ====================================================
+  // 6. HISINGEN / NORRA GÖTEBORG
+  //
+  // Lundby
+  // Backa
+  // Biskopsgården
+  // Tuve
+  // Kärra
+  // Torslanda
+  // Säve m.fl.
+  // ====================================================
+
+  const hisingenPrefixes = [
     "417",
     "418",
     "422",
@@ -150,11 +272,7 @@ const getDeliveryZone = ({
   ];
 
   if (
-    hisingenCityNames.some(
-      (area) =>
-        normalizedCity.includes(area)
-    ) ||
-    hisingenZipPrefixes.some(
+    hisingenPrefixes.some(
       (prefix) =>
         normalizedZip.startsWith(prefix)
     )
@@ -162,74 +280,174 @@ const getDeliveryZone = ({
     return DELIVERY_ZONES.hisingen;
   }
 
-  const outerCityNames = [
-    "angered",
-    "partille",
-    "sävedalen",
-    "jonsered",
-    "lerum",
-    "floda",
-    "stenkullen",
-    "gunnilse",
-    "olofstorp"
-  ];
 
-  const outerZipPrefixes = [
-    "424",
-    "433",
-    "443"
-  ];
+  // ====================================================
+  // 7. NORDÖSTRA GÖTEBORG
+  //
+  // Angered
+  // Gunnilse
+  // Olofstorp
+  // ====================================================
 
   if (
-    outerCityNames.some(
-      (area) =>
-        normalizedCity.includes(area)
-    ) ||
-    outerZipPrefixes.some(
-      (prefix) =>
-        normalizedZip.startsWith(prefix)
-    )
+    normalizedZip.startsWith("424")
   ) {
-    return DELIVERY_ZONES.outer;
+    return DELIVERY_ZONES.northeast;
   }
 
-  const nearbyCityNames = [
-    "göteborg",
-    "mölndal",
-    "askim",
-    "högsbo",
-    "majorna",
-    "linne"
-  ];
 
-  const nearbyZipPrefixes = [
-    "411",
-    "412",
-    "413",
-    "414",
-    "415",
-    "416",
-    "426",
+  // ====================================================
+  // 8. SÖDRA GÖTEBORG / MÖLNDAL
+  //
+  // Askim
+  // Hovås
+  // Billdal
+  // Mölndal
+  // Kållered
+  //
+  // Lindome ligger separat ovan.
+  // ====================================================
+
+  const southPrefixes = [
+    "427",
+    "428",
     "431",
     "436"
   ];
 
   if (
-    nearbyCityNames.some(
-      (area) =>
-        normalizedCity.includes(area)
-    ) ||
-    nearbyZipPrefixes.some(
+    southPrefixes.some(
       (prefix) =>
         normalizedZip.startsWith(prefix)
     )
   ) {
-    return DELIVERY_ZONES.nearby;
+    return DELIVERY_ZONES.south;
   }
+
+
+  // ====================================================
+  // 9. ÖSTRA GÖTEBORG
+  //
+  // Kortedala
+  // Bergsjön
+  // Gamlestaden
+  // delar av Örgryte / Härlanda
+  // ====================================================
+
+  const eastPrefixes = [
+    "415",
+    "416"
+  ];
+
+  if (
+    eastPrefixes.some(
+      (prefix) =>
+        normalizedZip.startsWith(prefix)
+    )
+  ) {
+    return DELIVERY_ZONES.east;
+  }
+
+
+  // ====================================================
+  // 10. CENTRALA GÖTEBORG
+  //
+  // Centrum
+  // Linné
+  // Vasastaden
+  // Johanneberg
+  // Guldheden m.fl.
+  // ====================================================
+
+  const centralPrefixes = [
+    "411",
+    "412",
+    "413"
+  ];
+
+  if (
+    centralPrefixes.some(
+      (prefix) =>
+        normalizedZip.startsWith(prefix)
+    )
+  ) {
+    return DELIVERY_ZONES.central;
+  }
+
+
+  // ====================================================
+  // 11. VÄSTRA GÖTEBORG
+  //
+  // Majorna
+  // Högsbo
+  // Näset
+  // Önnered
+  // Fiskebäck m.fl.
+  //
+  // 421 Frölunda har redan fångats ovan.
+  // ====================================================
+
+  const westPrefixes = [
+    "414",
+    "426"
+  ];
+
+  if (
+    westPrefixes.some(
+      (prefix) =>
+        normalizedZip.startsWith(prefix)
+    )
+  ) {
+    return DELIVERY_ZONES.west;
+  }
+
+
+  // ====================================================
+  // CITY FALLBACK
+  //
+  // Används endast när postnumret inte fångats ovan.
+  // Vi använder INTE bara "Göteborg", eftersom det
+  // inte säger vilken del av Göteborg kunden bor i.
+  // ====================================================
+
+  if (
+    normalizedCity.includes("grabo")
+  ) {
+    return DELIVERY_ZONES.grabo;
+  }
+
+
+  if (
+    normalizedCity.includes("kungsbacka")
+  ) {
+    return DELIVERY_ZONES.kungsbacka;
+  }
+
+
+  if (
+    normalizedCity.includes("lindome")
+  ) {
+    return DELIVERY_ZONES.lindome;
+  }
+
+
+  if (
+    normalizedCity.includes("partille") ||
+    normalizedCity.includes("savedalen") ||
+    normalizedCity.includes("lerum") ||
+    normalizedCity.includes("jonsered") ||
+    normalizedCity.includes("stenkullen")
+  ) {
+    return DELIVERY_ZONES.partilleLerum;
+  }
+
+
+  // ====================================================
+  // OUTSIDE DELIVERY AREA
+  // ====================================================
 
   return false;
 };
-
 const ALLOWED_FULFILLMENT_TYPES = [
 
   "same-day",
