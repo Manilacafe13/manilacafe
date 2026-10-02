@@ -2529,16 +2529,9 @@ const placeOrder = async (req, res) => {
 
     });
 
-  } catch (error) {
-
-    console.error(
-
-      "Place order error:",
-
-      error.message
-
-    );
-
+    } catch (error) {
+  console.error("Place order error:", error);
+  console.error("Place order stack:", error.stack);
 
 
     return res.status(500).json({
