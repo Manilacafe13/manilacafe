@@ -74,7 +74,7 @@ const FoodItem = ({
         ingredients:
             "Mango, kondenserad mjölk, grädde, Graham crackers och Philadelphia.",
         allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten). ",
         extra:
             "Innehåller mango."
     },
@@ -83,7 +83,7 @@ const FoodItem = ({
         ingredients:
             "Äpple, kondenserad mjölk, grädde, Philadelphia, kex, kanel och karamelliserat äpple.",
         allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            "Innehåller MJÖLK (mjölkprotein och laktosfri) och VETE (gluten).",
         extra:
             "Innehåller äpple och kanel."
     },
@@ -92,7 +92,7 @@ const FoodItem = ({
         ingredients:
             "Gräddfil, strösocker, kokosflingor, Graham crackers, kokosgrädde, ube jam, Philadelphia, smör och salt.",
         allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            "Innehåller MJÖLK (mjölkprotein och laktosfri) och VETE (gluten).",
         extra:
             "Innehåller kokos."
     },
@@ -119,7 +119,7 @@ const FoodItem = ({
         ingredients:
             "Banan, kondenserad mjölk, grädde, Philadelphia, Biscoff-kex och kanel.",
         allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten).",
+            "Innehåller MJÖLK (mjölkprotein och laktosfri) och VETE (gluten).",
         extra:
             "Innehåller banan och kanel."
     },
