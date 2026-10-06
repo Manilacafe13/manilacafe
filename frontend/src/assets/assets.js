@@ -7,6 +7,7 @@ import menu_3 from './menu_3.png'
 import menu_8 from './menu_8.png'
 import menu_5 from './menu_5.png'
 import menu_10 from './menu_10.png'
+import menu_7 from './menu_7.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
