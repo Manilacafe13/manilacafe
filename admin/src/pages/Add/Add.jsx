@@ -559,6 +559,10 @@ const Add = ({ url }) => {
                 Fruit Cup
               </option>
 
+              <option value="Halo-Halo">
+                Halo-Halo
+              </option>
+
             </select>
 
           </div>
