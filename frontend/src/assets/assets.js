@@ -68,6 +68,10 @@ export const menu_list = [
         menu_name: "Floats",
         menu_image: menu_2
     },
+     {
+        menu_name: "Halo-Halo",
+        menu_image: menu_7
+    },
     {
         menu_name: "Fruit Cup",
         menu_image: menu_3

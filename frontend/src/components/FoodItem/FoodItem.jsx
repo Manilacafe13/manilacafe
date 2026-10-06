@@ -132,7 +132,15 @@ const FoodItem = ({
             "Innehåller SOJA.",
         extra:
             "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
-    }
+    },
+    "halo-halo": {
+    ingredients:
+        "Krossad is, sötad mjölk, nötgelé, sötade bönor, nata de coco och ube.",
+    allergens:
+        "Innehåller MJÖLK.",
+    extra:
+        "En färgstark filippinsk klassiker fylld med olika smaker och texturer – blandas ihop innan den avnjuts."
+}
 
 }
 
