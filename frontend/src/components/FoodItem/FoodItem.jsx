@@ -142,7 +142,7 @@ const FoodItem = ({
         "En färgstark filippinsk klassiker fylld med olika smaker och texturer – blandas ihop innan den avnjuts."
 },
 
-"chicken-adobo": {
+"chicken Adobo": {
     ingredients:
         "Kyckling, soja, vinäger, vitlök, lagerblad, svartpeppar och ris.",
 
