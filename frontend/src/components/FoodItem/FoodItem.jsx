@@ -140,7 +140,25 @@ const FoodItem = ({
         "Innehåller MJÖLK.",
     extra:
         "En färgstark filippinsk klassiker fylld med olika smaker och texturer – blandas ihop innan den avnjuts."
-}
+},
+
+
+    // ==================================================
+    // COFFEE
+    // ==================================================
+
+    "Ube Caramel Latte": {
+        ingredients:
+            "Espresso, mjölk, ube, karamellsås och is.",
+
+        allergens:
+            "Innehåller MJÖLK (laktosfri). Kontrollera även ingrediensförteckningen för ube och karamellsås för eventuella ytterligare allergener.",
+
+        extra:
+            "En kall kaffedryck med ube och karamell."
+    },
+
+
 
 }
 
