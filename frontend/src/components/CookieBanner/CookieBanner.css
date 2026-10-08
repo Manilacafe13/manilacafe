@@ -1,0 +1,114 @@
+
+/* ==========================================
+   MANILA CAFÉ – COOKIE BANNER
+========================================== */
+
+.cookie-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 560px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e9e5df;
+  border-radius: 16px;
+  box-shadow: 0 8px 35px rgba(0, 0, 0, 0.16);
+  z-index: 9999;
+}
+
+.cookie-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cookie-banner-content h3 {
+  margin: 0;
+  color: #242424;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cookie-banner-content p {
+  margin: 0;
+  color: #555555;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cookie-banner-actions button {
+  flex: 1;
+  min-height: 46px;
+  padding: 12px 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+/* NEKA */
+
+.cookie-banner-actions button:first-child {
+  background: #ffffff;
+  color: #242424;
+  border: 1px solid #cccccc;
+}
+
+.cookie-banner-actions button:first-child:hover {
+  background: #f5f5f5;
+}
+
+/* ACCEPTERA */
+
+.cookie-banner-actions button:last-child {
+  background: #242424;
+  color: #ffffff;
+  border: 1px solid #242424;
+}
+
+.cookie-banner-actions button:last-child:hover {
+  background: #444444;
+}
+
+.cookie-banner-actions button:focus-visible {
+  outline: 3px solid #8c7b65;
+  outline-offset: 3px;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .cookie-banner {
+    bottom: 12px;
+    width: calc(100% - 24px);
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .cookie-banner-content h3 {
+    font-size: 18px;
+  }
+
+  .cookie-banner-content p {
+    font-size: 13px;
+  }
+
+  .cookie-banner-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cookie-banner-actions button {
+    width: 100%;
+  }
+}

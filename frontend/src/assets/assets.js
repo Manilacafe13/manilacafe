@@ -9,6 +9,7 @@ import menu_5 from './menu_5.png'
 import menu_10 from './menu_10.png'
 import menu_7 from './menu_7.png'
 import menu_11 from './menu_11.png'
+import menu_13 from './menu_13.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
@@ -57,6 +58,11 @@ export const meal_list = [
     {
         menu_name: "Sinigang",
         menu_image: menu_7
+    },
+
+    {
+        menu_name: "Chicken Adobo",
+        menu_image: menu_13
     }
 ]
 

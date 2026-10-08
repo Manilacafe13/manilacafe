@@ -11,6 +11,7 @@ import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
 import Verify from './pages/Verify/Verify'
 import MyOrders from './pages/MyOrders/MyOrders'
 import ProductPage from './pages/Product/ProductPage'
+import CookieBanner from './components/CookieBanner/CookieBanner'
 
 import {
   TermsPage,
@@ -156,11 +157,12 @@ const App = () => {
       </div>
 
 
-      <Footer />
+           <Footer />
+
+      <CookieBanner />
 
     </>
   )
 }
-
 
 export default App
