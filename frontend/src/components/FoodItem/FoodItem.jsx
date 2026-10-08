@@ -143,20 +143,22 @@ const FoodItem = ({
 },
 
 
+    
     // ==================================================
     // COFFEE
     // ==================================================
 
-    "Ube Caramel Latte": {
+    "ube caramel latte": {
         ingredients:
-            "Espresso, mjölk, ube, karamellsås och is.",
+            "Espresso, laktosfri mjölk, ube, karamellsås och is.",
 
         allergens:
-            "Innehåller MJÖLK (laktosfri). Kontrollera även ingrediensförteckningen för ube och karamellsås för eventuella ytterligare allergener.",
+            "Innehåller MJÖLK (mjölkprotein). Kontrollera även ubeproduktens och karamellsåsens allergener.",
 
         extra:
             "En kall kaffedryck med ube och karamell."
     },
+
 
 
 
