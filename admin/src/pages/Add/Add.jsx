@@ -525,47 +525,38 @@ const Add = ({ url }) => {
         <div className="add-category-price">
 
 
-          {/* CATEGORY */}
+          
+<div className="add-category flex-col">
 
-          <div className="add-category flex-col">
+  <p>Kategori</p>
 
-            <p>
-              Kategori
-            </p>
+  <select
+    onChange={onChangeHandler}
+    name="category"
+    value={data.category}
+  >
 
-            <select
-              onChange={onChangeHandler}
-              name="category"
-              value={data.category}
-            >
+    <optgroup label="Maträtter">
+      <option value="Maträtter">
+        Maträtter
+      </option>
+    </optgroup>
 
-              <option value="Maträtter">
-                Maträtter
-              </option>
+    <optgroup label="Desserter">
+      <option value="Turon">Turon</option>
+      <option value="Ube cake">Ube cake</option>
+      <option value="Floats">Floats</option>
+      <option value="Fruit Cup">Fruit Cup</option>
+      <option value="Halo-Halo">Halo-Halo</option>
+    </optgroup>
 
-              <option value="Turon">
-                Turon
-              </option>
+    <optgroup label="Drycker">
+      <option value="Coffee">Coffee</option>
+    </optgroup>
 
-              <option value="Ube cake">
-                Ube cake
-              </option>
+  </select>
 
-              <option value="Floats">
-                Floats
-              </option>
-
-              <option value="Fruit Cup">
-                Fruit Cup
-              </option>
-
-              <option value="Halo-Halo">
-                Halo-Halo
-              </option>
-
-            </select>
-
-          </div>
+</div>
 
 
           {/* PRICE */}

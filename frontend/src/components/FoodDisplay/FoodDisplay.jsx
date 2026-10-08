@@ -1,26 +1,16 @@
+
 import React, { useContext } from 'react'
 import './FoodDisplay.css'
 
 import { StoreContext } from '../../context/StoreContext'
 import FoodItem from '../FoodItem/FoodItem'
 
-
 const FoodDisplay = ({
   category = "All",
   type = "desserts"
 }) => {
 
-  const {
-    food_list = []
-  } = useContext(StoreContext)
-
-
-  // ======================================================
-  // PRODUCT TYPE
-  // ======================================================
-
-  const isMeals = type === "meals"
-
+  const { food_list = [] } = useContext(StoreContext)
 
   // ======================================================
   // NORMALIZE TEXT
@@ -32,9 +22,22 @@ const FoodDisplay = ({
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      // Tillfällig kompatibilitet med produktnamnet "Siningang"
       .replace(/siningang/g, "sinigang")
 
+  // ======================================================
+  // PRODUCT TYPES
+  // ======================================================
+
+  const isMeals = type === "meals"
+  const isDrinks = type === "drinks"
+
+  const normalizedCategory = normalizeText(category)
+
+  const drinkCategories = [
+    "coffee",
+    "smoothies",
+    "coolers"
+  ]
 
   // ======================================================
   // FILTER PRODUCTS
@@ -42,48 +45,94 @@ const FoodDisplay = ({
 
   const filteredFoods = food_list.filter((item) => {
 
-    // ==================================================
-    // MATRÄTTER
-    // ==================================================
+    const itemCategory = normalizeText(item.category)
 
+    // MATRÄTTER
     if (isMeals) {
 
-      // Produkten måste vara en maträtt
-      if (item.category !== "Maträtter") {
+      if (itemCategory !== "matratter") {
         return false
       }
 
-      // Visa alla maträtter
-      if (category === "All") {
+      if (normalizedCategory === "all") {
         return true
       }
 
-      // Filtrera efter maträttens namn
       return normalizeText(item.name).includes(
-        normalizeText(category)
+        normalizedCategory
       )
     }
 
+    // DRYCKER
+    if (isDrinks) {
 
-    // ==================================================
+      if (!drinkCategories.includes(itemCategory)) {
+        return false
+      }
+
+      if (normalizedCategory === "all") {
+        return true
+      }
+
+      return itemCategory === normalizedCategory
+    }
+
     // DESSERTER
-    // ==================================================
-
-    // Maträtter ska aldrig visas bland desserterna
-    if (item.category === "Maträtter") {
+    if (
+      itemCategory === "matratter" ||
+      drinkCategories.includes(itemCategory)
+    ) {
       return false
     }
 
-    // Visa alla desserter
-    if (category === "All") {
+    if (normalizedCategory === "all") {
       return true
     }
 
-    // Filtrera dessertkategori
-    return item.category === category
-
+    return itemCategory === normalizedCategory
   })
 
+  // ======================================================
+  // SECTION SETTINGS
+  // ======================================================
+
+  const sections = {
+    desserts: {
+      id: "food-display",
+      className: "food-display-desserts",
+      eyebrow: "FILIPINO DESSERTS",
+      title: "Våra desserter",
+      description:
+        "Hitta din nästa favorit hos Manila Café. Välj bland filippinska desserter och tropiska favoriter som Mango Float, Ube Cake, Fruit Cup, Turon och fler söta smaker.",
+      empty:
+        "Inga desserter hittades i den här kategorin just nu."
+    },
+    meals: {
+      id: "meals-display",
+      className: "food-display-meals",
+      eyebrow: "FILIPINO FOOD",
+      title: "Maträtter",
+      description:
+        "Upptäck våra filippinska maträtter i Göteborg. Klassiska smaker från Filippinerna för avhämtning eller leverans.",
+      empty:
+        "Ingen maträtt hittades i den här kategorin just nu."
+    },
+    drinks: {
+      id: "drinks-display",
+      className: "food-display-drinks",
+      eyebrow: "MANILA CAFÉ DRINKS",
+      title: "Våra drycker",
+      description:
+        "Upptäck våra kaffedrycker. Från klassiska favoriter till nya spännande smaker. Smoothies och Coolers kommer framöver.",
+      empty:
+        "Inga drycker hittades i den här kategorin just nu."
+    }
+  }
+
+  const currentSection =
+    sections[type] || sections.desserts
+
+  const titleId = `${currentSection.id}-title`
 
   // ======================================================
   // HIDE EMPTY MEALS SECTION
@@ -91,25 +140,11 @@ const FoodDisplay = ({
 
   if (
     isMeals &&
-    category === "All" &&
+    normalizedCategory === "all" &&
     filteredFoods.length === 0
   ) {
     return null
   }
-
-
-  // ======================================================
-  // SECTION INFORMATION
-  // ======================================================
-
-  const sectionId = isMeals
-    ? "meals-display"
-    : "food-display"
-
-  const titleId = isMeals
-    ? "meals-display-title"
-    : "food-display-title"
-
 
   // ======================================================
   // JSX
@@ -117,66 +152,26 @@ const FoodDisplay = ({
 
   return (
     <section
-      className={`food-display ${
-        isMeals
-          ? "food-display-meals"
-          : "food-display-desserts"
-      }`}
-      id={sectionId}
+      className={`food-display ${currentSection.className}`}
+      id={currentSection.id}
       aria-labelledby={titleId}
     >
 
-      {/* ============================================== */}
-      {/* INTRO */}
-      {/* ============================================== */}
-
       <div className="food-display-intro">
 
-        {isMeals ? (
+        <span className="food-display-eyebrow">
+          {currentSection.eyebrow}
+        </span>
 
-          <>
-            <span className="food-display-eyebrow">
-              FILIPINO FOOD
-            </span>
+        <h2 id={titleId}>
+          {currentSection.title}
+        </h2>
 
-            <h2 id={titleId}>
-              Maträtter
-            </h2>
-
-            <p>
-              Upptäck våra filippinska maträtter i Göteborg.
-              Klassiska smaker från Filippinerna för avhämtning
-              eller leverans.
-            </p>
-          </>
-
-        ) : (
-
-          <>
-            <span className="food-display-eyebrow">
-              FILIPINO DESSERTS
-            </span>
-
-            <h2 id={titleId}>
-              Våra desserter
-            </h2>
-
-            <p>
-              Hitta din nästa favorit hos Manila Café.
-              Välj bland filippinska desserter och tropiska
-              favoriter som Mango Float, Ube Cake, Fruit Cup,
-              Turon och fler söta smaker.
-            </p>
-          </>
-
-        )}
+        <p>
+          {currentSection.description}
+        </p>
 
       </div>
-
-
-      {/* ============================================== */}
-      {/* PRODUCTS */}
-      {/* ============================================== */}
 
       <div
         className="food-display-list"
@@ -202,15 +197,9 @@ const FoodDisplay = ({
         ) : (
 
           <div className="food-display-empty">
-
             <p>
-              {
-                isMeals
-                  ? "Ingen maträtt hittades i den här kategorin just nu."
-                  : "Inga desserter hittades i den här kategorin just nu."
-              }
+              {currentSection.empty}
             </p>
-
           </div>
 
         )}
@@ -220,6 +209,5 @@ const FoodDisplay = ({
     </section>
   )
 }
-
 
 export default FoodDisplay

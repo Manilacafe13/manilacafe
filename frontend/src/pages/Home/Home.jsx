@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 
 import './Home.css'
@@ -9,11 +10,15 @@ import AboutUs from '../../components/AboutUs/AboutUs'
 import CultureSection from '../../components/CultureSection/CultureSection'
 import FutureProducts from '../../components/FutureProducts/FutureProducts'
 
-
 const Home = () => {
+
+  // ======================================================
+  // CATEGORY STATES
+  // ======================================================
 
   const [mealCategory, setMealCategory] = useState("All")
   const [dessertCategory, setDessertCategory] = useState("All")
+  const [drinkCategory, setDrinkCategory] = useState("All")
 
   return (
     <main className="home">
@@ -58,13 +63,30 @@ const Home = () => {
 
 
       {/* ============================================== */}
+      {/* DRYCKER */}
+      {/* ============================================== */}
+
+      <ExploreMenu
+        category={drinkCategory}
+        setCategory={setDrinkCategory}
+        type="drinks"
+      />
+
+      <FoodDisplay
+        category={drinkCategory}
+        type="drinks"
+      />
+
+
+      {/* ============================================== */}
       {/* SEO / DISCOVERY */}
       {/* ============================================== */}
 
       <section className="home-seo-section">
 
         <h2>
-          Filippinska maträtter & desserter i Göteborg
+          Filippinska maträtter, desserter & drycker
+          i Göteborg
         </h2>
 
         <h3>
@@ -72,16 +94,16 @@ const Home = () => {
         </h3>
 
         <p>
-          Upptäck Manila Café och filippinska smaker i Göteborg.
-          Här hittar du både klassiska maträtter och populära
-          desserter som Mango Float, Ube Cake, Fruit Cup
-          och andra filippinska favoriter.
+          Upptäck Manila Café och filippinska smaker
+          i Göteborg. Här hittar du klassiska maträtter,
+          populära desserter som Mango Float, Ube Cake
+          och Fruit Cup, samt vårt utbud av kaffedrycker.
         </p>
 
         <p>
-          Beställ online för avhämtning eller leverans i Göteborg
-          och upptäck traditionella maträtter och tropiska
-          desserter inspirerade av Filippinerna.
+          Beställ online för avhämtning eller leverans
+          i Göteborg och upptäck traditionella maträtter,
+          tropiska desserter och goda drycker.
         </p>
 
       </section>
@@ -110,6 +132,5 @@ const Home = () => {
     </main>
   )
 }
-
 
 export default Home
