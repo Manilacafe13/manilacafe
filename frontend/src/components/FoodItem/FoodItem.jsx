@@ -142,6 +142,16 @@ const FoodItem = ({
         "En färgstark filippinsk klassiker fylld med olika smaker och texturer – blandas ihop innan den avnjuts."
 },
 
+"chicken-adobo": {
+    ingredients:
+        "Kyckling, soja, vinäger, vitlök, lagerblad, svartpeppar och ris.",
+
+    allergens:
+        "Innehåller SOJA och kan innehålla VETE (gluten), beroende på vilken soja som används.",
+
+    extra:
+        "En klassisk filippinsk rätt med mör kyckling som tillagas i en smakrik sås av soja, vinäger och vitlök. En perfekt balans mellan sälta och syra, serverad med ris."
+},
 
     
     // ==================================================
