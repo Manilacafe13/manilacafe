@@ -153,6 +153,17 @@ const FoodItem = ({
         "En klassisk filippinsk rätt med mör kyckling som tillagas i en smakrik sås av soja, vinäger och vitlök. En perfekt balans mellan sälta och syra, serverad med ris."
 },
 
+"pandesal": {
+    ingredients:
+        "Vetemjöl, mjölk, jäst, socker, smör, ägg, salt och ströbröd.",
+
+    allergens:
+        "Innehåller VETE (gluten), MJÖLK (laktos) och ÄGG.",
+
+    extra:
+        "Ett klassiskt filippinskt bröd med en mjuk och luftig insida och en lätt gyllene yta täckt av fina brödsmulor. Perfekt till frukost, som mellanmål eller tillsammans med en kopp kaffe."
+},
+
     
     // ==================================================
     // COFFEE

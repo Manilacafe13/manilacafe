@@ -10,6 +10,7 @@ import menu_10 from './menu_10.png'
 import menu_7 from './menu_7.png'
 import menu_11 from './menu_11.png'
 import menu_13 from './menu_13.png'
+import menu_18 from './menu_18.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
@@ -91,6 +92,10 @@ export const menu_list = [
     {
         menu_name: "Turon",
         menu_image: menu_5
+    },
+    {
+        menu_name: "Pandesal",
+        menu_image: menu_18
     }
 ]
 
