@@ -548,6 +548,7 @@ const Add = ({ url }) => {
       <option value="Floats">Floats</option>
       <option value="Fruit Cup">Fruit Cup</option>
       <option value="Halo-Halo">Halo-Halo</option>
+      <option value="Pandesal">Pandesal</option>
     </optgroup>
 
     <optgroup label="Drycker">
