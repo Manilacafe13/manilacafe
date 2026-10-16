@@ -133,6 +133,27 @@ const FoodItem = ({
         extra:
             "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
     },
+    "Strawberry Taho": {
+    ingredients:
+        "Silkestofu, jordgubbssirap och sagopärlor.",
+
+    allergens:
+        "Innehåller SOJA.",
+
+    extra:
+        "En fruktig twist på den filippinska klassikern med silkeslen tofu, söt jordgubbssirap och mjuka sagopärlor."
+},
+
+"Apple Taho": {
+    ingredients:
+        "Silkestofu, äppelsirap och sagopärlor.",
+
+    allergens:
+        "Innehåller SOJA.",
+
+    extra:
+        "En frisk och fruktig variant av klassisk Taho med silkeslen tofu, söt äppelsirap och mjuka sagopärlor."
+},
     "halo-halo": {
     ingredients:
         "Krossad is, sötad mjölk, nötgelé, sötade bönor, nata de coco och ube.",
