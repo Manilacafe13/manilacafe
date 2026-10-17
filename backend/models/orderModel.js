@@ -275,41 +275,46 @@ const orderSchema = new mongoose.Schema(
     // REQUESTED TIME / TIME WINDOW
     // ==================================================
 
-    /*
-      Alla möjliga tidsintervall som Manila Café
-      använder finns här.
+   /*
+  Alla möjliga tidsintervall som Manila Café
+  använder finns här.
 
-      Vilka tider som faktiskt är tillåtna för
-      respektive veckodag kontrolleras i
-      orderController.js.
+  Vilka tider som faktiskt är tillåtna för
+  respektive veckodag kontrolleras i
+  orderController.js.
 
-      Måndag:
-      stängt
+  Måndag + tisdag:
+  Stängt
 
-      Tisdag - torsdag + söndag:
-      15:00 - 21:00
+  Onsdag + torsdag + söndag:
+  10:00 - 21:00
 
-      Fredag + lördag:
-      16:00 - 23:00
-    */
+  Fredag + lördag:
+  10:00 - 23:00
+*/
 
-    requestedTime: {
-      type: String,
+requestedTime: {
+  type: String,
 
-      enum: [
-        "15:00-16:00",
-        "16:00-17:00",
-        "17:00-18:00",
-        "18:00-19:00",
-        "19:00-20:00",
-        "20:00-21:00",
-        "21:00-22:00",
-        "22:00-23:00"
-      ],
+  enum: [
+    "10:00-11:00",
+    "11:00-12:00",
+    "12:00-13:00",
+    "13:00-14:00",
+    "14:00-15:00",
+    "15:00-16:00",
+    "16:00-17:00",
+    "17:00-18:00",
+    "18:00-19:00",
+    "19:00-20:00",
+    "20:00-21:00",
+    "21:00-22:00",
+    "22:00-23:00"
+  ],
 
-      required: true,
-      trim: true
-    },
+  required: true,
+  trim: true
+},
 
 
     // ==================================================
