@@ -1,5 +1,5 @@
 /* Manila CafÃ© â€¢ minimal 3-step checkout. Import after PlaceOrder.css. */
-.manila-checkout{--mc-ink:#352720;--mc-muted:#756b63;--mc-accent:#6d412d;--mc-bg:#fffdf9;--mc-border:#e9dfd5;color:var(--mc-ink);max-width:1140px;margin:36px auto 90px;padding:0 20px;font-family:inherit}
+.manila-checkout{--mc-ink:#262626;--mc-muted:#777777;--mc-accent:rgb(3, 149, 44);--mc-bg:#ffffff;--mc-border:#e5e5e5;color:var(--mc-ink);max-width:1140px;margin:36px auto 90px;padding:0 20px;font-family:inherit}
 .manila-checkout *{box-sizing:border-box}
 .manila-checkout button,.manila-checkout input,.manila-checkout select{font:inherit}
 .mc-head{text-align:center;margin:5px 0 25px}
@@ -8,18 +8,18 @@
 .mc-head p,.mc-muted{color:var(--mc-muted);font-size:14px;line-height:1.6;margin:0}
 .mc-progress{display:flex;justify-content:space-between;position:relative;margin:0 auto 28px;max-width:620px;gap:8px}
 .mc-progress:before{content:"";height:1px;background:var(--mc-border);position:absolute;top:17px;left:40px;right:40px;z-index:0}
-.mc-progress-item{display:flex;align-items:center;flex-direction:column;gap:7px;position:relative;z-index:1;color:#90857e;font-size:12px;font-weight:600;min-width:96px;text-align:center}
-.mc-progress-number{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;background:#fff;border:1px solid var(--mc-border);color:#83766b;font-size:13px}
+.mc-progress-item{display:flex;align-items:center;flex-direction:column;gap:7px;position:relative;z-index:1;color:#777777;font-size:12px;font-weight:600;min-width:96px;text-align:center}
+.mc-progress-number{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;background:#fff;border:1px solid var(--mc-border);color:#777777;font-size:13px}
 .mc-progress-item.is-current .mc-progress-number,.mc-progress-item.is-done .mc-progress-number{background:var(--mc-accent);border-color:var(--mc-accent);color:white}
 .mc-progress-item.is-current{color:var(--mc-ink)}
 .mc-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,1fr);align-items:start;gap:22px}
-.mc-panel,.mc-summary{background:#fff;border:1px solid var(--mc-border);border-radius:18px;box-shadow:0 9px 30px rgba(69,46,30,.045)}
+.mc-panel,.mc-summary{background:#fff;border:1px solid var(--mc-border);border-radius:18px;box-shadow:0 9px 30px rgba(0,0,0,.045)}
 .mc-panel{padding:clamp(20px,3vw,36px);min-height:350px}
 .mc-panel h2{font-size:clamp(21px,2.4vw,27px);margin:8px 0 7px;line-height:1.3}
 .mc-option,.mc-date-pill{cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
 .mc-options{display:grid;gap:12px;margin:26px 0 24px}
 .mc-option{display:flex;align-items:center;gap:14px;border:1.5px solid var(--mc-border);border-radius:13px;padding:17px;background:var(--mc-bg)}
-.mc-option.selected,.mc-date-pill.selected{background:#fbf2eb;border-color:#a37357;box-shadow:0 0 0 1px rgba(163,115,87,.12)}
+.mc-option.selected,.mc-date-pill.selected{background:#f4fbf5;border-color:rgb(3, 149, 44);box-shadow:0 0 0 1px rgba(3,149,44,.12)}
 .mc-option input,.mc-date-pill input{accent-color:var(--mc-accent);margin:0;width:17px;height:17px;flex-shrink:0}
 .mc-option-icon{font-size:24px;min-width:28px;text-align:center}
 .mc-option-text{display:grid;gap:4px;flex:1}
@@ -31,19 +31,19 @@
 .mc-date-pill{border:1.5px solid var(--mc-border);border-radius:12px;min-height:105px;padding:13px;background:var(--mc-bg);display:flex;flex-direction:column;gap:9px}
 .mc-date-pill input{width:15px;height:15px}
 .mc-date-pill strong{font-size:14px}
-.mc-date-pill.disabled{cursor:not-allowed;opacity:.45;background:#f5f3f0}
+.mc-date-pill.disabled{cursor:not-allowed;opacity:.45;background:#f7f7f7}
 .mc-date-pill.disabled input{cursor:not-allowed}
 .mc-fields{display:grid;gap:14px;margin-top:20px}
 .mc-two-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .mc-field{display:flex;flex-direction:column;gap:7px;margin:17px 0 0;min-width:0}
 .mc-fields .mc-field,.mc-two-columns>.mc-field{margin-top:0}
 .mc-field label{font-weight:600;font-size:13px}
-.manila-checkout .mc-field input,.manila-checkout .mc-field select{display:block;width:100%;min-width:0;height:49px;padding:0 14px;background:#fff;border:1px solid #d9d3ce;border-radius:9px;color:var(--mc-ink);outline:none}
-.manila-checkout .mc-field :is(input,select):focus{border-color:var(--mc-accent);box-shadow:0 0 0 3px rgba(109,65,45,.11)}
-.manila-checkout :is(button,input,select):focus-visible{outline:3px solid #bb9c88;outline-offset:2px}
+.manila-checkout .mc-field input,.manila-checkout .mc-field select{display:block;width:100%;min-width:0;height:49px;padding:0 14px;background:#fff;border:1px solid #c5c5c5;border-radius:9px;color:var(--mc-ink);outline:none}
+.manila-checkout .mc-field :is(input,select):focus{border-color:var(--mc-accent);box-shadow:0 0 0 3px rgba(3,149,44,.11)}
+.manila-checkout :is(button,input,select):focus-visible{outline:3px solid rgb(3, 149, 44);outline-offset:2px}
 .mc-address{margin-top:25px;padding-top:20px;border-top:1px solid var(--mc-border)}
 .mc-address h3{font-size:17px;margin:0}
-.mc-hint{font-size:12px;color:#725c48;line-height:1.5;background:#fff7e8;padding:11px 14px;border-radius:8px;margin:13px 0}
+.mc-hint{font-size:12px;color:#555;line-height:1.5;background:#f4fbf5;padding:11px 14px;border-radius:8px;margin:13px 0}
 .mc-error{font-size:13px;line-height:1.5;color:#a52323;background:#fff1ef;padding:10px 14px;border-radius:8px;margin:13px 0}
 .mc-reassurance{font-size:12px;color:var(--mc-muted);margin:23px 0 0}
 .mc-actions{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-top:26px}
@@ -52,7 +52,7 @@
 .manila-checkout .mc-actions button.mc-primary{margin-top:0}
 .manila-checkout button.mc-secondary{background:#fff;color:var(--mc-ink);border-color:var(--mc-border)}
 .manila-checkout button.mc-primary:disabled{opacity:.46;cursor:not-allowed}
-.manila-checkout button.mc-primary:not(:disabled):hover{background:#583320}
+.manila-checkout button.mc-primary:not(:disabled):hover{background:rgb(0, 126, 35)}
 .mc-summary{padding:24px;position:sticky;top:24px}
 .mc-summary-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--mc-border)}
 .mc-summary h2{font-size:19px;margin:0}
