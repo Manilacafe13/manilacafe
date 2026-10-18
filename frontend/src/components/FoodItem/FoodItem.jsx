@@ -133,7 +133,7 @@ const FoodItem = ({
         extra:
             "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
     },
-    "Strawberry Taho": {
+    "strawberry taho": {
     ingredients:
         "Silkestofu, jordgubbssirap och sagopärlor.",
 
@@ -144,7 +144,7 @@ const FoodItem = ({
         "En fruktig twist på den filippinska klassikern med silkeslen tofu, söt jordgubbssirap och mjuka sagopärlor."
 },
 
-"Apple Taho": {
+"apple taho": {
     ingredients:
         "Silkestofu, äppelsirap och sagopärlor.",
 
