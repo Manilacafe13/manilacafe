@@ -628,13 +628,10 @@ const PlaceOrder = () => {
   // ======================================================
   // CLOSED DAY HELPERS
   // ======================================================
-  const isClosedDay = (dateString) => {
-    if (!dateString) return false
-    const date = new Date(`${dateString}T12:00:00`)
-    const day = date.getDay()
-    // Monday + Tuesday
-    return day === 1 || day === 2
-  }
+  const isClosedDay = () => {
+  return false
+}
+
   const isTodayClosed = isClosedDay(getTodayDate())
   const isTomorrowClosed = isClosedDay(getTomorrowDate())
 
