@@ -550,6 +550,7 @@ const Add = ({ url }) => {
       <option value="Halo-Halo">Halo-Halo</option>
       <option value="Pandesal">Pandesal</option>
       <option value="Taho">Taho</option>
+      <option value="Sago">Sago</option>
     </optgroup>
 
     <optgroup label="Drycker">

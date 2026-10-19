@@ -185,6 +185,17 @@ const FoodItem = ({
         "Ett klassiskt filippinskt bröd med en mjuk och luftig insida och en lätt gyllene yta täckt av fina brödsmulor. Perfekt till frukost, som mellanmål eller tillsammans med en kopp kaffe."
 },
 
+"mango sago": {
+    ingredients:
+        "Färsk mango, sagopärlor (tapioka), kokosmjölk och sötad kondenserad mjölk.",
+
+    allergens:
+        "Innehåller MJÖLK. Kontrollera även övriga ingredienser för eventuella allergener.",
+
+    extra:
+        "En tropisk filippinsk dessert med söt, saftig mango och mjuka sagopärlor i en len och krämig mangoblandning. En perfekt balans mellan fruktig sötma och krämighet, serverad kall för en härligt uppfriskande smakupplevelse."
+},
+
     
     // ==================================================
     // COFFEE
