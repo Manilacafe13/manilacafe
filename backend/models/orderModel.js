@@ -270,27 +270,20 @@ const orderSchema = new mongoose.Schema(
       required: true
     },
 
+// ==================================================
+// REQUESTED TIME / TIME WINDOW
+// ==================================================
 
-    // ==================================================
-    // REQUESTED TIME / TIME WINDOW
-    // ==================================================
+/*
+  Manila Café öppettider:
 
-   /*
-  Alla möjliga tidsintervall som Manila Café
-  använder finns här.
-
-  Vilka tider som faktiskt är tillåtna för
-  respektive veckodag kontrolleras i
-  orderController.js.
-
-  Måndag + tisdag:
-  Stängt
-
-  Onsdag + torsdag + söndag:
-  10:00 - 21:00
-
-  Fredag + lördag:
+  Måndag - söndag:
   10:00 - 23:00
+
+  Samma tider gäller alla dagar.
+
+  Tillåtna tider kontrolleras även i
+  orderController.js.
 */
 
 requestedTime: {

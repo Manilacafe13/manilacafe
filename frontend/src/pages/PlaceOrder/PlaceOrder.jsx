@@ -648,39 +648,18 @@ const PlaceOrder = () => {
     }
   }, [fulfillmentType, isLargeOrder, isTomorrowClosed, isTodayClosed, sameDayAvailable])
   // ======================================================
-  // OPENING HOURS / AVAILABLE TIME SLOTS
-  // ======================================================
-  const getAvailableTimeSlots = () => {
-    const requestedDate =
-      getRequestedDate()
-    if (!requestedDate) {
-      return []
-    }
-    // T12:00 förhindrar problem runt midnatt / timezone
-    const date =
-      new Date(`${requestedDate}T12:00:00`)
-    const day =
-      date.getDay()
-    // JavaScript:
-    // 0 = söndag
-    // 1 = måndag
-    // 2 = tisdag
-    // 3 = onsdag
-    // 4 = torsdag
-    // 5 = fredag
-    // 6 = lördag
-    // ==================================================
-    // MONDAY - CLOSED
-    // ==================================================
-    // Monday + Tuesday - closed
-    if (day === 1 || day === 2) {
-      return []
-    }
-    // ==================================================
-// FRIDAY + SATURDAY
-// 10:00 - 23:00
-// ==================================================
-if (day === 5 || day === 6) {
+// OPENING HOURS / AVAILABLE TIME SLOTS
+// MONDAY - SUNDAY: 10:00 - 23:00
+// ======================================================
+
+const getAvailableTimeSlots = () => {
+  const requestedDate = getRequestedDate()
+
+  if (!requestedDate) {
+    return []
+  }
+
+  // Same opening hours every day
   return [
     "10:00-11:00",
     "11:00-12:00",
@@ -697,24 +676,6 @@ if (day === 5 || day === 6) {
     "22:00-23:00"
   ]
 }
-// ==================================================
-// WEDNESDAY + THURSDAY + SUNDAY
-// 10:00 - 21:00
-// ==================================================
-return [
-  "10:00-11:00",
-  "11:00-12:00",
-  "12:00-13:00",
-  "13:00-14:00",
-  "14:00-15:00",
-  "15:00-16:00",
-  "16:00-17:00",
-  "17:00-18:00",
-  "18:00-19:00",
-  "19:00-20:00",
-  "20:00-21:00"
-]
-  }
   useEffect(() => {
     setRequestedTime("")
   }, [
