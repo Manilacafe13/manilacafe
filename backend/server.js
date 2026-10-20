@@ -11,6 +11,7 @@ import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import futureProductRouter from "./routes/futureProductRoute.js";
 import adminRouter from "./routes/adminRoute.js";
+import discountRouter from "./routes/discountRoute.js";
 
 import {
   stripeWebhook
@@ -287,6 +288,10 @@ app.use(
   "/api/admin",
   adminRouter
 );
+
+app.use(
+  "/api/discount", 
+  discountRouter);
 
 // ======================================================
 // FUTURE PRODUCTS / CUSTOMER VOTING

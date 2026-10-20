@@ -310,6 +310,61 @@ requestedTime: {
 },
 
 
+// ==================================================
+// DISCOUNT / PROMO CODE
+// ==================================================
+
+discountCode: {
+  type: String,
+  default: null,
+  trim: true,
+  uppercase: true,
+  maxlength: 50
+},
+
+
+discountId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "discount",
+  default: null
+},
+
+
+// Rabattbelopp inklusive moms
+discountAmount: {
+  type: Number,
+  default: 0,
+  min: 0
+},
+
+
+discountReservationStatus: {
+  type: String,
+  enum: ["none", "reserved", "redeemed", "released"],
+  default: "none"
+},
+
+discountReservedAt: {
+  type: Date,
+  default: null
+},
+
+
+// Rabattens typ
+discountType: {
+  type: String,
+  enum: ["percentage", "fixed", null],
+  default: null
+},
+
+// Rabattens ursprungliga värde
+// Exempel: 15 (%) eller 30 (kr)
+discountValue: {
+  type: Number,
+  default: 0,
+  min: 0
+},
+
     // ==================================================
     // PRICE EXCLUDING VAT
     // ==================================================

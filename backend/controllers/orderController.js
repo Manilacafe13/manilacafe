@@ -1,5 +1,9 @@
 import orderModel from "../models/orderModel.js";
 
+import discountModel from "../models/discountModel.js";
+
+import { reserveDiscount } from "../services/discountService.js";
+
 import userModel from "../models/userModel.js";
 
 import foodModel from "../models/foodmodel.js";
@@ -551,6 +555,28 @@ const roundMoney = (value) => {
 
 };
 
+
+
+const calculateProductDiscount = (
+  productTotal,
+  discount
+) => {
+  if (!discount) return 0;
+
+  let amount = 0;
+
+  if (discount.type === "percentage") {
+    amount = productTotal * (discount.value / 100);
+  }
+
+  if (discount.type === "fixed") {
+    amount = discount.value;
+  }
+
+  return roundMoney(
+    Math.min(productTotal, Math.max(0, amount))
+  );
+};
 
 
 const getSwedenDateString = (daysToAdd = 0) => {
@@ -1344,20 +1370,14 @@ const placeOrder = async (req, res) => {
 
 
     const {
-
-      items,
-
-      address,
-
-      deliveryMethod,
-
-      fulfillmentType,
-
-      requestedDate,
-
-      requestedTime
-
-    } = req.body || {};
+  items,
+  address,
+  deliveryMethod,
+  fulfillmentType,
+  requestedDate,
+  requestedTime,
+  discountCode
+} = req.body || {};
 
 
 
@@ -2118,18 +2138,124 @@ const placeOrder = async (req, res) => {
 
     }
 
+     
+    // ==================================================
+    // VALIDATE DISCOUNT CODE
+    // ==================================================
 
+    let appliedDiscount = null;
+
+    const normalizedDiscountCode =
+      typeof discountCode === "string"
+        ? discountCode.trim().toUpperCase()
+        : "";
+
+    if (normalizedDiscountCode) {
+
+      if (
+        normalizedDiscountCode.length > 50
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Ogiltig rabattkod."
+        });
+      }
+
+      const discount = await discountModel.findOne({
+        code: normalizedDiscountCode,
+        isActive: true
+      });
+
+      if (!discount) {
+        return res.status(400).json({
+          success: false,
+          message: "Rabattkoden är ogiltig."
+        });
+      }
+
+      if (
+        discount.expiresAt &&
+        discount.expiresAt <= new Date()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Rabattkoden har gått ut."
+        });
+      }
+
+      if (
+        discount.usageLimit !== null &&
+(discount.usedCount + (discount.reservedCount || 0)) >= discount.usageLimit
+
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Rabattkoden har nått sin användningsgräns."
+        });
+      }
+
+      // Produktvärde inklusive moms, före rabatt
+      const productTotalBeforeDiscount = roundMoney(
+        subtotal + roundMoney(subtotal * VAT_RATE)
+      );
+
+      if (
+        productTotalBeforeDiscount <
+        discount.minOrderAmount
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            `Rabattkoden kräver ett produktköp på minst ${discount.minOrderAmount} kr.`
+        });
+      }
+
+      appliedDiscount = discount;
+    }
+
+
+
+    
+    // ==================================================
+    // PRICE CALCULATION WITH DISCOUNT
+    // ==================================================
+
+   
+    // ==================================================
+    // CALCULATE ORDER TOTAL
+    // ==================================================
 
     const roundedSubtotal = roundMoney(subtotal);
 
-    const roundedVat = roundMoney(
-      subtotal * VAT_RATE
+    // Produkter inklusive moms, före rabatt
+    const productTotalBeforeDiscount = roundMoney(
+      roundedSubtotal +
+      roundMoney(roundedSubtotal * VAT_RATE)
     );
 
+    // Rabatt gäller endast produkter, inte leverans
+    const discountAmount = appliedDiscount
+      ? calculateProductDiscount(
+          productTotalBeforeDiscount,
+          appliedDiscount
+        )
+      : 0;
+
+    // Produktvärde inklusive moms, efter rabatt
     const productTotal = roundMoney(
-      roundedSubtotal + roundedVat
+      productTotalBeforeDiscount - discountAmount
     );
 
+    // Räkna om moms efter rabatt
+    const roundedVat = roundMoney(
+      productTotal * VAT_RATE / (1 + VAT_RATE)
+    );
+
+    const subtotalAfterDiscount = roundMoney(
+      productTotal - roundedVat
+    );
+
+    // Fri leverans baseras på produktvärdet efter rabatt
     const qualifiesForFreeDelivery =
       productTotal >= FREE_DELIVERY_THRESHOLD;
 
@@ -2145,147 +2271,126 @@ const placeOrder = async (req, res) => {
       productTotal + roundedDeliveryFee
     );
 
-
+    // ==================================================
+    // CREATE ORDER
+    // ==================================================
 
     const newOrder = new orderModel({
-
       userId,
 
       items: verifiedItems,
 
+      fulfillmentType,
       deliveryMethod,
 
-      fulfillmentType,
-
-      requestedDate:
-
-        createStoredDate(requestedDate),
-
+      requestedDate: createStoredDate(requestedDate),
       requestedTime,
 
-      address: {
+      discountCode: appliedDiscount
+        ? appliedDiscount.code
+        : null,
 
-        firstName,
+      discountAmount,
 
-        lastName,
+      discountType: appliedDiscount
+        ? appliedDiscount.type
+        : null,
 
-        email,
+      discountValue: appliedDiscount
+        ? appliedDiscount.value
+        : 0,
 
-        phone,
+      discountReservationStatus: "none",
+      discountReservedAt: null,
 
-        street:
-
-          deliveryMethod === "delivery"
-
-            ? street
-
-            : "",
-
-        city:
-
-          deliveryMethod === "delivery"
-
-            ? city
-
-            : "",
-
-        zipcode:
-
-          deliveryMethod === "delivery"
-
-            ? zipcode
-
-            : ""
-
-      },
-
-      subtotal: roundedSubtotal,
-
+      subtotal: subtotalAfterDiscount,
       vatRate: 6,
-
       vatAmount: roundedVat,
-
       amount: roundedTotal,
 
+      address: {
+        firstName,
+        lastName,
+        email,
+        phone,
+        street,
+        city,
+        zipcode
+      },
+
+      status: "Inväntar betalning",
       payment: false,
-
-      paymentMethod: "Stripe",
-
-      status: "Inväntar betalning"
-
+      paymentMethod: "Stripe"
     });
-
-
 
     await newOrder.save();
 
+    // ==================================================
+    // STRIPE CHECKOUT - PRODUCTS WITH DISCOUNT
+    // ==================================================
 
+    const lineItems = [];
 
-    const lineItems = verifiedItems.map(
-
-      (item) => ({
-
-        price_data: {
-
-          currency: "sek",
-
-          product_data: {
-
-            name: item.name
-
-          },
-
-          unit_amount: Math.round(
-
-            item.price * 100
-
-          )
-
-        },
-
-        quantity: item.quantity
-
-      })
-
+    // Produktvärdet efter rabatt, exklusive moms
+    const productNetCents = Math.round(
+      subtotalAfterDiscount * 100
     );
 
-
-
-    if (roundedVat > 0) {
-
-      lineItems.push({
-
-        price_data: {
-
-          currency: "sek",
-
-          product_data: {
-
-            name: "Moms 6%"
-
+    // Visa produkterna som en samlad rad vid rabatt
+    // så att Stripe-beloppet matchar ordern.
+    if (appliedDiscount) {
+      if (productNetCents > 0) {
+        lineItems.push({
+          price_data: {
+            currency: "sek",
+            product_data: {
+              name: "Manila Café - produkter efter rabatt",
+              description:
+                `Rabattkod: ${appliedDiscount.code}`
+            },
+            unit_amount: productNetCents
           },
-
-          unit_amount: Math.round(
-
-            roundedVat * 100
-
-          )
-
-        },
-
-        quantity: 1
-
-      });
-
+          quantity: 1
+        });
+      }
+    } else {
+      // Utan rabatt: behåll ursprungliga produktrader
+      for (const item of verifiedItems) {
+        lineItems.push({
+          price_data: {
+            currency: "sek",
+            product_data: {
+              name: item.name
+            },
+            unit_amount: Math.round(item.price * 100)
+          },
+          quantity: item.quantity
+        });
+      }
     }
 
+    // Moms efter rabatt
+    if (roundedVat > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "sek",
+          product_data: {
+            name: "Moms 6%"
+          },
+          unit_amount: Math.round(roundedVat * 100)
+        },
+        quantity: 1
+      });
+    }
+
+    // Leveransavgift påverkas inte av rabatten
     if (roundedDeliveryFee > 0) {
       lineItems.push({
         price_data: {
           currency: "sek",
           product_data: {
             name: deliveryZone?.label
-              ? `Leverans avgift ${deliveryZone.label}`
+              ? `Leveransavgift ${deliveryZone.label}`
               : "Leverans"
           },
           unit_amount: Math.round(
@@ -2296,16 +2401,38 @@ const placeOrder = async (req, res) => {
       });
     }
 
+    // Kontrollera att Stripe får exakt samma belopp
+    // som sparats på ordern.
+    const stripeTotalCents = lineItems.reduce(
+      (sum, item) =>
+        sum +
+        item.price_data.unit_amount * item.quantity,
+      0
+    );
 
+    const expectedTotalCents = Math.round(
+      roundedTotal * 100
+    );
 
+    if (stripeTotalCents !== expectedTotalCents) {
+      throw new Error(
+        `STRIPE_TOTAL_MISMATCH: ${stripeTotalCents} !== ${expectedTotalCents}`
+      );
+    }
 
+    // Stripe Checkout kräver ett positivt belopp
+    // i detta betalningsflöde.
+    if (expectedTotalCents <= 0) {
+      throw new Error("ORDER_TOTAL_MUST_BE_POSITIVE");
+    }
 
-   const frontendUrl = (
-  process.env.FRONTEND_URL ||
-  "http://localhost:5173"
-)
-  .trim()
-  .replace(/\/+$/, "");
+  
+    const frontendUrl = (
+      process.env.FRONTEND_URL ||
+      "http://localhost:5173"
+    )
+      .trim()
+      .replace(/\/+$/, "");
 
 
 
