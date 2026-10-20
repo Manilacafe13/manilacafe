@@ -54,43 +54,43 @@ const DELIVERY_ZONES = {
 
   frolunda: {
     id: "frolunda",
-    label: "FrÃ¶lunda",
+    label: "Frölunda",
     fee: 0
   },
 
   west: {
     id: "west",
-    label: "VÃ¤stra GÃ¶teborg",
+    label: "Västra Göteborg",
     fee: 39
   },
 
   central: {
     id: "central",
-    label: "Centrala GÃ¶teborg",
+    label: "Centrala Göteborg",
     fee: 59
   },
 
   hisingen: {
     id: "hisingen",
-    label: "Hisingen / Norra GÃ¶teborg",
+    label: "Hisingen / Norra Göteborg",
     fee: 59
   },
 
   south: {
     id: "south",
-    label: "SÃ¶dra GÃ¶teborg / MÃ¶lndal",
+    label: "Södra Göteborg / Mölndal",
     fee: 49
   },
 
   east: {
     id: "east",
-    label: "Ã–stra GÃ¶teborg",
+    label: "västra Götteborg",
     fee: 69
   },
 
   northeast: {
     id: "northeast",
-    label: "NordÃ¶stra GÃ¶teborg / Angered",
+    label: "Nordvästra Göteborg / Angered",
     fee: 79
   },
 
@@ -114,7 +114,7 @@ const DELIVERY_ZONES = {
 
   grabo: {
     id: "grabo",
-    label: "GrÃ¥bo",
+    label: "Gråbo",
     fee: 150
   }
 
@@ -382,15 +382,15 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 11. VÃ„STRA GÃ–TEBORG
+  // 11. VäsTRA GöTEBORG
   //
   // Majorna
-  // HÃ¶gsbo
-  // NÃ¤set
-  // Ã–nnered
-  // FiskebÃ¤ck m.fl.
+  // Högsbo
+  // Näset
+  // Angered
+  // Fiskebäckk m.fl.
   //
-  // 421 FrÃ¶lunda har redan fÃ¥ngats ovan.
+  // 421 Frölunda har redan fÃ¥ngats ovan.
   // ====================================================
 
   const westPrefixes = [
@@ -417,7 +417,7 @@ const getDeliveryZone = ({
   // ====================================================
 
   if (
-    normalizedCity.includes("grabo")
+    normalizedCity.includes("gråbo")
   ) {
     return DELIVERY_ZONES.grabo;
   }
@@ -503,20 +503,19 @@ const getAllowedTimeSlotsForDate = (dateString) => {
 
 const ALLOWED_ORDER_STATUSES = [
 
-  "BestÃƒÂ¤llning mottagen",
+  "Beställning mottagen",
 
-  "FÃƒÂ¶rbereds",
+"Förbereds",
 
-  "Redo fÃƒÂ¶r upphÃƒÂ¤mtning",
+"Redo för upphämtning",
 
-  "UpphÃƒÂ¤mtad",
+"Upphämtad",
 
-  "PÃƒÂ¥ vÃƒÂ¤g",
+"På väg",
 
-  "Levererad",
+"Levererad",
 
-  "Avbruten"
-
+"Avbruten"
 ];
 
 
@@ -780,32 +779,19 @@ const getStripeValidationMessage = (error) => {
   switch (error.message) {
 
     case "STRIPE_SESSION_MISSING":
+  return "Stripe-sessionen saknas.";
 
-      return "Stripe-sessionen saknas.";
+case "STRIPE_ORDER_MISMATCH":
+  return "Stripe-betalningen matchar inte beställningen.";
 
+case "STRIPE_SESSION_MISMATCH":
+  return "Stripe-sessionen matchar inte beställningen.";
 
+case "STRIPE_NOT_PAID":
+  return "Betalningen är inte genomförd.";
 
-    case "STRIPE_ORDER_MISMATCH":
-
-      return "Stripe-betalningen matchar inte bestÃ¤llningen.";
-
-
-
-    case "STRIPE_SESSION_MISMATCH":
-
-      return "Stripe-sessionen matchar inte bestÃ¤llningen.";
-
-
-
-    case "STRIPE_NOT_PAID":
-
-      return "Betalningen Ã¤r inte genomfÃ¶rd.";
-
-
-
-    case "STRIPE_AMOUNT_MISMATCH":
-
-      return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
+case "STRIPE_AMOUNT_MISMATCH":
+  return "Betalningsbeloppet matchar inte beställningen.";
 
 
 
@@ -949,7 +935,7 @@ const markPaidWithStockWarning = async (
 
       const warning =
 
-        `${productName} har inte lÃ¤ngre tillrÃ¤kligt dagslager.`;
+        `${productName} Har inte längre tillräcklig dagslager.`;
 
 
 
@@ -961,7 +947,7 @@ const markPaidWithStockWarning = async (
 
       order.status =
 
-        "Betalning mottagen - lagerkontroll krÃ¤vs";
+        "Betalning mottagen - lagerkontroll krävs";
 
       order.stripeSessionId = stripeSession.id;
 
@@ -1465,7 +1451,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Din varukorg Ã¤r tom."
+        message: "Din varukorg är tom."
 
       });
 
@@ -1487,7 +1473,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "VÃ¤lj avhÃ¤mtning eller leverans."
+        message: "Välj avhämtning eller leverans."
 
       });
 
@@ -1571,7 +1557,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Namn, e-post och telefonnummer mÃ¥ste fyllas i."
+          "Namn, e-post och telefonnummer måste fyllas i."
 
       });
 
@@ -1593,7 +1579,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "FÃ¶rnamn eller efternamn Ã¤r fÃ¶r lÃ¥ngt."
+          "Förnamn eller efternamn är för långt."
 
       });
 
@@ -1689,7 +1675,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Leveransadressen innehÃ¥ller fÃ¶r lÃ¥nga uppgifter."
+          "Leveransadressen innehåller för långa uppgifter."
 
       });
 
@@ -1711,7 +1697,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "FullstÃ¤ndig leveransadress mÃ¥sste fyllas i."
+          "Fullständig leveransadress måste fyllas i."
 
       });
 
@@ -1729,7 +1715,7 @@ const placeOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            "Vi levererar tyvÃ¤rr inte till den hÃ¤r adressen."
+            "Vi levererar tyvärr inte till den här adressen."
         });
       }
     }
@@ -1752,7 +1738,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt bestÃ¤llningsalternativ."
+        message: "Ogiltigt beställningsalternativ."
 
       });
 
@@ -1766,7 +1752,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt bestÃ¤llningsdatum."
+        message: "Ogiltigt beställningsdatum."
 
       });
 
@@ -1798,7 +1784,7 @@ const placeOrder = async (req, res) => {
 
           allowedTimeSlots.length === 0
 
-            ? "Manila CafÃƒÂ© har stÃ¤ngt pÃ¥ det valda datumet."
+            ? "ManilaCafe  har stängt på vald datumet."
 
             : "Ogiltig vald tid."
 
@@ -1832,7 +1818,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "BestÃ¤llning fÃ¶r idag mÃ¥ste ha dagens datum."
+          "Beställning för idag måste ha dagens datum."
 
       });
 
@@ -1854,7 +1840,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "BestÃ¤llning fÃ¶r imorgon mÃ¥ste ha morgondagens datum."
+          "Beställning för imorgon måste ha morgondagens datum."
 
       });
 
@@ -1876,7 +1862,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "StÃ¶rre bestÃ¤llningar mÃ¥ste gÃ¶ras minst 48 timmar i fÃ¶rvÃ¤g."
+          "Större beställningar måste göras minst 48 timmar i förskott."
 
       });
 
@@ -1894,7 +1880,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Stripe Ã¤r inte konfigurerat."
+        message: "Stripe är inte konfigurerat."
 
       });
 
@@ -1956,7 +1942,7 @@ const placeOrder = async (req, res) => {
 
           message:
 
-            `Du kan bestÃ¤lla hÃ¶gst ${MAX_ITEM_QUANTITY} st av samma produkt.`
+            `Du kan beställa högst ${MAX_ITEM_QUANTITY} st av samma produkt.`
 
         });
 
@@ -2006,7 +1992,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Samma produkt fÃ¥r inte fÃ¶rekomma flera gÃ¥nger i bestÃ¤llningen."
+          "Samma produkt får inte förekomma flera gånger i beställningen."
 
       });
 
@@ -2122,7 +2108,7 @@ const placeOrder = async (req, res) => {
 
             message:
 
-              `${product.name} finns inte i tillrÃ¤cklig antal fÃ¶r bestÃ¤llning idag.`
+              `${product.name} finns inte i tillräcklig antal för beställning idag.`
 
           });
 
@@ -2170,7 +2156,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          `BestÃ¤llningar med ${LARGE_ORDER_LIMIT} produkter eller fler mÃ¥ste gÃ¶ras som en stÃ¶rrre bestÃ¤llning.`
+          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en störrre beställning.`
 
       });
 
@@ -2207,7 +2193,7 @@ const placeOrder = async (req, res) => {
       if (!discount) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden Ã¤r ogiltig."
+          message: "Rabattkoden är ogiltig."
         });
       }
 
@@ -2217,7 +2203,7 @@ const placeOrder = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden har gÃ¥tt ut."
+          message: "Rabattkoden har gått ut."
         });
       }
 
@@ -2228,7 +2214,7 @@ const placeOrder = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden har nÃ¥tt sin anvÃ¤ndningsgrÃ¤ns."
+          message: "Rabattkoden har nått sin användningsgräns."
         });
       }
 
@@ -2244,7 +2230,7 @@ const placeOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            `Rabattkoden krÃ¤ver ett produktkÃ¶p pÃ¥ minst ${discount.minOrderAmount} kr.`
+            `Rabattkoden kräver ett produktköp på minst ${discount.minOrderAmount} kr.`
         });
       }
 
@@ -2371,7 +2357,7 @@ const placeOrder = async (req, res) => {
 
     const lineItems = [];
 
-    // ProduktvÃ¤rdet efter rabatt, exklusive moms
+    // Produktvärrdet efter rabatt, exklusive moms
     const productNetCents = Math.round(
       subtotalAfterDiscount * 100
     );
@@ -2382,7 +2368,7 @@ const placeOrder = async (req, res) => {
         price_data: {
           currency: "sek",
           product_data: {
-            name: "Manila CafÃ© - produkter",
+            name: "Manilacafe - produkter",
             ...(appliedDiscount ? { description: `Rabattkod: ${appliedDiscount.code}` } : {})
           },
           unit_amount: productNetCents
@@ -2472,7 +2458,7 @@ const placeOrder = async (req, res) => {
       });
     } catch (reservationError) {
       if (reservationError.message === "DISCOUNT_UNAVAILABLE") {
-        return res.status(409).json({ success: false, message: "Rabattkoden Ã¤r inte lÃ¤ngre tillgÃ¤nglig." });
+        return res.status(409).json({ success: false, message: "Rabattkoden är inte längre tillgänglig." });
       }
       throw reservationError;
     } finally {
@@ -2535,7 +2521,7 @@ const placeOrder = async (req, res) => {
           deliveryZone:
             deliveryZone?.id || "pickup",
           deliveryZoneLabel:
-            deliveryZone?.label || "AvhÃ¤mtning",
+            deliveryZone?.label || "Avhämtning",
           freeDelivery:
             (
               deliveryMethod === "delivery" &&
@@ -2564,7 +2550,7 @@ const placeOrder = async (req, res) => {
 
           }
 
-        }, { idempotencyKey: `manila-checkout-${newOrder._id.toString()}` });
+        }, { idempotencyKey: `Manila-checkout-${newOrder._id.toString()}` });
 
 
 
@@ -2631,7 +2617,7 @@ const placeOrder = async (req, res) => {
 
       success: true,
 
-      message: "BestÃ¤llningen har skapats.",
+      message: "Beställningen har skapats.",
 
       subtotal: roundedSubtotal,
 
@@ -2672,7 +2658,7 @@ const placeOrder = async (req, res) => {
 
       message:
 
-        "Ett fel uppstod nÃ¤r bestÃ¤llningen skulle skapas."
+        "Ett fel uppstod nä beställningen skulle skapas."
 
     });
 
@@ -2732,7 +2718,7 @@ const verifyOrder = async (req, res) => {
 
         success: false,
 
-        message: "Betalningen avbrÃ¶ts."
+        message: "Betalningen avbröts."
 
       });
 
@@ -2784,7 +2770,7 @@ const verifyOrder = async (req, res) => {
 
         success: false,
 
-        message: "Stripe Ã¤r inte konfigurerat."
+        message: "Stripe är inte konfigurerat."
 
       });
 
@@ -2816,7 +2802,7 @@ const verifyOrder = async (req, res) => {
 
         message:
 
-          "Stripe-betalningen matchar inte bestÃ¤llningen."
+          "Stripe-betalningen matchar inte beställningen."
 
       });
 
@@ -2844,11 +2830,11 @@ const verifyOrder = async (req, res) => {
 
       message: result.warning
 
-        ? "Betalningen lyckades, men ordern behÃ¶ver lagerkontrolleras."
+        ? "Betalningen lyckades, men ordern behöver lagerkontrolleras."
 
         : result.alreadyProcessed
 
-          ? "BestÃ¤llningen Ã¤r redan betald."
+          ? "Beställningen är redan betald."
 
           : "Betalningen lyckades.",
 
@@ -2898,7 +2884,7 @@ const verifyOrder = async (req, res) => {
 
         message:
 
-          "BestÃ¤llningen kunde inte hittas."
+          "Beställningen kunde inte hittas."
 
       });
 
@@ -2912,7 +2898,7 @@ const verifyOrder = async (req, res) => {
 
       message:
 
-        "Ett fel uppstod nÃ¤r betalningen skulle verifieras."
+        "Ett fel uppstod när betalningen skulle verifieras."
 
     });
 
@@ -3220,7 +3206,7 @@ const userOrders = async (req, res) => {
 
         success: false,
 
-        message: "Du mÃ¥ste vara inloggad."
+        message: "Du måste vara inloggad."
 
       });
 
@@ -3234,7 +3220,7 @@ const userOrders = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt anvÃ¤ndar-ID."
+        message: "Ogiltigt användar-ID."
 
       });
 
@@ -3278,7 +3264,7 @@ const userOrders = async (req, res) => {
 
       message:
 
-        "BestÃ¤llningarna kunde inte hÃ¤mtas."
+        "Beställningarna kunde inte hämtas."
 
     });
 
@@ -3328,7 +3314,7 @@ const listOrders = async (req, res) => {
 
       message:
 
-        "BestÃ¤llningarna kunde inte hÃ¤mtas."
+        "Beställningarna kunde inte hämtas."
 
     });
 
@@ -3358,7 +3344,7 @@ const updateStatus = async (req, res) => {
 
         success: false,
 
-        message: "Order-ID och status krÃƒÂ¤vs."
+        message: "Order-ID och status krävs."
 
       });
 
@@ -3440,7 +3426,7 @@ const updateStatus = async (req, res) => {
 
         message:
 
-          "BestÃ¤llningen kunde inte hittas."
+          "Beställningen kunde inte hittas."
 
       });
 
