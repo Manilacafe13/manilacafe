@@ -2357,7 +2357,7 @@ const placeOrder = async (req, res) => {
         zipcode
       },
 
-      status: "InvÃ¤ntar betalning",
+     status: "Inväntar betalning",
       payment: false,
       paymentMethod: "Stripe"
     });
