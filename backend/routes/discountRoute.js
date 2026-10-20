@@ -8,34 +8,48 @@ import {
   toggleDiscount
 } from "../controllers/discountController.js";
 
+import authMiddleware from "../middleware/auth.js";
 import adminAuth from "../middleware/adminAuth.js";
 
 const discountRouter = express.Router();
 
-// Kund: kontrollera rabattkod
+// ======================================================
+// CUSTOMER — VALIDATE DISCOUNT CODE
+// ======================================================
+// Public endpoint for checkout.
+// Does not require login.
+
 discountRouter.post(
   "/validate",
   validateDiscount
 );
 
-// Admin: skapa rabattkod
+// ======================================================
+// ADMIN — PROTECTED ROUTES
+// ======================================================
+// First verify JWT token.
+// Then verify admin role.
+
+discountRouter.use(
+  authMiddleware,
+  adminAuth
+);
+
+// Create discount code
 discountRouter.post(
   "/create",
-  adminAuth,
   createDiscount
 );
 
-// Admin: visa alla rabattkoder
+// List discount codes
 discountRouter.get(
   "/list",
-  adminAuth,
   listDiscounts
 );
 
-// Admin: aktivera/inaktivera rabattkod
+// Activate / deactivate discount code
 discountRouter.patch(
   "/toggle/:id",
-  adminAuth,
   toggleDiscount
 );
 
