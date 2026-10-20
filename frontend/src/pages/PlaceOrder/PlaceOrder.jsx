@@ -367,6 +367,10 @@ const PlaceOrder = () => {
   const [largeOrderDate, setLargeOrderDate] =
     useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [discountCode, setDiscountCode] = useState("")
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
+  const [discountError, setDiscountError] = useState("")
+  const [discountChecking, setDiscountChecking] = useState(false)
   // Customers see only one checkout step at a time.
   const [checkoutStep, setCheckoutStep] = useState(1)
   const [stepError, setStepError] = useState("")
@@ -393,6 +397,48 @@ const PlaceOrder = () => {
     getVatAmount()
   const total =
     getTotalWithVat()
+  // Rabattförhandsvisning. Backend beräknar alltid slutpriset på nytt.
+  const productDiscount = appliedDiscount?.code === discountCode.trim().toUpperCase()
+    ? Math.min(total, appliedDiscount.amount)
+    : 0
+  const discountedProductTotal = Math.max(0, total - productDiscount)
+  const discountedVat = Math.round((discountedProductTotal * 6 / 106) * 100) / 100
+
+  const applyDiscount = async () => {
+    const code = discountCode.trim().toUpperCase()
+    if (!code) {
+      setDiscountError("Ange en rabattkod.")
+      setAppliedDiscount(null)
+      return
+    }
+    setDiscountChecking(true)
+    setDiscountError("")
+    setAppliedDiscount(null)
+    try {
+      const response = await axios.post(`${url}/api/discount/validate`, {
+        code,
+        subtotal: total
+      })
+      const result = response.data
+      const rawAmount = result.discountAmount ?? result.discount?.discountAmount ?? result.discount?.amount
+      const amount = Number(rawAmount)
+      if (result.success && rawAmount != null && Number.isFinite(amount) && amount >= 0) {
+        setAppliedDiscount({ code, amount })
+      } else {
+        setDiscountError(result.message || "Rabatten kunde inte beräknas.")
+      }
+    } catch (error) {
+      setDiscountError(error.response?.data?.message || "Rabattkoden kunde inte kontrolleras.")
+    } finally {
+      setDiscountChecking(false)
+    }
+  }
+
+  useEffect(() => {
+    setAppliedDiscount(null)
+    setDiscountError("")
+  }, [total])
+
   // ======================================================
   // DELIVERY PRICE
   // ======================================================
@@ -428,7 +474,7 @@ const PlaceOrder = () => {
     deliveryZone === null ||
     Boolean(deliveryZone)
   const qualifiesForFreeDelivery =
-    total >= FREE_DELIVERY_THRESHOLD
+    discountedProductTotal >= FREE_DELIVERY_THRESHOLD
   const deliveryFee =
     useMemo(() => {
       if (
@@ -455,11 +501,11 @@ const PlaceOrder = () => {
       qualifiesForFreeDelivery
     ])
   const checkoutTotal =
-    total + deliveryFee
+    discountedProductTotal + deliveryFee
   const amountUntilFreeDelivery =
     Math.max(
       0,
-      FREE_DELIVERY_THRESHOLD - total
+      FREE_DELIVERY_THRESHOLD - discountedProductTotal
     )
   // ======================================================
   // TOTAL PRODUCT QUANTITY
@@ -737,6 +783,10 @@ const getAvailableTimeSlots = () => {
     if (isLoading) {
       return
     }
+    if (discountCode.trim() && appliedDiscount?.code !== discountCode.trim().toUpperCase()) {
+      alert("Kontrollera rabattkoden med knappen Använd kod, eller ta bort den.")
+      return
+    }
     // ==================================================
     // CHECK CART
     // ==================================================
@@ -998,7 +1048,10 @@ const getAvailableTimeSlots = () => {
         fulfillmentType,
         requestedDate:
           getRequestedDate(),
-        requestedTime
+        requestedTime,
+        discountCode: appliedDiscount?.code === discountCode.trim().toUpperCase()
+          ? appliedDiscount.code
+          : undefined
       }
       // ==================================================
       // SEND ORDER
@@ -1187,10 +1240,34 @@ const getAvailableTimeSlots = () => {
                   )}
                 </div>
               )}
+              <div className="mc-field">
+                <label htmlFor="mc-discount">Rabattkod (valfritt)</label>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <input
+                    id="mc-discount"
+                    type="text"
+                    value={discountCode}
+                    maxLength={50}
+                    placeholder="Ange rabattkod"
+                    autoComplete="off"
+                    onChange={(e) => {
+                      setDiscountCode(e.target.value.toUpperCase())
+                      setAppliedDiscount(null)
+                      setDiscountError("")
+                    }}
+                    style={{ flex: "1 1 170px" }}
+                  />
+                  <button type="button" className="mc-secondary" disabled={discountChecking || isLoading || !discountCode.trim()} onClick={applyDiscount}>
+                    {discountChecking ? "Kontrollerar…" : "Använd kod"}
+                  </button>
+                </div>
+                {discountError && <p className="mc-error" role="alert">{discountError}</p>}
+                {appliedDiscount && <p className="mc-hint" role="status">Rabattkod {appliedDiscount.code} tillagd. Slutpriset bekräftas vid betalningen.</p>}
+              </div>
               <div className="mc-reassurance">🔒 Säker betalning via Stripe · Ingen inloggning krävs</div>
               <div className="mc-actions">
                 <button type="button" className="mc-secondary" onClick={() => setCheckoutStep(2)}>← Tillbaka</button>
-                <button type="submit" className="mc-primary" disabled={!canPay}>
+                <button type="submit" className="mc-primary" disabled={!canPay || discountChecking}>
                   {isLoading ? "Öppnar betalningen…" : `Betala ${checkoutTotal.toFixed(2)} kr`} <span aria-hidden="true">→</span>
                 </button>
               </div>
@@ -1218,7 +1295,8 @@ const getAvailableTimeSlots = () => {
           </div>
           <div className="mc-price-lines">
             <div><span>Varor (inkl. moms)</span><strong>{total.toFixed(2)} kr</strong></div>
-            <div><span>Varav moms (6 %)</span><span>{vatAmount.toFixed(2)} kr</span></div>
+            {productDiscount > 0 && <div><span>Rabatt ({appliedDiscount.code})</span><strong>−{productDiscount.toFixed(2)} kr</strong></div>}
+            <div><span>Varav moms (6 %)</span><span>{(productDiscount > 0 ? discountedVat : vatAmount).toFixed(2)} kr</span></div>
             {deliveryMethod === "delivery" && <div><span>Leverans</span><strong>{deliveryZone ? (deliveryFee === 0 ? "Gratis" : `${deliveryFee.toFixed(2)} kr`) : "Beräknas vid adress"}</strong></div>}
           </div>
           <div className="mc-summary-total"><span>Totalt</span><strong>{checkoutTotal.toFixed(2)} kr</strong></div>

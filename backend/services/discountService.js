@@ -1,34 +1,20 @@
-
 import discountModel from "../models/discountModel.js";
 
-// Reservera en användning atomiskt.
-// Anropas när en order ska få en Stripe-session.
-const reserveDiscount = async (discountId) => {
-  const now = new Date();
-
-  const discount = await discountModel.findOneAndUpdate(
+// Atomic reservation; optional MongoDB transaction session.
+export const reserveDiscount = (discountId, session = null) =>
+  discountModel.findOneAndUpdate(
     {
       _id: discountId,
       isActive: true,
       $and: [
-        {
-          $or: [
-            { expiresAt: null },
-            { expiresAt: { $gt: now } }
-          ]
-        },
+        { $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] },
         {
           $expr: {
             $or: [
               { $eq: ["$usageLimit", null] },
               {
                 $lt: [
-                  {
-                    $add: [
-                      { $ifNull: ["$usedCount", 0] },
-                      { $ifNull: ["$reservedCount", 0] }
-                    ]
-                  },
+                  { $add: [{ $ifNull: ["$usedCount", 0] }, { $ifNull: ["$reservedCount", 0] }] },
                   "$usageLimit"
                 ]
               }
@@ -37,15 +23,20 @@ const reserveDiscount = async (discountId) => {
         }
       ]
     },
-    {
-      $inc: { reservedCount: 1 }
-    },
-    {
-      new: true
-    }
+    { $inc: { reservedCount: 1 } },
+    { new: true, ...(session ? { session } : {}) }
   );
 
-  return discount;
-};
+export const releaseDiscount = (discountId, session = null) =>
+  discountModel.findOneAndUpdate(
+    { _id: discountId, reservedCount: { $gt: 0 } },
+    { $inc: { reservedCount: -1 } },
+    { new: true, ...(session ? { session } : {}) }
+  );
 
-export { reserveDiscount };
+export const redeemDiscount = (discountId, session = null) =>
+  discountModel.findOneAndUpdate(
+    { _id: discountId, reservedCount: { $gt: 0 } },
+    { $inc: { reservedCount: -1, usedCount: 1 } },
+    { new: true, ...(session ? { session } : {}) }
+  );

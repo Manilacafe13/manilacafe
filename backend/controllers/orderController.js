@@ -2,7 +2,7 @@ import orderModel from "../models/orderModel.js";
 
 import discountModel from "../models/discountModel.js";
 
-import { reserveDiscount } from "../services/discountService.js";
+import { reserveDiscount, releaseDiscount, redeemDiscount } from "../services/discountService.js";
 
 import userModel from "../models/userModel.js";
 
@@ -54,43 +54,43 @@ const DELIVERY_ZONES = {
 
   frolunda: {
     id: "frolunda",
-    label: "Frölunda",
+    label: "FrÃ¶lunda",
     fee: 0
   },
 
   west: {
     id: "west",
-    label: "Västra Göteborg",
+    label: "VÃ¤stra GÃ¶teborg",
     fee: 39
   },
 
   central: {
     id: "central",
-    label: "Centrala Göteborg",
+    label: "Centrala GÃ¶teborg",
     fee: 59
   },
 
   hisingen: {
     id: "hisingen",
-    label: "Hisingen / Norra Göteborg",
+    label: "Hisingen / Norra GÃ¶teborg",
     fee: 59
   },
 
   south: {
     id: "south",
-    label: "Södra Göteborg / Mölndal",
+    label: "SÃ¶dra GÃ¶teborg / MÃ¶lndal",
     fee: 49
   },
 
   east: {
     id: "east",
-    label: "Östra Göteborg",
+    label: "Ã–stra GÃ¶teborg",
     fee: 69
   },
 
   northeast: {
     id: "northeast",
-    label: "Nordöstra Göteborg / Angered",
+    label: "NordÃ¶stra GÃ¶teborg / Angered",
     fee: 79
   },
 
@@ -114,7 +114,7 @@ const DELIVERY_ZONES = {
 
   grabo: {
     id: "grabo",
-    label: "Gråbo",
+    label: "GrÃ¥bo",
     fee: 150
   }
 
@@ -140,11 +140,11 @@ const normalizeZipcode = (value = "") =>
 
 
 // ======================================================
-// GRÅBO POSTCODES
+// GRÃ…BO POSTCODES
 //
 // Viktigt:
-// 443 används även av Lerum och Stenkullen.
-// Därför kontrollerar vi Gråbo EXAKT innan 443-zonen.
+// 443 anvÃ¤nds Ã¤ven av Lerum och Stenkullen.
+// DÃ¤rfÃ¶r kontrollerar vi GrÃ¥bo EXAKT innan 443-zonen.
 // ======================================================
 
 const GRABO_ZIPCODES = [
@@ -181,14 +181,14 @@ const getDeliveryZone = ({
     normalizeZipcode(zipcode);
 
 
-  // Vi behöver ett riktigt postnummer för säker zonberäkning
+  // Vi behÃ¶ver ett riktigt postnummer fÃ¶r sÃ¤ker zonberÃ¤kning
   if (normalizedZip.length !== 5) {
     return null;
   }
 
 
   // ====================================================
-  // 1. FRÖLUNDA
+  // 1. FRÃ–LUNDA
   // GRATIS
   // ====================================================
 
@@ -200,8 +200,8 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 2. GRÅBO
-  // Kontrollera före Lerum eftersom båda använder 443
+  // 2. GRÃ…BO
+  // Kontrollera fÃ¶re Lerum eftersom bÃ¥da anvÃ¤nder 443
   // ====================================================
 
   if (
@@ -215,7 +215,7 @@ const getDeliveryZone = ({
   // 3. KUNGSBACKA / HEDE
   //
   // Kungsbacka = 434-serien.
-  // Hedeområdet i Kungsbacka fångas därför här också.
+  // HedeomrÃ¥det i Kungsbacka fÃ¥ngas dÃ¤rfÃ¶r hÃ¤r ocksÃ¥.
   // ====================================================
 
   if (
@@ -247,7 +247,7 @@ const getDeliveryZone = ({
   }
 
 
-  // 443 som INTE redan matchats som Gråbo
+  // 443 som INTE redan matchats som GrÃ¥bo
   if (
     normalizedZip.startsWith("443")
   ) {
@@ -256,15 +256,15 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 6. HISINGEN / NORRA GÖTEBORG
+  // 6. HISINGEN / NORRA GÃ–TEBORG
   //
   // Lundby
   // Backa
-  // Biskopsgården
+  // BiskopsgÃ¥rden
   // Tuve
-  // Kärra
+  // KÃ¤rra
   // Torslanda
-  // Säve m.fl.
+  // SÃ¤ve m.fl.
   // ====================================================
 
   const hisingenPrefixes = [
@@ -286,7 +286,7 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 7. NORDÖSTRA GÖTEBORG
+  // 7. NORDÃ–STRA GÃ–TEBORG
   //
   // Angered
   // Gunnilse
@@ -301,13 +301,13 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 8. SÖDRA GÖTEBORG / MÖLNDAL
+  // 8. SÃ–DRA GÃ–TEBORG / MÃ–LNDAL
   //
   // Askim
-  // Hovås
+  // HovÃ¥s
   // Billdal
-  // Mölndal
-  // Kållered
+  // MÃ¶lndal
+  // KÃ¥llered
   //
   // Lindome ligger separat ovan.
   // ====================================================
@@ -330,12 +330,12 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 9. ÖSTRA GÖTEBORG
+  // 9. Ã–STRA GÃ–TEBORG
   //
   // Kortedala
-  // Bergsjön
+  // BergsjÃ¶n
   // Gamlestaden
-  // delar av Örgryte / Härlanda
+  // delar av Ã–rgryte / HÃ¤rlanda
   // ====================================================
 
   const eastPrefixes = [
@@ -356,10 +356,10 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 10. CENTRALA GÖTEBORG
+  // 10. CENTRALA GÃ–TEBORG
   //
   // Centrum
-  // Linné
+  // LinnÃ©
   // Vasastaden
   // Johanneberg
   // Guldheden m.fl.
@@ -382,15 +382,15 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 11. VÄSTRA GÖTEBORG
+  // 11. VÃ„STRA GÃ–TEBORG
   //
   // Majorna
-  // Högsbo
-  // Näset
-  // Önnered
-  // Fiskebäck m.fl.
+  // HÃ¶gsbo
+  // NÃ¤set
+  // Ã–nnered
+  // FiskebÃ¤ck m.fl.
   //
-  // 421 Frölunda har redan fångats ovan.
+  // 421 FrÃ¶lunda har redan fÃ¥ngats ovan.
   // ====================================================
 
   const westPrefixes = [
@@ -411,9 +411,9 @@ const getDeliveryZone = ({
   // ====================================================
   // CITY FALLBACK
   //
-  // Används endast när postnumret inte fångats ovan.
-  // Vi använder INTE bara "Göteborg", eftersom det
-  // inte säger vilken del av Göteborg kunden bor i.
+  // AnvÃ¤nds endast nÃ¤r postnumret inte fÃ¥ngats ovan.
+  // Vi anvÃ¤nder INTE bara "GÃ¶teborg", eftersom det
+  // inte sÃ¤ger vilken del av GÃ¶teborg kunden bor i.
   // ====================================================
 
   if (
@@ -503,15 +503,15 @@ const getAllowedTimeSlotsForDate = (dateString) => {
 
 const ALLOWED_ORDER_STATUSES = [
 
-  "BestÃ¤llning mottagen",
+  "BestÃƒÂ¤llning mottagen",
 
-  "FÃ¶rbereds",
+  "FÃƒÂ¶rbereds",
 
-  "Redo fÃ¶r upphÃ¤mtning",
+  "Redo fÃƒÂ¶r upphÃƒÂ¤mtning",
 
-  "UpphÃ¤mtad",
+  "UpphÃƒÂ¤mtad",
 
-  "PÃ¥ vÃ¤g",
+  "PÃƒÂ¥ vÃƒÂ¤g",
 
   "Levererad",
 
@@ -787,25 +787,25 @@ const getStripeValidationMessage = (error) => {
 
     case "STRIPE_ORDER_MISMATCH":
 
-      return "Stripe-betalningen matchar inte beställningen.";
+      return "Stripe-betalningen matchar inte bestÃ¤llningen.";
 
 
 
     case "STRIPE_SESSION_MISMATCH":
 
-      return "Stripe-sessionen matchar inte beställningen.";
+      return "Stripe-sessionen matchar inte bestÃ¤llningen.";
 
 
 
     case "STRIPE_NOT_PAID":
 
-      return "Betalningen är inte genomförd.";
+      return "Betalningen Ã¤r inte genomfÃ¶rd.";
 
 
 
     case "STRIPE_AMOUNT_MISMATCH":
 
-      return "Betalningsbeloppet matchar inte beställningen.";
+      return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
 
 
 
@@ -854,6 +854,36 @@ const clearRegisteredUserCart = async (
 };
 
 
+
+// Update discount counter in the SAME transaction as marking the order paid.
+const redeemOrderDiscount = async (order, session) => {
+  if (!order.discountId) return;
+  if (order.discountReservationStatus !== "reserved") {
+    throw new Error("DISCOUNT_RESERVATION_MISSING");
+  }
+  const result = await redeemDiscount(order.discountId, session);
+  if (!result) throw new Error("DISCOUNT_REDEEM_FAILED");
+  order.discountReservationStatus = "redeemed";
+};
+
+// Only a reserved, unpaid order can release its own reservation.
+const releaseOrderDiscount = async (orderId, expectedSessionId = null) => {
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const order = await orderModel.findById(orderId).session(session);
+      if (!order || order.payment || order.discountReservationStatus !== "reserved") return;
+      if (expectedSessionId && order.stripeSessionId !== expectedSessionId) return;
+      const released = await releaseDiscount(order.discountId, session);
+      if (!released) throw new Error("DISCOUNT_RELEASE_FAILED");
+      order.discountReservationStatus = "released";
+      order.status = "Avbruten";
+      await order.save({ session });
+    });
+  } finally {
+    await session.endSession();
+  }
+};
 
 const markPaidWithStockWarning = async (
 
@@ -919,7 +949,11 @@ const markPaidWithStockWarning = async (
 
       const warning =
 
-        `${productName} har inte längre tillräkligt dagslager.`;
+        `${productName} har inte lÃ¤ngre tillrÃ¤kligt dagslager.`;
+
+
+
+      await redeemOrderDiscount(order, mongoSession);
 
 
 
@@ -927,7 +961,7 @@ const markPaidWithStockWarning = async (
 
       order.status =
 
-        "Betalning mottagen - lagerkontroll krävs";
+        "Betalning mottagen - lagerkontroll krÃ¤vs";
 
       order.stripeSessionId = stripeSession.id;
 
@@ -1160,6 +1194,10 @@ const processPaidCheckoutSession = async (
           }
 
         }
+
+
+
+        await redeemOrderDiscount(order, mongoSession);
 
 
 
@@ -1427,7 +1465,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Din varukorg är tom."
+        message: "Din varukorg Ã¤r tom."
 
       });
 
@@ -1449,7 +1487,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Välj avhämtning eller leverans."
+        message: "VÃ¤lj avhÃ¤mtning eller leverans."
 
       });
 
@@ -1533,7 +1571,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Namn, e-post och telefonnummer måste fyllas i."
+          "Namn, e-post och telefonnummer mÃ¥ste fyllas i."
 
       });
 
@@ -1555,7 +1593,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Förnamn eller efternamn är för långt."
+          "FÃ¶rnamn eller efternamn Ã¤r fÃ¶r lÃ¥ngt."
 
       });
 
@@ -1651,7 +1689,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Leveransadressen innehåller för långa uppgifter."
+          "Leveransadressen innehÃ¥ller fÃ¶r lÃ¥nga uppgifter."
 
       });
 
@@ -1673,7 +1711,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Fullständig leveransadress måsste fyllas i."
+          "FullstÃ¤ndig leveransadress mÃ¥sste fyllas i."
 
       });
 
@@ -1691,7 +1729,7 @@ const placeOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            "Vi levererar tyvärr inte till den här adressen."
+            "Vi levererar tyvÃ¤rr inte till den hÃ¤r adressen."
         });
       }
     }
@@ -1714,7 +1752,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt beställningsalternativ."
+        message: "Ogiltigt bestÃ¤llningsalternativ."
 
       });
 
@@ -1728,7 +1766,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt beställningsdatum."
+        message: "Ogiltigt bestÃ¤llningsdatum."
 
       });
 
@@ -1760,7 +1798,7 @@ const placeOrder = async (req, res) => {
 
           allowedTimeSlots.length === 0
 
-            ? "Manila CafÃ© har stängt på det valda datumet."
+            ? "Manila CafÃƒÂ© har stÃ¤ngt pÃ¥ det valda datumet."
 
             : "Ogiltig vald tid."
 
@@ -1794,7 +1832,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Beställning för idag måste ha dagens datum."
+          "BestÃ¤llning fÃ¶r idag mÃ¥ste ha dagens datum."
 
       });
 
@@ -1816,7 +1854,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Beställning för imorgon måste ha morgondagens datum."
+          "BestÃ¤llning fÃ¶r imorgon mÃ¥ste ha morgondagens datum."
 
       });
 
@@ -1838,7 +1876,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Större beställningar måste göras minst 48 timmar i förväg."
+          "StÃ¶rre bestÃ¤llningar mÃ¥ste gÃ¶ras minst 48 timmar i fÃ¶rvÃ¤g."
 
       });
 
@@ -1856,7 +1894,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Stripe är inte konfigurerat."
+        message: "Stripe Ã¤r inte konfigurerat."
 
       });
 
@@ -1918,7 +1956,7 @@ const placeOrder = async (req, res) => {
 
           message:
 
-            `Du kan beställa högst ${MAX_ITEM_QUANTITY} st av samma produkt.`
+            `Du kan bestÃ¤lla hÃ¶gst ${MAX_ITEM_QUANTITY} st av samma produkt.`
 
         });
 
@@ -1968,7 +2006,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Samma produkt får inte förekomma flera gånger i beställningen."
+          "Samma produkt fÃ¥r inte fÃ¶rekomma flera gÃ¥nger i bestÃ¤llningen."
 
       });
 
@@ -2084,7 +2122,7 @@ const placeOrder = async (req, res) => {
 
             message:
 
-              `${product.name} finns inte i tillräcklig antal för beställning idag.`
+              `${product.name} finns inte i tillrÃ¤cklig antal fÃ¶r bestÃ¤llning idag.`
 
           });
 
@@ -2132,7 +2170,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en störrre beställning.`
+          `BestÃ¤llningar med ${LARGE_ORDER_LIMIT} produkter eller fler mÃ¥ste gÃ¶ras som en stÃ¶rrre bestÃ¤llning.`
 
       });
 
@@ -2169,7 +2207,7 @@ const placeOrder = async (req, res) => {
       if (!discount) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden är ogiltig."
+          message: "Rabattkoden Ã¤r ogiltig."
         });
       }
 
@@ -2179,7 +2217,7 @@ const placeOrder = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden har gått ut."
+          message: "Rabattkoden har gÃ¥tt ut."
         });
       }
 
@@ -2190,11 +2228,11 @@ const placeOrder = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden har nått sin användningsgräns."
+          message: "Rabattkoden har nÃ¥tt sin anvÃ¤ndningsgrÃ¤ns."
         });
       }
 
-      // Produktvärde inklusive moms, före rabatt
+      // ProduktvÃ¤rde inklusive moms, fÃ¶re rabatt
       const productTotalBeforeDiscount = roundMoney(
         subtotal + roundMoney(subtotal * VAT_RATE)
       );
@@ -2206,7 +2244,7 @@ const placeOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            `Rabattkoden kräver ett produktköp på minst ${discount.minOrderAmount} kr.`
+            `Rabattkoden krÃ¤ver ett produktkÃ¶p pÃ¥ minst ${discount.minOrderAmount} kr.`
         });
       }
 
@@ -2227,13 +2265,13 @@ const placeOrder = async (req, res) => {
 
     const roundedSubtotal = roundMoney(subtotal);
 
-    // Produkter inklusive moms, före rabatt
+    // Produkter inklusive moms, fÃ¶re rabatt
     const productTotalBeforeDiscount = roundMoney(
       roundedSubtotal +
       roundMoney(roundedSubtotal * VAT_RATE)
     );
 
-    // Rabatt gäller endast produkter, inte leverans
+    // Rabatt gÃ¤ller endast produkter, inte leverans
     const discountAmount = appliedDiscount
       ? calculateProductDiscount(
           productTotalBeforeDiscount,
@@ -2241,12 +2279,12 @@ const placeOrder = async (req, res) => {
         )
       : 0;
 
-    // Produktvärde inklusive moms, efter rabatt
+    // ProduktvÃ¤rde inklusive moms, efter rabatt
     const productTotal = roundMoney(
       productTotalBeforeDiscount - discountAmount
     );
 
-    // Räkna om moms efter rabatt
+    // RÃ¤kna om moms efter rabatt
     const roundedVat = roundMoney(
       productTotal * VAT_RATE / (1 + VAT_RATE)
     );
@@ -2255,7 +2293,7 @@ const placeOrder = async (req, res) => {
       productTotal - roundedVat
     );
 
-    // Fri leverans baseras på produktvärdet efter rabatt
+    // Fri leverans baseras pÃ¥ produktvÃ¤rdet efter rabatt
     const qualifiesForFreeDelivery =
       productTotal >= FREE_DELIVERY_THRESHOLD;
 
@@ -2290,6 +2328,7 @@ const placeOrder = async (req, res) => {
         ? appliedDiscount.code
         : null,
 
+      discountId: appliedDiscount?._id || null,
       discountAmount,
 
       discountType: appliedDiscount
@@ -2318,12 +2357,13 @@ const placeOrder = async (req, res) => {
         zipcode
       },
 
-      status: "Inväntar betalning",
+      status: "InvÃ¤ntar betalning",
       payment: false,
       paymentMethod: "Stripe"
     });
 
-    await newOrder.save();
+    // Order will be saved atomically with the discount reservation
+    // after validating the Stripe line items.
 
     // ==================================================
     // STRIPE CHECKOUT - PRODUCTS WITH DISCOUNT
@@ -2331,42 +2371,24 @@ const placeOrder = async (req, res) => {
 
     const lineItems = [];
 
-    // Produktvärdet efter rabatt, exklusive moms
+    // ProduktvÃ¤rdet efter rabatt, exklusive moms
     const productNetCents = Math.round(
       subtotalAfterDiscount * 100
     );
 
-    // Visa produkterna som en samlad rad vid rabatt
-    // så att Stripe-beloppet matchar ordern.
-    if (appliedDiscount) {
-      if (productNetCents > 0) {
-        lineItems.push({
-          price_data: {
-            currency: "sek",
-            product_data: {
-              name: "Manila Café - produkter efter rabatt",
-              description:
-                `Rabattkod: ${appliedDiscount.code}`
-            },
-            unit_amount: productNetCents
+    // One aggregated product line avoids per-item rounding differences.
+    if (productNetCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "sek",
+          product_data: {
+            name: "Manila CafÃ© - produkter",
+            ...(appliedDiscount ? { description: `Rabattkod: ${appliedDiscount.code}` } : {})
           },
-          quantity: 1
-        });
-      }
-    } else {
-      // Utan rabatt: behåll ursprungliga produktrader
-      for (const item of verifiedItems) {
-        lineItems.push({
-          price_data: {
-            currency: "sek",
-            product_data: {
-              name: item.name
-            },
-            unit_amount: Math.round(item.price * 100)
-          },
-          quantity: item.quantity
-        });
-      }
+          unit_amount: productNetCents
+        },
+        quantity: 1
+      });
     }
 
     // Moms efter rabatt
@@ -2383,7 +2405,7 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // Leveransavgift påverkas inte av rabatten
+    // Leveransavgift pÃ¥verkas inte av rabatten
     if (roundedDeliveryFee > 0) {
       lineItems.push({
         price_data: {
@@ -2401,8 +2423,8 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // Kontrollera att Stripe får exakt samma belopp
-    // som sparats på ordern.
+    // Kontrollera att Stripe fÃ¥r exakt samma belopp
+    // som sparats pÃ¥ ordern.
     const stripeTotalCents = lineItems.reduce(
       (sum, item) =>
         sum +
@@ -2420,8 +2442,8 @@ const placeOrder = async (req, res) => {
       );
     }
 
-    // Stripe Checkout kräver ett positivt belopp
-    // i detta betalningsflöde.
+    // Stripe Checkout krÃ¤ver ett positivt belopp
+    // i detta betalningsflÃ¶de.
     if (expectedTotalCents <= 0) {
       throw new Error("ORDER_TOTAL_MUST_BE_POSITIVE");
     }
@@ -2436,9 +2458,28 @@ const placeOrder = async (req, res) => {
 
 
 
+    // Save order and reserve code in a single MongoDB transaction.
+    const reservationSession = await mongoose.startSession();
+    try {
+      await reservationSession.withTransaction(async () => {
+        if (appliedDiscount) {
+          const reserved = await reserveDiscount(appliedDiscount._id, reservationSession);
+          if (!reserved) throw new Error("DISCOUNT_UNAVAILABLE");
+          newOrder.discountReservationStatus = "reserved";
+          newOrder.discountReservedAt = new Date();
+        }
+        await newOrder.save({ session: reservationSession });
+      });
+    } catch (reservationError) {
+      if (reservationError.message === "DISCOUNT_UNAVAILABLE") {
+        return res.status(409).json({ success: false, message: "Rabattkoden Ã¤r inte lÃ¤ngre tillgÃ¤nglig." });
+      }
+      throw reservationError;
+    } finally {
+      await reservationSession.endSession();
+    }
+
     let stripeSession;
-
-
 
     try {
 
@@ -2449,6 +2490,7 @@ const placeOrder = async (req, res) => {
           line_items: lineItems,
 
           mode: "payment",
+          expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
 
           success_url:
 
@@ -2484,7 +2526,7 @@ const placeOrder = async (req, res) => {
 
             subtotal:
 
-              roundedSubtotal.toString(),
+              subtotalAfterDiscount.toString(),
 
             vatAmount:
             roundedVat.toString(),
@@ -2493,7 +2535,7 @@ const placeOrder = async (req, res) => {
           deliveryZone:
             deliveryZone?.id || "pickup",
           deliveryZoneLabel:
-            deliveryZone?.label || "Avhämtning",
+            deliveryZone?.label || "AvhÃ¤mtning",
           freeDelivery:
             (
               deliveryMethod === "delivery" &&
@@ -2522,7 +2564,7 @@ const placeOrder = async (req, res) => {
 
           }
 
-        });
+        }, { idempotencyKey: `manila-checkout-${newOrder._id.toString()}` });
 
 
 
@@ -2558,14 +2600,27 @@ const placeOrder = async (req, res) => {
 
 
 
-      await orderModel.findByIdAndDelete(
-
-        newOrder._id
-
-      );
-
-
-
+      // IMPORTANT: A Stripe create request may have succeeded even when its
+      // response was lost. Without a confirmed session status, NEVER release
+      // the reservation or delete the order. Reconciliation is required.
+      if (stripeSession?.id) {
+        try {
+          const latest = await stripe.checkout.sessions.retrieve(stripeSession.id);
+          if (latest.status === "expired") {
+            // If saving stripeSessionId failed, link the confirmed expired
+            // session before releasing the order's reservation.
+            await orderModel.updateOne(
+              { _id: newOrder._id, payment: false, stripeSessionId: { $exists: false } },
+              { $set: { stripeSessionId: stripeSession.id } }
+            );
+            await releaseOrderDiscount(newOrder._id, stripeSession.id);
+          }
+        } catch (reconciliationError) {
+          console.error("Stripe status uncertain; reservation retained:", reconciliationError.message);
+        }
+      }
+      // Without stripeSession.id the request outcome is ambiguous.
+      // Leave the order/reservation for a separate reconciliation job.
       throw stripeError;
 
     }
@@ -2576,7 +2631,7 @@ const placeOrder = async (req, res) => {
 
       success: true,
 
-      message: "Beställningen har skapats.",
+      message: "BestÃ¤llningen har skapats.",
 
       subtotal: roundedSubtotal,
 
@@ -2617,7 +2672,7 @@ const placeOrder = async (req, res) => {
 
       message:
 
-        "Ett fel uppstod när beställningen skulle skapas."
+        "Ett fel uppstod nÃ¤r bestÃ¤llningen skulle skapas."
 
     });
 
@@ -2677,7 +2732,7 @@ const verifyOrder = async (req, res) => {
 
         success: false,
 
-        message: "Betalningen avbröts."
+        message: "Betalningen avbrÃ¶ts."
 
       });
 
@@ -2729,7 +2784,7 @@ const verifyOrder = async (req, res) => {
 
         success: false,
 
-        message: "Stripe är inte konfigurerat."
+        message: "Stripe Ã¤r inte konfigurerat."
 
       });
 
@@ -2761,7 +2816,7 @@ const verifyOrder = async (req, res) => {
 
         message:
 
-          "Stripe-betalningen matchar inte beställningen."
+          "Stripe-betalningen matchar inte bestÃ¤llningen."
 
       });
 
@@ -2789,11 +2844,11 @@ const verifyOrder = async (req, res) => {
 
       message: result.warning
 
-        ? "Betalningen lyckades, men ordern behöver lagerkontrolleras."
+        ? "Betalningen lyckades, men ordern behÃ¶ver lagerkontrolleras."
 
         : result.alreadyProcessed
 
-          ? "Beställningen är redan betald."
+          ? "BestÃ¤llningen Ã¤r redan betald."
 
           : "Betalningen lyckades.",
 
@@ -2843,7 +2898,7 @@ const verifyOrder = async (req, res) => {
 
         message:
 
-          "Beställningen kunde inte hittas."
+          "BestÃ¤llningen kunde inte hittas."
 
       });
 
@@ -2857,7 +2912,7 @@ const verifyOrder = async (req, res) => {
 
       message:
 
-        "Ett fel uppstod när betalningen skulle verifieras."
+        "Ett fel uppstod nÃ¤r betalningen skulle verifieras."
 
     });
 
@@ -3106,6 +3161,14 @@ const stripeWebhook = async (req, res) => {
           }
 
         );
+        // A webhook can arrive before the session ID was persisted.
+        // Link the exact Stripe session (identified by signed metadata) first.
+        await orderModel.updateOne(
+          { _id: orderId, payment: false,
+            $or: [{ stripeSessionId: { $exists: false } }, { stripeSessionId: null }] },
+          { $set: { stripeSessionId: stripeSession.id } }
+        );
+        await releaseOrderDiscount(orderId, stripeSession.id);
 
       }
 
@@ -3157,7 +3220,7 @@ const userOrders = async (req, res) => {
 
         success: false,
 
-        message: "Du måste vara inloggad."
+        message: "Du mÃ¥ste vara inloggad."
 
       });
 
@@ -3171,7 +3234,7 @@ const userOrders = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt användar-ID."
+        message: "Ogiltigt anvÃ¤ndar-ID."
 
       });
 
@@ -3215,7 +3278,7 @@ const userOrders = async (req, res) => {
 
       message:
 
-        "Beställningarna kunde inte hämtas."
+        "BestÃ¤llningarna kunde inte hÃ¤mtas."
 
     });
 
@@ -3265,7 +3328,7 @@ const listOrders = async (req, res) => {
 
       message:
 
-        "Beställningarna kunde inte hämtas."
+        "BestÃ¤llningarna kunde inte hÃ¤mtas."
 
     });
 
@@ -3295,7 +3358,7 @@ const updateStatus = async (req, res) => {
 
         success: false,
 
-        message: "Order-ID och status krÃ¤vs."
+        message: "Order-ID och status krÃƒÂ¤vs."
 
       });
 
@@ -3377,7 +3440,7 @@ const updateStatus = async (req, res) => {
 
         message:
 
-          "Beställningen kunde inte hittas."
+          "BestÃ¤llningen kunde inte hittas."
 
       });
 
