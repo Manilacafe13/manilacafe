@@ -154,13 +154,15 @@ const FoodItem = ({
     extra:
         "En frisk och fruktig variant av klassisk Taho med silkeslen tofu, söt äppelsirap och mjuka sagopärlor."
 },
-    "halo-halo": {
+   "halo-halo": {
     ingredients:
-        "Krossad is, sötad mjölk, nötgelé, sötade bönor, nata de coco och ube.",
+        "Krossad is, sötad mjölk, nötgelé, sötade bönor, nata de coco, majs, jordgubbar och ube-glass.",
+
     allergens:
-        "Innehåller MJÖLK.",
+        "Innehåller MJÖLK. Kontrollera övriga ingredienser för eventuella ytterligare allergener.",
+
     extra:
-        "En färgstark filippinsk klassiker fylld med olika smaker och texturer – blandas ihop innan den avnjuts."
+        "En färgstark filippinsk klassiker med tropiska smaker, krämig mjölk, söta jordgubbar och majs, toppad med ube-glass. Blandas ihop innan den avnjuts."
 },
 
 "chicken adobo": {
