@@ -1304,30 +1304,8 @@ const getAvailableTimeSlots = () => {
             <p className="mc-free-delivery">{amountUntilFreeDelivery.toFixed(0)} kr kvar till fri leverans</p>
           )}
           <p className="mc-summary-note">Inga dolda avgifter. Du ser alltid totalen innan betalning.</p>
-                </aside>
+        </aside>
       </div>
-
-      {/* MOBILE CHECKOUT PAYMENT BAR */}
-
-      {checkoutStep === 3 && (
-        <div className="mc-mobile-paybar">
-
-          <div className="mc-mobile-paybar-total">
-            <span>Totalt inkl. moms</span>
-            <strong>{checkoutTotal.toFixed(2)} kr</strong>
-          </div>
-
-          <button
-            type="submit"
-            className="mc-primary"
-            disabled={!canPay || discountChecking}
-          >
-            {isLoading ? "Öppnar betalningen…" : "Betala nu →"}
-          </button>
-
-        </div>
-      )}
-
     </form>
   )
 }
