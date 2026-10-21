@@ -230,15 +230,43 @@
    VERY SMALL MOBILE
    ========================================================= */
 
-@media (max-width: 360px) {
+/* =========================================================
+   SMALL MOBILE — COMPACT PRODUCT GRID
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+    .food-display {
+        margin-top: 24px;
+    }
 
     .food-display-intro h2 {
-        font-size: 22px;
+        font-size: 24px;
     }
 
+    .food-display-intro p {
+        font-size: 13px;
+        line-height: 1.5;
+    }
 
     .food-display-list {
-        row-gap: 22px;
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        margin-top: 18px;
+
+        column-gap: 10px;
+        row-gap: 16px;
+
+        align-items: stretch;
     }
 
+    .food-display-empty {
+        padding: 30px 16px;
+    }
+
+    .food-display-empty p {
+        font-size: 14px;
+    }
 }
