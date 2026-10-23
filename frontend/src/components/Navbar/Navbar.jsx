@@ -6,12 +6,29 @@ import { StoreContext } from '../../context/StoreContext'
 
 // Visa bara betalningsmetoder som finns eller tydligt markeras som kommande.
 // Billie är aktiverat. Swish-ansökan väntar fortfarande på godkännande.
+// Logotyper för betalningsmetoderna från Dinteros offentliga varumärkesmaterial.
+// Swish markeras fortfarande som kommande tills Stripe-ansökan har godkänts.
 const paymentOptions = [
   { id: 'visa', name: 'VISA' },
   { id: 'mastercard', name: 'Mastercard' },
-  { id: 'klarna', name: 'Klarna.' },
-  { id: 'billie', name: 'Billie', note: 'för företag' },
-  { id: 'swish', name: 'Swish', note: 'kommer snart', pending: true }
+  {
+    id: 'klarna',
+    name: 'Klarna',
+    logo: 'https://cdn.prod.website-files.com/65200b28053a7ec77284becf/677e9b8acc860057a17089e0_KlarnaLogo.svg'
+  },
+  {
+    id: 'billie',
+    name: 'Billie',
+    logo: 'https://cdn.prod.website-files.com/65200b28053a7ec77284becf/68f89a9b2acab0826189c36d_Billie%20%281%29.svg',
+    note: 'för företag'
+  },
+  {
+    id: 'swish',
+    name: 'Swish',
+    logo: 'https://cdn.prod.website-files.com/65200b28053a7ec77284becf/65fd521b0fc28b127f908dcd_Swish.svg',
+    note: 'kommer snart',
+    pending: true
+  }
 ]
 
 const Navbar = ({ setShowLogin }) => {
@@ -97,9 +114,20 @@ const Navbar = ({ setShowLogin }) => {
                   className={`payment-banner-option${option.pending ? ' payment-banner-option--pending' : ''}`}
                   key={`${copy}-${option.id}`}
                 >
-                  <span className={`payment-banner-name payment-banner-name--${option.id}`}>
-                    {option.name}
-                  </span>
+                  {option.logo ? (
+                    <span className="payment-banner-logo-wrap">
+                      <img
+                        src={option.logo}
+                        alt={option.name}
+                        className={`payment-banner-logo payment-banner-logo--${option.id}`}
+                        decoding="async"
+                      />
+                    </span>
+                  ) : (
+                    <span className={`payment-banner-name payment-banner-name--${option.id}`}>
+                      {option.name}
+                    </span>
+                  )}
                   {option.note && (
                     <span className="payment-banner-note">{option.note}</span>
                   )}

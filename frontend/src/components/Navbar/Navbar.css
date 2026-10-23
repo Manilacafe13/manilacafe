@@ -671,7 +671,7 @@
     padding: 10px 0;
     background-color: var(--payment-bg);
     color: var(--payment-text);
-    border-bottom: 1px solid rgba(246, 207, 128, 0.22);
+    border-bottom: none;
 }
 
 .payment-banner *,
@@ -760,6 +760,34 @@
     font-weight: 900;
 }
 
+/* Samma banner â€“ bara varumÃ¤rkeslogotyperna fÃ¥r egna ljusa mÃ¤rken */
+.payment-banner-logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 27px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: #fff9eb;
+}
+
+.payment-banner-logo {
+    display: block;
+    width: auto;
+    height: 19px;
+    max-width: 84px;
+    object-fit: contain;
+}
+
+.payment-banner-logo--billie {
+    max-width: 76px;
+}
+
+.payment-banner-logo--swish {
+    max-width: 87px;
+}
+
 .payment-banner-note {
     font-size: 11px;
     opacity: 0.9;
@@ -823,6 +851,16 @@
 
     .payment-banner-note {
         font-size: 10px;
+    }
+
+    .payment-banner-logo-wrap {
+        min-height: 25px;
+        padding: 4px 7px;
+    }
+
+    .payment-banner-logo {
+        height: 17px;
+        max-width: 76px;
     }
 }
 
