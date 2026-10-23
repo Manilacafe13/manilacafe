@@ -16,6 +16,78 @@ const createSlug = (name = "") =>
         .replace(/^-+|-+$/g, "")
 
 
+// ======================================================
+// PORTIONSINFORMATION
+// Visar vad kunden får vid beställning, utan att anta
+// okända vikter, volymer eller antal tillbehör.
+// ======================================================
+
+const portionInformation = {
+    "siningang med räkor": {
+        contents: "Räkor i syrlig sinigang-buljong med grönsaker, serveras med ris."
+    },
+    "sinigang med räkor": {
+        contents: "Räkor i syrlig sinigang-buljong med grönsaker, serveras med ris."
+    },
+    "mango float": {
+        contents: "En portion Mango Float med mango och krämiga lager av grahamskex."
+    },
+    "apple crisp float": {
+        contents: "En portion Apple Crisp Float med karamelliserat äpple och kanel."
+    },
+    "ube cake": {
+        contents: "En portion Ube Cake med ube och kokos."
+    },
+    "fruit cup": {
+        contents: "En bägare Fruit Cup med fruktblandning, kokos, ost och kondenserad mjölk."
+    },
+    "golden turon & ube ice cream": {
+        contents: "Krispig turon med banan, serverad med ube-glass."
+    },
+    "biscoff cinnamon banana float": {
+        contents: "En portion Banana Float med banan, Biscoff och kanel."
+    },
+    "taho": {
+        contents: "En portion Taho med silkestofu, sagopärlor och söt sirap."
+    },
+    "strawberry taho": {
+        contents: "En portion Strawberry Taho med silkestofu, sagopärlor och jordgubbssirap."
+    },
+    "apple taho": {
+        contents: "En portion Apple Taho med silkestofu, sagopärlor och äppelsirap."
+    },
+    "halo-halo": {
+        contents: "En portion Halo-halo med krossad is, mjölk, söta tillbehör och ube-glass.",
+        serving: "Blanda innehållet före servering."
+    },
+    "chicken adobo": {
+        contents: "Kyckling tillagad i adobosås, serverad med ris."
+    },
+    "pandesal": {
+        quantity: "3 stycken",
+        contents: "Tre klassiska filippinska pandesal."
+    },
+    "mango sago": {
+        contents: "En portion Mango Sago med mango, sagopärlor och krämig mjölkblandning.",
+        serving: "Serveras kall."
+    },
+    "ube caramel latte": {
+        contents: "En kall Ube Caramel Latte med espresso, ube, mjölk, karamell och is."
+    },
+    "ube pandesal med ost": {
+        quantity: "4 stycken",
+        contents: "Fyra mjuka Ube Pandesal med ostfyllning.",
+        serving: "Värm bröden i cirka 20 sekunder före servering.",
+        preparation: "Tillagningen kan ta några timmar beroende på efterfrågan."
+    },
+    "ube pandesal": {
+        quantity: "4 stycken",
+        contents: "Fyra mjuka Ube Pandesal med ostfyllning.",
+        serving: "Värm bröden i cirka 20 sekunder före servering.",
+        preparation: "Tillagningen kan ta några timmar beroende på efterfrågan."
+    }
+}
+
 const FoodItem = ({
     id,
     name,
@@ -33,6 +105,7 @@ const FoodItem = ({
     } = useContext(StoreContext)
 
     const [showAllergens, setShowAllergens] = useState(false)
+    const [showPortionInfo, setShowPortionInfo] = useState(false)
 
 
     // ======================================================
@@ -231,6 +304,9 @@ const FoodItem = ({
 
     const productInfo =
         productInformation[normalizedName]
+
+    const portionInfo =
+        portionInformation[normalizedName]
 
 
     // ======================================================
@@ -468,6 +544,68 @@ const FoodItem = ({
 
                     </div>
 
+                )}
+
+
+                {/* PORTIONSINFORMATION */}
+
+                {portionInfo && (
+
+                    <div className="food-item-allergen-section">
+
+                        <button
+                            type="button"
+                            className="food-item-allergen-button"
+                            onClick={() =>
+                                setShowPortionInfo(prev => !prev)
+                            }
+                            aria-expanded={showPortionInfo}
+                            aria-controls={`portion-${id}`}
+                        >
+                            <span>Portionsinformation</span>
+
+                            <span
+                                className="food-item-allergen-icon"
+                                aria-hidden="true"
+                            >
+                                {showPortionInfo ? "−" : "+"}
+                            </span>
+                        </button>
+
+                        {showPortionInfo && (
+                            <div
+                                className="food-item-allergen-content"
+                                id={`portion-${id}`}
+                            >
+                                {portionInfo.quantity && (
+                                    <p>
+                                        <strong>Antal:</strong>{" "}
+                                        {portionInfo.quantity}
+                                    </p>
+                                )}
+
+                                <p>
+                                    <strong>Portionsinnehåll:</strong>{" "}
+                                    {portionInfo.contents}
+                                </p>
+
+                                {portionInfo.serving && (
+                                    <p>
+                                        <strong>Servering:</strong>{" "}
+                                        {portionInfo.serving}
+                                    </p>
+                                )}
+
+                                {portionInfo.preparation && (
+                                    <p>
+                                        <strong>Tillagningstid:</strong>{" "}
+                                        {portionInfo.preparation}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                    </div>
                 )}
 
 
