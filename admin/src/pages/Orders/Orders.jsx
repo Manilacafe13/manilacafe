@@ -1,1699 +1,410 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
-
-import './Orders.css'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-
-
-const Orders = ({ url }) => {
-
-  // ======================================================
-  // BACKEND URL
-  // ======================================================
-
-  const backendUrl = (
-    url ||
-    import.meta.env.VITE_API_URL ||
-    ""
-  ).replace(/\/+$/, "")
-
-
-  // ======================================================
-  // STATES
-  // ======================================================
-
-  const [orders, setOrders] =
-    useState([])
-
-  const [loading, setLoading] =
-    useState(true)
-
-  const [error, setError] =
-    useState("")
-
-  const [updatingOrder, setUpdatingOrder] =
-    useState(null)
-
-  const knownOrderIds =
-    useRef(new Set())
-
-  const initialOrdersLoaded =
-    useRef(false)
-
-
-  // ======================================================
-  // GET ADMIN TOKEN
-  // ======================================================
-
-  const getToken = () => {
-
-    return localStorage.getItem(
-      "token"
-    )
-
-  }
-
-
-  // ======================================================
-  // PRODUCT IMAGE URL
-  // ======================================================
-
-  const getImageUrl = (image) => {
-
-    if (!image) {
-      return ""
-    }
-
-
-    const imageValue =
-      String(image).trim()
-
-
-    if (
-      imageValue.startsWith("http://") ||
-      imageValue.startsWith("https://")
-    ) {
-
-      return imageValue
-
-    }
-
-
-    if (
-      imageValue.startsWith("//")
-    ) {
-
-      return `https:${imageValue}`
-
-    }
-
-
-    return `${backendUrl}/images/${imageValue}`
-
-  }
-
-
-  // ======================================================
-  // FETCH ALL ORDERS
-  // ======================================================
-
-  const fetchAllOrders =
-    useCallback(async () => {
-
-      const token =
-        getToken()
-
-
-      if (!token) {
-
-        setLoading(false)
-
-        setError(
-          "Du måste vara inloggad som administratör."
-        )
-
-        return
-
-      }
-
-
-      if (!backendUrl) {
-
-        setLoading(false)
-
-        setError(
-          "Backend-adressen saknas."
-        )
-
-        return
-
-      }
-
-
-      try {
-
-  if (!initialOrdersLoaded.current) {
-    setLoading(true)
-  }
-
-  setError("")
-
-
-        const response =
-          await axios.get(
-
-            `${backendUrl}/api/order/list`,
-
-            {
-              headers: {
-                token
-              }
-            }
-
-          )
-
-
-        if (
-          response.data.success
-        ) {
-
-          const fetchedOrders =
-            Array.isArray(response.data.data)
-              ? response.data.data
-              : []
-
-
-          // ================================================
-          // FIRST LOAD
-          // ================================================
-
-          if (!initialOrdersLoaded.current) {
-
-            fetchedOrders.forEach((order) => {
-
-              if (order._id) {
-                knownOrderIds.current.add(order._id)
-              }
-
-            })
-
-            initialOrdersLoaded.current = true
-
-          } else {
-
-            // ==============================================
-            // FIND NEW ORDERS
-            // ==============================================
-
-            const newOrders =
-              fetchedOrders.filter((order) => {
-
-                return (
-                  order._id &&
-                  !knownOrderIds.current.has(order._id)
-                )
-
-              })
-
-
-            // ==============================================
-            // NOTIFY ADMIN
-            // ==============================================
-
-            if (newOrders.length > 0) {
-
-              if (newOrders.length === 1) {
-
-                toast.success(
-                  `🔔 Ny beställning! ${getOrderNumber(
-                    newOrders[0]._id
-                  )}`,
-                  {
-                    autoClose: 10000
-                  }
-                )
-
-              } else {
-
-                toast.success(
-                  `🔔 ${newOrders.length} nya beställningar!`,
-                  {
-                    autoClose: 10000
-                  }
-                )
-
-              }
-
-
-              // ============================================
-              // SOUND
-              // ============================================
-
-              try {
-
-                const audioContext =
-                  new (
-                    window.AudioContext ||
-                    window.webkitAudioContext
-                  )()
-
-                const oscillator =
-                  audioContext.createOscillator()
-
-                const gain =
-                  audioContext.createGain()
-
-                oscillator.connect(gain)
-                gain.connect(audioContext.destination)
-
-                oscillator.frequency.value = 880
-
-                gain.gain.setValueAtTime(
-                  0.15,
-                  audioContext.currentTime
-                )
-
-                gain.gain.exponentialRampToValueAtTime(
-                  0.001,
-                  audioContext.currentTime + 0.5
-                )
-
-                oscillator.start()
-
-                oscillator.stop(
-                  audioContext.currentTime + 0.5
-                )
-
-              } catch (error) {
-
-                console.warn(
-                  "Order notification sound unavailable."
-                )
-
-              }
-
-            }
-
-
-            // ==============================================
-            // REMEMBER ORDERS
-            // ==============================================
-
-            fetchedOrders.forEach((order) => {
-
-              if (order._id) {
-                knownOrderIds.current.add(order._id)
-              }
-
-            })
-
-          }
-
-
-          setOrders(fetchedOrders)
-
-        } else {
-
-          setOrders([])
-
-          setError(
-            response.data.message ||
-            "Beställningarna kunde inte hämtas."
-          )
-
-        }
-
-
-      } catch (error) {
-
-
-
-        setOrders([])
-
-
-        if (
-          error.response?.status === 401
-        ) {
-
-          setError(
-            "Du måste logga in igen."
-          )
-
-        } else if (
-          error.response?.status === 403
-        ) {
-
-          setError(
-            "Du har inte administratörsbehörighet."
-          )
-
-        } else {
-
-          setError(
-            error.response?.data?.message ||
-            "Något gick fel när beställningarna skulle hämtas."
-          )
-
-        }
-
-
-      } finally {
-
-        setLoading(false)
-
-      }
-
-    }, [backendUrl])
-
-
-  // ======================================================
-  // LOAD ORDERS
-  // ======================================================
-
-   useEffect(() => {
-
-  fetchAllOrders()
-
-
-  const interval =
-    setInterval(() => {
-
-      fetchAllOrders()
-
-    }, 15000)
-
-
-  return () => {
-    clearInterval(interval)
-  }
-
-}, [fetchAllOrders])
-
-  // ======================================================
-  // UPDATE ORDER STATUS
-  // ======================================================
-
-  const updateStatus = async (
-    orderId,
-    status
-  ) => {
-
-    const token =
-      getToken()
-
-
-    if (!token) {
-
-      setError(
-        "Du måste vara inloggad som administratör."
-      )
-
-      return
-
-    }
-
-
-    if (!backendUrl) {
-
-      setError(
-        "Backend-adressen saknas."
-      )
-
-      return
-
-    }
-
-
-    try {
-
-      setUpdatingOrder(
-        orderId
-      )
-
-
-      const response =
-        await axios.post(
-
-          `${backendUrl}/api/order/status`,
-
-          {
-            orderId,
-            status
-          },
-
-          {
-            headers: {
-              token
-            }
-          }
-
-        )
-
-
-      if (
-        response.data.success
-      ) {
-
-        setOrders((prevOrders) =>
-
-          prevOrders.map((order) =>
-
-            order._id === orderId
-
-              ? {
-                ...order,
-
-                status:
-                  response.data.data?.status ||
-                  status
-              }
-
-              : order
-
-          )
-
-        )
-
-      } else {
-
-        alert(
-          response.data.message ||
-          "Orderstatus kunde inte uppdateras."
-        )
-
-      }
-
-
-    } catch (error) {
-
-
-
-      if (
-        error.response?.status === 401
-      ) {
-
-        alert(
-          "Din inloggning har gått ut. Logga in igen."
-        )
-
-        return
-
-      }
-
-
-      if (
-        error.response?.status === 403
-      ) {
-
-        alert(
-          "Du har inte administratörsbehörighet."
-        )
-
-        return
-
-      }
-
-
-      alert(
-        error.response?.data?.message ||
-        "Något gick fel när orderstatus skulle uppdateras."
-      )
-
-
-    } finally {
-
-      setUpdatingOrder(
-        null
-      )
-
-    }
-
-  }
-
-
-  // ======================================================
-  // FORMAT PRICE
-  // ======================================================
-
-  const formatPrice = (
-    price
-  ) => {
-
-    const value =
-      Number(
-        price
-      )
-
-
-    if (
-      !Number.isFinite(value)
-    ) {
-
-      return "0,00 kr"
-
-    }
-
-
-    return (
-      value.toLocaleString(
-        "sv-SE",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }
-      ) + " kr"
-    )
-
-  }
-
-
-  // ======================================================
-  // FORMAT CREATED DATE
-  // ======================================================
-
-  const formatDate = (
-    date
-  ) => {
-
-    if (!date) {
-
-      return "Datum saknas"
-
-    }
-
-
-    const parsedDate =
-      new Date(
-        date
-      )
-
-
-    if (
-      Number.isNaN(
-        parsedDate.getTime()
-      )
-    ) {
-
-      return "Datum saknas"
-
-    }
-
-
-    return parsedDate.toLocaleString(
-      "sv-SE",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      }
-    )
-
-  }
-
-
-  // ======================================================
-  // FORMAT REQUESTED DATE
-  // ======================================================
-
-  const formatRequestedDate = (
-    date
-  ) => {
-
-    if (!date) {
-
-      return "Ej angivet"
-
-    }
-
-
-    const parsedDate =
-      new Date(
-        date
-      )
-
-
-    if (
-      Number.isNaN(
-        parsedDate.getTime()
-      )
-    ) {
-
-      return "Ej angivet"
-
-    }
-
-
-    return parsedDate.toLocaleDateString(
-      "sv-SE",
-      {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      }
-    )
-
-  }
-
-
-  // ======================================================
-  // FULFILLMENT LABEL
-  // ======================================================
-
-  const getFulfillmentLabel = (
-    fulfillmentType
-  ) => {
-
-    switch (
-    fulfillmentType
-    ) {
-
-      case "same-day":
-
-        return "Idag"
-
-
-      case "next-day":
-
-        return "Imorgon"
-
-
-      case "large-order":
-
-        return "Större beställning"
-
-
-      default:
-
-        return "Ej angivet"
-
-    }
-
-  }
-
-
-  // ======================================================
-  // FULFILLMENT CLASS
-  // ======================================================
-
-  const getFulfillmentClass = (
-    fulfillmentType
-  ) => {
-
-    switch (
-    fulfillmentType
-    ) {
-
-      case "same-day":
-
-        return "same-day"
-
-
-      case "next-day":
-
-        return "next-day"
-
-
-      case "large-order":
-
-        return "large-order"
-
-
-      default:
-
-        return ""
-
-    }
-
-  }
-
-
-  // ======================================================
-  // DELIVERY METHOD
-  // ======================================================
-
-  const getDeliveryMethod = (
-    deliveryMethod
-  ) => {
-
-    /*
-      Äldre beställningar skapades innan
-      pickup / delivery infördes.
-
-      Dessa behandlas som delivery eftersom
-      de tidigare alltid hade leveransadress.
-    */
-
-    if (
-      deliveryMethod === "pickup"
-    ) {
-
-      return "pickup"
-
-    }
-
-
-    return "delivery"
-
-  }
-
-
-  // ======================================================
-  // DELIVERY METHOD LABEL
-  // ======================================================
-
-  const getDeliveryMethodLabel = (
-    deliveryMethod
-  ) => {
-
-    if (
-      getDeliveryMethod(
-        deliveryMethod
-      ) === "pickup"
-    ) {
-
-      return "Avhämtning"
-
-    }
-
-
-    return "Leverans"
-
-  }
-
-
-  // ======================================================
-  // DELIVERY METHOD CLASS
-  // ======================================================
-
-  const getDeliveryMethodClass = (
-    deliveryMethod
-  ) => {
-
-    if (
-      getDeliveryMethod(
-        deliveryMethod
-      ) === "pickup"
-    ) {
-
-      return "pickup"
-
-    }
-
-
-    return "delivery"
-
-  }
-
-
-  // ======================================================
-  // SHORT ORDER ID
-  // ======================================================
-
-  const getOrderNumber = (
-    orderId
-  ) => {
-
-    if (!orderId) {
-
-      return "-"
-
-    }
-
-
-    return (
-      "#" +
-      String(orderId)
-        .slice(-8)
-        .toUpperCase()
-    )
-
-  }
-
-
-  // ======================================================
-  // TOTAL PRODUCT QUANTITY
-  // ======================================================
-
-  const getTotalQuantity = (
-    items
-  ) => {
-
-    if (
-      !Array.isArray(items)
-    ) {
-
-      return 0
-
-    }
-
-
-    return items.reduce(
-      (total, item) => {
-
-        const quantity =
-          Number(
-            item.quantity
-          )
-
-
-        return (
-          total +
-          (
-            Number.isFinite(quantity)
-              ? quantity
-              : 0
-          )
-        )
-
-      },
-      0
-    )
-
-  }
-
-
-  // ======================================================
-  // LOADING
-  // ======================================================
-
-  if (loading) {
-
-    return (
-
-      <div className="orders">
-
-        <div className="orders-loading">
-
-          <div className="orders-loader">
-          </div>
-
-          <p>
-            Hämtar beställningar...
-          </p>
-
-        </div>
-
-      </div>
-
-    )
-
-  }
-
-
-  // ======================================================
-  // ERROR
-  // ======================================================
-
-  if (error) {
-
-    return (
-
-      <div className="orders">
-
-        <div className="orders-message">
-
-          <h2>
-            Kunde inte hämta beställningar
-          </h2>
-
-          <p>
-            {error}
-          </p>
-
-          <button
-            type="button"
-            onClick={fetchAllOrders}
-          >
-            Försök igen
-          </button>
-
-        </div>
-
-      </div>
-
-    )
-
-  }
-
-
-  // ======================================================
-  // JSX
-  // ======================================================
-
-  return (
-
-    <div className="orders">
-
-
-      {/* ================================================ */}
-      {/* HEADER */}
-      {/* ================================================ */}
-
-      <div className="orders-header">
-
-        <div>
-
-          <h1>
-            Beställningar
-          </h1>
-
-          <p>
-            Hantera kundernas beställningar.
-          </p>
-
-        </div>
-
-
-        <div className="orders-header-right">
-
-          <span className="orders-count">
-
-            {orders.length}
-
-            {" "}
-
-            {
-              orders.length === 1
-                ? "beställning"
-                : "beställningar"
-            }
-
-          </span>
-
-
-          <button
-            type="button"
-            className="refresh-orders-button"
-            onClick={fetchAllOrders}
-          >
-            Uppdatera
-          </button>
-
-        </div>
-
-      </div>
-
-
-      {/* ================================================ */}
-      {/* NO ORDERS */}
-      {/* ================================================ */}
-
-      {orders.length === 0 ? (
-
-        <div className="orders-empty">
-
-          <div className="orders-empty-icon">
-            📦
-          </div>
-
-          <h2>
-            Inga beställningar ännu
-          </h2>
-
-          <p>
-            När en kund gör en beställning
-            kommer den att visas här.
-          </p>
-
-        </div>
-
-      ) : (
-
-        <div className="orders-list">
-
-
-          {orders.map((order) => {
-
-            const deliveryMethod =
-              getDeliveryMethod(
-                order.deliveryMethod
-              )
-
-
-            const isPickup =
-              deliveryMethod === "pickup"
-
-
-            return (
-
-              <div
-                className="admin-order-card"
-                key={order._id}
-              >
-
-
-                {/* ====================================== */}
-                {/* ORDER HEADER */}
-                {/* ====================================== */}
-
-                <div className="admin-order-header">
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Ordernummer
-                    </span>
-
-                    <strong className="admin-order-number">
-
-                      {getOrderNumber(
-                        order._id
-                      )}
-
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Beställd
-                    </span>
-
-                    <span>
-
-                      {formatDate(
-                        order.createdAt ||
-                        order.date
-                      )}
-
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Betalning
-                    </span>
-
-                    <span
-                      className={
-                        order.payment
-                          ? "admin-payment-paid"
-                          : "admin-payment-unpaid"
-                      }
-                    >
-
-                      {
-                        order.payment
-                          ? "Betald"
-                          : "Ej betald"
-                      }
-
-                    </span>
-
-                  </div>
-
-
-                </div>
-
-
-                {/* ====================================== */}
-                {/* ORDER INFORMATION */}
-                {/* ====================================== */}
-
-                <div className="admin-order-fulfillment">
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Mottagande
-                    </span>
-
-                    <strong
-                      className={
-                        `delivery-method-badge ${getDeliveryMethodClass(
-                          order.deliveryMethod
-                        )
-                        }`
-                      }
-                    >
-
-                      {getDeliveryMethodLabel(
-                        order.deliveryMethod
-                      )}
-
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Beställningstyp
-                    </span>
-
-                    <strong
-                      className={
-                        `fulfillment-badge ${getFulfillmentClass(
-                          order.fulfillmentType
-                        )
-                        }`
-                      }
-                    >
-
-                      {getFulfillmentLabel(
-                        order.fulfillmentType
-                      )}
-
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Önskat datum
-                    </span>
-
-                    <strong>
-
-                      {formatRequestedDate(
-                        order.requestedDate
-                      )}
-
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-
-                      {
-                        isPickup
-                          ? "Tid för avhämtning"
-                          : "Tid för leverans"
-                      }
-
-                    </span>
-
-                    <strong>
-
-                      {order.requestedTime ||
-                        "Ej angivet"}
-
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span className="admin-order-label">
-                      Antal produkter
-                    </span>
-
-                    <strong>
-
-                      {getTotalQuantity(
-                        order.items
-                      )}
-
-                    </strong>
-
-                  </div>
-
-
-                </div>
-
-
-                {/* ====================================== */}
-                {/* STOCK WARNING */}
-                {/* ====================================== */}
-
-                {order.status ===
-                  "Betalning mottagen - lagerkontroll krävs" && (
-
-                    <div className="admin-stock-warning">
-
-                      <strong>
-                        ⚠ Lagerkontroll krävs
-                      </strong>
-
-                      <p>
-                        Kunden har betalat men dagslagret
-                        behöver kontrolleras innan ordern
-                        bekräftas.
-                      </p>
-
-                    </div>
-
-                  )}
-
-
-                {/* ====================================== */}
-                {/* CUSTOMER + DELIVERY */}
-                {/* ====================================== */}
-
-                <div className="admin-order-customer">
-
-
-                  <div className="admin-order-section">
-
-                    <h3>
-                      Kund
-                    </h3>
-
-                    <p>
-
-                      {order.address?.firstName || ""}
-
-                      {" "}
-
-                      {order.address?.lastName || ""}
-
-                    </p>
-
-                    <p>
-                      {order.address?.email || "-"}
-                    </p>
-
-                    <p>
-                      {order.address?.phone || "-"}
-                    </p>
-
-                  </div>
-
-
-                  {isPickup ? (
-
-                    <div className="admin-order-section admin-pickup-section">
-
-                      <h3>
-                        Avhämtning
-                      </h3>
-
-                      <p>
-                        Kunden hämtar beställningen.
-                      </p>
-
-                      <p>
-
-                        <strong>
-                          Datum:
-                        </strong>
-
-                        {" "}
-
-                        {formatRequestedDate(
-                          order.requestedDate
-                        )}
-
-                      </p>
-
-                      <p>
-
-                        <strong>
-                          Tid:
-                        </strong>
-
-                        {" "}
-
-                        {order.requestedTime ||
-                          "Ej angivet"}
-
-                      </p>
-
-                    </div>
-
-                  ) : (
-
-                    <div className="admin-order-section">
-
-                      <h3>
-                        Leveransadress
-                      </h3>
-
-                      <p>
-                        {order.address?.street || "-"}
-                      </p>
-
-                      <p>
-
-                        {order.address?.zipcode || ""}
-
-                        {" "}
-
-                        {order.address?.city || ""}
-
-                      </p>
-
-                    </div>
-
-                  )}
-
-
-                </div>
-
-
-                {/* ====================================== */}
-                {/* PRODUCTS */}
-                {/* ====================================== */}
-
-                <div className="admin-order-products">
-
-
-                  <h3>
-                    Produkter
-                  </h3>
-
-
-                  {Array.isArray(
-                    order.items
-                  ) &&
-                    order.items.map(
-                      (item, index) => {
-
-                        const quantity =
-                          Number(
-                            item.quantity || 0
-                          )
-
-
-                        const price =
-                          Number(
-                            item.price || 0
-                          )
-
-
-                        return (
-
-                          <div
-                            className="admin-order-product"
-                            key={
-                              item._id ||
-                              `${order._id}-${index}`
-                            }
-                          >
-
-
-                            {/* PRODUCT IMAGE */}
-
-                            {item.image ? (
-
-                              <img
-                                src={
-                                  getImageUrl(
-                                    item.image
-                                  )
-                                }
-                                alt={
-                                  item.name ||
-                                  "Produkt"
-                                }
-                              />
-
-                            ) : (
-
-                              <div className="admin-product-placeholder">
-                                📦
-                              </div>
-
-                            )}
-
-
-                            {/* PRODUCT INFO */}
-
-                            <div className="admin-product-info">
-
-                              <strong>
-
-                                {item.name ||
-                                  "Produkt"}
-
-                              </strong>
-
-                              <span>
-
-                                {formatPrice(
-                                  price
-                                )}
-
-                                {" / st"}
-
-                              </span>
-
-                            </div>
-
-
-                            {/* QUANTITY */}
-
-                            <div className="admin-product-quantity">
-
-                              <span>
-                                Antal
-                              </span>
-
-                              <strong>
-                                {quantity}
-                              </strong>
-
-                            </div>
-
-
-                            {/* PRODUCT TOTAL */}
-
-                            <strong className="admin-product-total">
-
-                              {formatPrice(
-                                price *
-                                quantity
-                              )}
-
-                            </strong>
-
-
-                          </div>
-
-                        )
-
-                      }
-                    )}
-
-
-                </div>
-
-
-                {/* ====================================== */}
-                {/* TOTALS */}
-                {/* ====================================== */}
-
-                <div className="admin-order-summary">
-
-
-                  <div>
-
-                    <span>
-                      Delsumma
-                    </span>
-
-                    <span>
-
-                      {formatPrice(
-                        order.subtotal
-                      )}
-
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <span>
-                      Moms ({order.vatRate || 6}%)
-                    </span>
-
-                    <span>
-
-                      {formatPrice(
-                        order.vatAmount
-                      )}
-
-                    </span>
-
-                  </div>
-
-
-                  <div className="admin-order-total">
-
-                    <strong>
-                      Totalt
-                    </strong>
-
-                    <strong>
-
-                      {formatPrice(
-                        order.amount
-                      )}
-
-                    </strong>
-
-                  </div>
-
-
-                </div>
-
-
-                {/* ====================================== */}
-                {/* STATUS */}
-                {/* ====================================== */}
-
-                <div className="admin-order-footer">
-
-
-                  <div className="admin-payment-method">
-
-                    <span>
-                      Betalningsmetod:
-                    </span>
-
-                    <strong>
-
-                      {order.paymentMethod ||
-                        "Stripe"}
-
-                    </strong>
-
-                  </div>
-
-
-                  <div className="admin-status-control">
-
-                    <label
-                      htmlFor={
-                        `status-${order._id}`
-                      }
-                    >
-                      Orderstatus
-                    </label>
-
-
-                    <select
-
-                      id={
-                        `status-${order._id}`
-                      }
-
-                      value={
-                        order.status ||
-                        "Inväntar betalning"
-                      }
-
-                      disabled={
-                        updatingOrder ===
-                        order._id
-                      }
-
-                      onChange={(event) =>
-                        updateStatus(
-                          order._id,
-                          event.target.value
-                        )
-                      }
-
-                    >
-
-
-                      {[
-                        "Inväntar betalning",
-                        "Betalning mottagen",
-                        "Betalning mottagen - lagerkontroll krävs"
-                      ].includes(order.status) && (
-
-                          <option
-                            value={order.status}
-                            disabled
-                          >
-                            {order.status}
-                          </option>
-
-                        )}
-
-
-                      <option value="Beställning mottagen">
-                        Beställning mottagen
-                      </option>
-
-
-                      <option value="Förbereds">
-                        Förbereds
-                      </option>
-
-
-                      {isPickup && (
-
-                        <option value="Redo för upphämtning">
-                          Redo för upphämtning
-                        </option>
-
-                      )}
-
-
-                      {isPickup && (
-
-                        <option value="Upphämtad">
-                          Upphämtad
-                        </option>
-
-                      )}
-
-
-                      {!isPickup && (
-
-                        <option value="På väg">
-                          På väg
-                        </option>
-
-                      )}
-
-
-                      {!isPickup && (
-
-                        <option value="Levererad">
-                          Levererad
-                        </option>
-
-                      )}
-
-
-                      <option value="Avbruten">
-                        Avbruten
-                      </option>
-
-
-                    </select>
-
-
-                    {updatingOrder ===
-                      order._id && (
-
-                        <span className="status-saving">
-                          Sparar...
-                        </span>
-
-                      )}
-
-
-                  </div>
-
-
-                </div>
-
-
-              </div>
-
-            )
-
-          })}
-
-
-        </div>
-
-      )}
-
-
-    </div>
-
-  )
-
+import './Orders.css'
+
+// Terminal status är vårt arkiv: ordern ligger kvar i MongoDB och i kundhistoriken.
+const COMPLETED = new Set(['Levererad', 'Upphämtad'])
+const POLL_MS = 15000
+const TABS = [
+  { id: 'active', title: 'Pågående' },
+  { id: 'pending', title: 'Väntar betalning' },
+  { id: 'completed', title: 'Arkiv' },
+  { id: 'cancelled', title: 'Avbrutna' }
+]
+
+const getGroup = (order) => {
+  if (COMPLETED.has(order.status)) return 'completed'
+  if (order.status === 'Avbruten') return 'cancelled'
+  if (order.payment !== true) return 'pending'
+  return 'active'
 }
 
+const orderNumber = (id) => `#${String(id || '').slice(-8).toUpperCase()}`
+const orderName = (order) =>
+  [order.address?.firstName, order.address?.lastName].filter(Boolean).join(' ') || 'Kund utan namn'
+const isPickupOrder = (order) => order.deliveryMethod === 'pickup'
+const formatMoney = (value) =>
+  `${Number(value || 0).toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr`
+const formatDateTime = (value) => {
+  if (!value) return 'Datum saknas'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Datum saknas'
+  return date.toLocaleString('sv-SE', {
+    timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short',
+    year: 'numeric', hour: '2-digit', minute: '2-digit'
+  })
+}
+const formatDay = (value) => {
+  if (!value) return 'Datum saknas'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Datum saknas'
+  return date.toLocaleDateString('sv-SE', {
+    timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short', year: 'numeric'
+  })
+}
+const orderPriority = (order) => {
+  const day = order.requestedDate
+  const time = String(order.requestedTime || '23:59').slice(0, 5)
+  if (!day) return Number.MAX_SAFE_INTEGER
+  const value = new Date(`${String(day).slice(0, 10)}T${/^\d{2}:\d{2}$/.test(time) ? time : '23:59'}:00`).getTime()
+  return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER
+}
+const totalQuantity = (items) =>
+  (Array.isArray(items) ? items : []).reduce((total, item) => total + Number(item.quantity || 0), 0)
+
+const Orders = ({ url }) => {
+  const backendUrl = (
+    url || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000' : '')
+  ).replace(/\/+$/, '')
+
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [updatingOrder, setUpdatingOrder] = useState(null)
+  const [tab, setTab] = useState('active')
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState('requested')
+  const [expandedId, setExpandedId] = useState(null)
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [lastChecked, setLastChecked] = useState(null)
+
+  // Spara betalningsstatus, inte bara ID. En order kan skapas före Stripe-betalningen.
+  const knownPaymentsRef = useRef(new Map())
+  const initializedRef = useRef(false)
+  const fetchingRef = useRef(false)
+  const mountedRef = useRef(false)
+  const soundEnabledRef = useRef(false)
+  const audioContextRef = useRef(null)
+
+  const playChime = useCallback(async () => {
+    const context = audioContextRef.current
+    if (!context || !soundEnabledRef.current) return
+    try {
+      if (context.state === 'suspended') await context.resume()
+      const start = context.currentTime + 0.03
+      ;[740, 980, 1175].forEach((frequency, index) => {
+        const oscillator = context.createOscillator()
+        const gain = context.createGain()
+        const begin = start + index * 0.22
+        oscillator.type = 'sine'
+        oscillator.frequency.value = frequency
+        gain.gain.setValueAtTime(0.001, begin)
+        gain.gain.exponentialRampToValueAtTime(0.13, begin + 0.025)
+        gain.gain.exponentialRampToValueAtTime(0.001, begin + 0.19)
+        oscillator.connect(gain)
+        gain.connect(context.destination)
+        oscillator.start(begin)
+        oscillator.stop(begin + 0.2)
+      })
+    } catch {
+      // Webbläsarens ljudpolicy kan blockera ljud i bakgrunden.
+      console.warn('Orderljudet kunde inte spelas. Aktivera ljud igen i adminpanelen.')
+    }
+  }, [])
+
+  const toggleSound = async () => {
+    if (soundEnabledRef.current) {
+      soundEnabledRef.current = false
+      setSoundEnabled(false)
+      return
+    }
+    try {
+      const Context = window.AudioContext || window.webkitAudioContext
+      if (!Context) throw new Error('Ljud stöds inte av webbläsaren')
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new Context()
+      }
+      // Måste ske direkt efter ett klick för att uppfylla webbläsarens ljudregler.
+      await audioContextRef.current.resume()
+      soundEnabledRef.current = true
+      setSoundEnabled(true)
+      await playChime() // Bekräftar ljudnivån direkt.
+      toast.success('Ordersignal aktiverad')
+    } catch {
+      toast.error('Ljud kunde inte aktiveras i den här webbläsaren.')
+    }
+  }
+
+  const fetchAllOrders = useCallback(async () => {
+    if (fetchingRef.current) return
+    const token = localStorage.getItem('token')
+    if (!token || !backendUrl) {
+      setError(!token ? 'Du behöver logga in som administratör.' : 'Backend-adressen saknas.')
+      setLoading(false)
+      return
+    }
+    fetchingRef.current = true
+    try {
+      const response = await axios.get(`${backendUrl}/api/order/list`, {
+        headers: { token, Authorization: `Bearer ${token}` }
+      })
+      if (!response.data?.success) throw new Error(response.data?.message || 'Orderlistan kunde inte hämtas.')
+      const incoming = Array.isArray(response.data.data) ? response.data.data : []
+
+      if (initializedRef.current) {
+        const justPaid = incoming.filter(order =>
+          order?._id && order.payment === true && knownPaymentsRef.current.get(order._id) !== true
+        )
+        if (justPaid.length) {
+          toast.success(
+            justPaid.length === 1
+              ? `Ny betald beställning ${orderNumber(justPaid[0]._id)}!`
+              : `${justPaid.length} nya betalda beställningar!`,
+            { autoClose: 10000, toastId: `new-paid-${justPaid.map(o => o._id).join('-')}` }
+          )
+          void playChime()
+        }
+      }
+
+      knownPaymentsRef.current = new Map(incoming.filter(order => order?._id).map(order => [order._id, order.payment === true]))
+      initializedRef.current = true
+      if (mountedRef.current) {
+        setOrders(incoming)
+        setLastChecked(new Date())
+        setError('')
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        setError(err.response?.data?.message || err.message || 'Kunde inte hämta beställningar.')
+      }
+    } finally {
+      fetchingRef.current = false
+      if (mountedRef.current) setLoading(false)
+    }
+  }, [backendUrl, playChime])
+
+  useEffect(() => {
+    mountedRef.current = true
+    void fetchAllOrders()
+    const interval = window.setInterval(() => { void fetchAllOrders() }, POLL_MS)
+    return () => {
+      mountedRef.current = false
+      window.clearInterval(interval)
+      soundEnabledRef.current = false
+      // Inget ljud ska fortsätta när ordersidan lämnas.
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        void audioContextRef.current.close().catch(() => {})
+      }
+      audioContextRef.current = null
+    }
+  }, [fetchAllOrders])
+
+  const updateStatus = async (orderId, status) => {
+    const token = localStorage.getItem('token')
+    if (!token || !backendUrl || updatingOrder) return
+    if (status === 'Avbruten' && !window.confirm('Avbryta beställningen? Den blir kvar under Avbrutna.')) return
+    if (COMPLETED.has(status) && !window.confirm('Bekräfta att beställningen är färdig och överlämnad? Den flyttas till Arkiv.')) return
+    setUpdatingOrder(orderId)
+    try {
+      const response = await axios.post(`${backendUrl}/api/order/status`, { orderId, status }, {
+        headers: { token, Authorization: `Bearer ${token}` }
+      })
+      if (!response.data?.success) throw new Error(response.data?.message || 'Orderstatus kunde inte sparas.')
+      setOrders(previous => previous.map(order =>
+        order._id === orderId ? { ...order, status: response.data.data?.status || status } : order
+      ))
+      setExpandedId(current => current === orderId ? null : current)
+      toast.success(COMPLETED.has(status) ? 'Ordern är klar och finns nu i Arkiv.' : 'Orderstatus uppdaterad.')
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Orderstatus kunde inte sparas.')
+    } finally {
+      setUpdatingOrder(null)
+    }
+  }
+
+  const getImageUrl = (image) => {
+    const value = String(image || '').trim()
+    if (!value) return ''
+    if (/^https?:\/\//i.test(value)) return value
+    if (value.startsWith('//')) return `https:${value}`
+    return `${backendUrl}/images/${value}`
+  }
+
+  const counts = { active: 0, pending: 0, completed: 0, cancelled: 0 }
+  orders.forEach(order => { counts[getGroup(order)] += 1 })
+
+  const visibleOrders = orders
+    .filter(order => getGroup(order) === tab)
+    .filter(order => {
+      const term = query.toLocaleLowerCase('sv-SE').trim()
+      if (!term) return true
+      return [orderNumber(order._id), orderName(order), order.address?.email,
+        order.address?.phone, order.address?.street,
+        ...(Array.isArray(order.items) ? order.items.map(item => item.name) : [])]
+        .some(value => String(value || '').toLocaleLowerCase('sv-SE').includes(term))
+    })
+    .sort((a, b) => sort === 'requested'
+      ? orderPriority(a) - orderPriority(b) || new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
+      : new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
+
+  return (
+    <main className="orders mc-orders">
+      <header className="mc-orders-header">
+        <div>
+          <p className="mc-orders-eyebrow">MANILA CAFÉ · ADMIN</p>
+          <h1>Beställningar</h1>
+          <p>Fånga upp nya ordrar och håll isär det som ska förberedas.</p>
+        </div>
+        <div className="mc-orders-actions">
+          <button type="button" className={`mc-orders-sound ${soundEnabled ? 'is-on' : ''}`} onClick={toggleSound}
+            aria-pressed={soundEnabled}>
+            {soundEnabled ? '🔊 Ljud på' : '🔇 Aktivera ordersignal'}
+          </button>
+          <button type="button" className="mc-orders-refresh" onClick={() => void fetchAllOrders()}>↻ Uppdatera</button>
+        </div>
+      </header>
+
+      <p className="mc-orders-hint">
+        {soundEnabled
+          ? 'Ordersignalen spelas när en ny betald order upptäcks. Ha sidan öppen för att höra den.'
+          : 'Klicka på ”Aktivera ordersignal” för att tillåta ljud i webbläsaren.'}
+        {lastChecked && <span> Senast kontrollerad: {lastChecked.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>}
+      </p>
+
+      <section className="mc-orders-counts" aria-label="Orderstatusöversikt">
+        {TABS.map(item => (
+          <button type="button" key={item.id} className={`mc-orders-stat ${tab === item.id ? 'is-active' : ''}`}
+            onClick={() => { setTab(item.id); setExpandedId(null) }} aria-pressed={tab === item.id}>
+            <strong>{counts[item.id]}</strong><span>{item.title}</span>
+          </button>
+        ))}
+      </section>
+
+      <div className="mc-orders-tools">
+        <label className="mc-orders-search">
+          <span>Sök bland {TABS.find(item => item.id === tab)?.title.toLowerCase()}</span>
+          <input type="search" value={query} onChange={event => setQuery(event.target.value)}
+            placeholder="Ordernummer, kund, telefon eller produkt…" />
+        </label>
+        <label className="mc-orders-sort">
+          <span>Sortera</span>
+          <select value={sort} onChange={event => setSort(event.target.value)}>
+            <option value="requested">Önskad leverans-/hämtningstid</option>
+            <option value="newest">Senaste beställning</option>
+          </select>
+        </label>
+      </div>
+
+      {error && (
+        <div className="mc-orders-error" role="alert">
+          {error} <button type="button" onClick={() => void fetchAllOrders()}>Försök igen</button>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="mc-orders-empty">Hämtar beställningar…</div>
+      ) : visibleOrders.length === 0 ? (
+        <div className="mc-orders-empty">
+          <strong>{query ? 'Inga matchande beställningar' : tab === 'active' ? 'Inga pågående beställningar' : 'Inga beställningar i den här vyn'}</strong>
+          <p>{tab === 'completed' ? 'Levererade och upphämtade ordrar sparas här automatiskt.' : 'Nya beställningar kontrolleras automatiskt var 15:e sekund.'}</p>
+        </div>
+      ) : (
+        <div className="mc-orders-grid">
+          {visibleOrders.map(order => {
+            const pickup = isPickupOrder(order)
+            const expanded = expandedId === order._id
+            const group = getGroup(order)
+            const statusOptions = [
+              'Beställning mottagen', 'Förbereds',
+              ...(pickup ? ['Redo för upphämtning', 'Upphämtad'] : ['På väg', 'Levererad']),
+              'Avbruten'
+            ]
+            const currentStatus = order.status || 'Inväntar betalning'
+            return (
+              <article className={`mc-order-card mc-order-card--${group}`} key={order._id}>
+                <div className="mc-order-top">
+                  <div><span className="mc-order-kicker">ORDER</span><h2>{orderNumber(order._id)}</h2></div>
+                  <span className={`mc-order-state mc-order-state--${group}`}>{currentStatus}</span>
+                </div>
+                <div className="mc-order-primary">
+                  <strong>{orderName(order)}</strong>
+                  <span>{pickup ? '📍 Avhämtning' : '🚗 Leverans'} · {formatDay(order.requestedDate)} · {order.requestedTime || 'Tid saknas'}</span>
+                </div>
+                <div className="mc-order-summary-items">
+                  {(Array.isArray(order.items) ? order.items : []).slice(0, 2).map((item, index) => (
+                    <span key={`${order._id}-${index}`}>{Number(item.quantity || 0)} × {item.name || 'Produkt'}{item.flavor ? ` (${item.flavor})` : ''}</span>
+                  ))}
+                  {(order.items?.length || 0) > 2 && <small>+ {order.items.length - 2} fler produktrader</small>}
+                </div>
+                <div className="mc-order-price-row">
+                  <span className={order.payment ? 'mc-order-paid' : 'mc-order-unpaid'}>
+                    {order.payment ? '✓ Betald' : 'Väntar på betalning'}
+                  </span>
+                  <strong>{formatMoney(order.amount)}</strong>
+                </div>
+                {currentStatus === 'Betalning mottagen - lagerkontroll krävs' && (
+                  <div className="mc-order-warning">⚠ Lagerkontroll krävs innan ordern bekräftas.</div>
+                )}
+
+                <div className="mc-order-buttons">
+                  <button type="button" className="mc-order-details-button" onClick={() => setExpandedId(expanded ? null : order._id)}
+                    aria-expanded={expanded} aria-controls={`mc-order-details-${order._id}`}>
+                    {expanded ? 'Dölj detaljer ↑' : 'Visa detaljer ↓'}
+                  </button>
+                  {group === 'active' && (
+                    <button type="button" className="mc-order-finish-button" disabled={updatingOrder === order._id}
+                      onClick={() => void updateStatus(order._id, pickup ? 'Upphämtad' : 'Levererad')}>
+                      {updatingOrder === order._id ? 'Sparar…' : 'Avsluta & arkivera'}
+                    </button>
+                  )}
+                </div>
+
+                {expanded && (
+                  <div className="mc-order-details" id={`mc-order-details-${order._id}`}>
+                    <div className="mc-order-detail-grid">
+                      <section>
+                        <h3>Kund</h3>
+                        <p>{orderName(order)}</p>
+                        <p>{order.address?.email || 'E-post saknas'}</p>
+                        <p>{order.address?.phone || 'Telefon saknas'}</p>
+                      </section>
+                      <section>
+                        <h3>{pickup ? 'Avhämtning' : 'Leveransadress'}</h3>
+                        {pickup ? <p>Kunden hämtar sin beställning.</p> : (
+                          <><p>{order.address?.street || '-'}</p><p>{order.address?.zipcode || ''} {order.address?.city || ''}</p></>
+                        )}
+                        <p>{formatDay(order.requestedDate)} · {order.requestedTime || 'Tid saknas'}</p>
+                        <p>Beställd: {formatDateTime(order.createdAt || order.date)}</p>
+                        <p>Typ: {({ 'same-day': 'Idag', 'next-day': 'Imorgon', 'large-order': 'Större beställning' })[order.fulfillmentType] || 'Ej angivet'}</p>
+                      </section>
+                    </div>
+                    <section className="mc-order-detail-products">
+                      <h3>Produkter · {totalQuantity(order.items)} st</h3>
+                      {(Array.isArray(order.items) ? order.items : []).map((item, index) => (
+                        <div className="mc-order-product" key={`${order._id}-detail-${index}`}>
+                          {item.image ? <img src={getImageUrl(item.image)} alt="" loading="lazy" /> : <span className="mc-order-image-placeholder">📦</span>}
+                          <div><strong>{item.name || 'Produkt'}{item.flavor ? ` – ${item.flavor}` : ''}</strong>
+                            <span>{Number(item.quantity || 0)} st × {formatMoney(item.price)}</span></div>
+                          <strong>{formatMoney(Number(item.quantity || 0) * Number(item.price || 0))}</strong>
+                        </div>
+                      ))}
+                    </section>
+                    <div className="mc-order-totals">
+                      <span>Delsumma <strong>{formatMoney(order.subtotal)}</strong></span>
+                      <span>Moms ({order.vatRate ?? 6} %) <strong>{formatMoney(order.vatAmount)}</strong></span>
+                      <span>Totalt <strong>{formatMoney(order.amount)}</strong></span>
+                    </div>
+                    <div className="mc-order-status-editor">
+                      <label htmlFor={`mc-status-${order._id}`}>Ändra orderstatus</label>
+                      <select id={`mc-status-${order._id}`} value={currentStatus}
+                        disabled={updatingOrder === order._id}
+                        onChange={event => void updateStatus(order._id, event.target.value)}>
+                        {!statusOptions.includes(currentStatus) && <option value={currentStatus}>{currentStatus}</option>}
+                        {statusOptions.map(status => <option key={status} value={status}>{status}</option>)}
+                      </select>
+                      <small>Betalningsmetod: {order.paymentMethod || 'Stripe'}</small>
+                      {group === 'completed' && <small>Ordern finns kvar i MongoDB som historik.</small>}
+                    </div>
+                  </div>
+                )}
+              </article>
+            )
+          })}
+        </div>
+      )}
+    </main>
+  )
+}
 
 export default Orders

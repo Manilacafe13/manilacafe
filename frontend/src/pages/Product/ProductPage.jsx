@@ -445,8 +445,9 @@ const ProductPage = () => {
       const homeTitle =
         "Manila Café | Filippinska maträtter & desserter i Göteborg"
 
+
       const homeDescription =
-        "Beställ filippinska maträtter och desserter i Göteborg från Manila Café. Upptäck Sinigang, Mango Float, Ube Cake, Fruit Cup och andra filippinska favoriter."
+        "Upptäck filippinska maträtter och desserter hos Manila Café i Göteborg. Beställ enkelt online för leverans eller avhämtning. Betala tryggt med kort eller Klarna."
 
 
       document.title =
