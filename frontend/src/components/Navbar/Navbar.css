@@ -739,7 +739,7 @@
 }
 
 .payment-banner-option::before {
-    content: "âœ¦";
+    content: "none";
     margin-right: 5px;
     color: var(--payment-gold);
     font-size: 10px;
