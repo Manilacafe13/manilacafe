@@ -739,10 +739,7 @@
 }
 
 .payment-banner-option::before {
-    content: "none";
-    margin-right: 5px;
-    color: var(--payment-gold);
-    font-size: 10px;
+    content: none;
 }
 
 .payment-banner-name {
