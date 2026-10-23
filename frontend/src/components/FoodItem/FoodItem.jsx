@@ -344,7 +344,7 @@ const FoodItem = ({
         "En klassisk filippinsk rätt med mör kyckling som tillagas i en smakrik sås av soja, vinäger och vitlök. En perfekt balans mellan sälta och syra, serverad med ris."
 },
 
-" ube pandesal": {
+"ube pandesal": {
     ingredients:
         "Vetemjöl, mjölk, jäst, socker, smör, ägg, salt och ströbröd.",
 
