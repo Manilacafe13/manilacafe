@@ -22,71 +22,166 @@ const createSlug = (name = "") =>
 // okända vikter, volymer eller antal tillbehör.
 // ======================================================
 
+
 const portionInformation = {
+
+    // ==========================================
+    // MATRÄTTER
+    // ==========================================
+
     "siningang med räkor": {
-        contents: "Räkor i syrlig sinigang-buljong med grönsaker, serveras med ris."
+        quantity: "5 stora räkor",
+        contents:
+            "Fem stora räkor i en syrlig filippinsk sinigang-buljong med grönsaker. Serveras med ris.",
+        serving:
+            "Rätten kan levereras kyld för att bevara kvaliteten. Värm tills maten är ordentligt genomvarm före servering."
     },
+
     "sinigang med räkor": {
-        contents: "Räkor i syrlig sinigang-buljong med grönsaker, serveras med ris."
+        quantity: "5 stora räkor",
+        contents:
+            "Fem stora räkor i en syrlig filippinsk sinigang-buljong med grönsaker. Serveras med ris.",
+        serving:
+            "Värm tills maten är ordentligt genomvarm före servering."
     },
-    "mango float": {
-        contents: "En portion Mango Float med mango och krämiga lager av grahamskex."
-    },
-    "apple crisp float": {
-        contents: "En portion Apple Crisp Float med karamelliserat äpple och kanel."
-    },
-    "ube cake": {
-        contents: "En portion Ube Cake med ube och kokos."
-    },
-    "fruit cup": {
-        contents: "En bägare Fruit Cup med fruktblandning, kokos, ost och kondenserad mjölk."
-    },
-    "golden turon & ube ice cream": {
-        contents: "Krispig turon med banan, serverad med ube-glass."
-    },
-    "biscoff cinnamon banana float": {
-        contents: "En portion Banana Float med banan, Biscoff och kanel."
-    },
-    "taho": {
-        contents: "En portion Taho med silkestofu, sagopärlor och söt sirap."
-    },
-    "strawberry taho": {
-        contents: "En portion Strawberry Taho med silkestofu, sagopärlor och jordgubbssirap."
-    },
-    "apple taho": {
-        contents: "En portion Apple Taho med silkestofu, sagopärlor och äppelsirap."
-    },
-    "halo-halo": {
-        contents: "En portion Halo-halo med krossad is, mjölk, söta tillbehör och ube-glass.",
-        serving: "Blanda innehållet före servering."
-    },
+
     "chicken adobo": {
-        contents: "Kyckling tillagad i adobosås, serverad med ris."
+        quantity: "4 kycklingklubbor",
+        contents:
+            "Fyra kycklingklubbor tillagade i vår klassiska adobosås med soja, vinäger och vitlök. Serveras med ris.",
+        serving:
+            "Värm kycklingen, såsen och riset ordentligt före servering tills allt är genomvarmt."
     },
+
+    // ==========================================
+    // DESSERTER
+    // ==========================================
+
+    "mango float": {
+        contents:
+            "En portion Mango Float med färsk mango, krämig fyllning och lager av grahamskex.",
+        serving:
+            "Serveras väl kyld. Förvara i kylskåp fram till servering."
+    },
+
+    "apple crisp float": {
+        contents:
+            "En portion Apple Crisp Float med karamelliserade äpplen, kanel och krämiga lager.",
+        serving:
+            "Serveras kyld. För bästa smak och konsistens rekommenderar vi att desserten förvaras i kylskåp fram till servering."
+    },
+
+    "ube cake": {
+        contents:
+            "En portion Ube Cake med krämiga lager av ube och kokos.",
+        serving:
+            "Serveras kyld och bör förvaras i kylskåp fram till servering."
+    },
+
+    "fruit cup": {
+        contents:
+            "En bägare Fruit Cup med fruktblandning, kokos, ost och kondenserad mjölk.",
+        serving:
+            "Serveras väl kyld. Förvara i kylskåp fram till servering."
+    },
+
+    "golden turon & ube ice cream": {
+        quantity: "3 turonrullar med ube-glass",
+        contents:
+            "Tre krispiga turonrullar fyllda med banan, serverade med skopor av ube-glass.",
+        serving:
+            "Värm gärna turon separat om den har svalnat under leveransen. Vi gör vårt bästa för att glassen ska behålla sin konsistens, men viss smältning kan förekomma under transporten."
+    },
+
+    "biscoff cinnamon banana float": {
+        contents:
+            "En portion Banana Float med banan, Biscoff-kex, kanel och krämig fyllning.",
+        serving:
+            "Serveras kyld. Förvara i kylskåp fram till servering."
+    },
+
+    // ==========================================
+    // TAHO
+    // ==========================================
+
+    "taho": {
+        contents:
+            "En portion klassisk Taho med silkeslen tofu, sagopärlor och söt sirap."
+    },
+
+    "strawberry taho": {
+        contents:
+            "En portion Strawberry Taho med silkeslen tofu, sagopärlor och söt jordgubbssirap."
+    },
+
+    "apple taho": {
+        contents:
+            "En portion Apple Taho med silkeslen tofu, sagopärlor och söt äppelsirap."
+    },
+
+    // ==========================================
+    // HALO-HALO & MANGO SAGO
+    // ==========================================
+
+    "halo-halo": {
+        contents:
+            "En portion Halo-halo med krossad is, sötad mjölk, filippinska tillbehör och ube-glass.",
+        serving:
+            "Blanda ingredienserna ordentligt före servering. Vi gör vårt bästa för att bevara dessertens temperatur och konsistens under leveransen, men viss smältning av is och glass kan förekomma."
+    },
+
+    "mango sago": {
+        contents:
+            "En portion Mango Sago med färsk mango, sagopärlor och en krämig mjölk- och kokosblandning.",
+        serving:
+            "Serveras väl kyld. Förvara i kylskåp fram till servering."
+    },
+
+    // ==========================================
+    // BRÖD
+    // ==========================================
+
     "pandesal": {
         quantity: "3 stycken",
-        contents: "Tre klassiska filippinska pandesal."
+        contents:
+            "Tre klassiska filippinska pandesal med mjuk insida och lätt gyllene yta.",
+        serving:
+            "Bröden kan ha svalnat under leveransen. Värm gärna lätt före servering för en mjukare och nybakad känsla."
     },
-    "mango sago": {
-        contents: "En portion Mango Sago med mango, sagopärlor och krämig mjölkblandning.",
-        serving: "Serveras kall."
-    },
-    "ube caramel latte": {
-        contents: "En kall Ube Caramel Latte med espresso, ube, mjölk, karamell och is."
-    },
+
     "ube pandesal med ost": {
         quantity: "4 stycken",
-        contents: "Fyra mjuka Ube Pandesal med ostfyllning.",
-        serving: "Värm bröden i cirka 20 sekunder före servering.",
-        preparation: "Tillagningen kan ta några timmar beroende på efterfrågan."
+        contents:
+            "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
+        serving:
+            "Bröden kan ha svalnat under leveransen. Värm gärna i mikrovågsugn i cirka 20 sekunder före servering.",
+        preparation:
+            "Eftersom bröden tillagas färska kan tillagningen ta några timmar beroende på efterfrågan."
     },
+
     "ube pandesal": {
         quantity: "4 stycken",
-        contents: "Fyra mjuka Ube Pandesal med ostfyllning.",
-        serving: "Värm bröden i cirka 20 sekunder före servering.",
-        preparation: "Tillagningen kan ta några timmar beroende på efterfrågan."
+        contents:
+            "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
+        serving:
+            "Bröden kan ha svalnat under leveransen. Värm gärna i mikrovågsugn i cirka 20 sekunder före servering.",
+        preparation:
+            "Eftersom bröden tillagas färska kan tillagningen ta några timmar beroende på efterfrågan."
+    },
+
+    // ==========================================
+    // DRYCKER
+    // ==========================================
+
+    "ube caramel latte": {
+        contents:
+            "En kall Ube Caramel Latte med espresso, ube, mjölk, karamell och is.",
+        serving:
+            "Serveras kall. Vi gör vårt bästa för att drycken ska behålla sin temperatur under leveransen, men isen kan delvis smälta under transporten."
     }
+
 }
+
 
 const FoodItem = ({
     id,
@@ -249,7 +344,7 @@ const FoodItem = ({
         "En klassisk filippinsk rätt med mör kyckling som tillagas i en smakrik sås av soja, vinäger och vitlök. En perfekt balans mellan sälta och syra, serverad med ris."
 },
 
-"pandesal": {
+" ube pandesal": {
     ingredients:
         "Vetemjöl, mjölk, jäst, socker, smör, ägg, salt och ströbröd.",
 
