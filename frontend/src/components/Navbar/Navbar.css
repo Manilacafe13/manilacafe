@@ -45,7 +45,7 @@
 }
 
 
-/* LÄNKAR + KNAPPAR */
+/* LÃ„NKAR + KNAPPAR */
 
 .navbar-menu a,
 .navbar-menu button {
@@ -104,7 +104,7 @@
 
 
 /* ============================= */
-/* HÖGER SIDA */
+/* HÃ–GER SIDA */
 /* ============================= */
 
 .navbar-right {
@@ -116,7 +116,7 @@
 
 
 /* ============================= */
-/* SÖK */
+/* SÃ–K */
 /* ============================= */
 
 .navbar-search {
@@ -651,4 +651,192 @@
         width: 185px;
     }
 
+}
+
+/* =================================================== */
+/* MANILA CAFÃ‰ â€” AUTOMATISKT RULLANDE BETALNINGSBANNER */
+/* Tillagd separat â€” all ovanstÃ¥ende Navbar-CSS Ã¤r kvar */
+/* =================================================== */
+
+.payment-banner {
+    --payment-bg: #235b46;
+    --payment-gold: #f6cf80;
+    --payment-text: #fff9eb;
+
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+    box-sizing: border-box;
+    padding: 10px 0;
+    background-color: var(--payment-bg);
+    color: var(--payment-text);
+    border-bottom: 1px solid rgba(246, 207, 128, 0.22);
+}
+
+.payment-banner *,
+.payment-banner *::before,
+.payment-banner *::after {
+    box-sizing: border-box;
+}
+
+.payment-banner::before,
+.payment-banner::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+}
+
+.payment-banner::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--payment-bg), transparent);
+}
+
+.payment-banner::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--payment-bg), transparent);
+}
+
+.payment-banner-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: payment-banner-scroll 34s linear infinite;
+    will-change: transform;
+}
+
+.payment-banner-group {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 30px;
+    padding-right: 30px;
+    white-space: nowrap;
+}
+
+.payment-banner-intro,
+.payment-banner-option {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 7px;
+    line-height: 1.3;
+    font-size: 12px;
+}
+
+.payment-banner-intro {
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.payment-banner-icon {
+    color: var(--payment-gold);
+    font-size: 15px;
+}
+
+.payment-banner-option::before {
+    content: "âœ¦";
+    margin-right: 5px;
+    color: var(--payment-gold);
+    font-size: 10px;
+}
+
+.payment-banner-name {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.15px;
+}
+
+.payment-banner-name--visa {
+    font-style: italic;
+    letter-spacing: 0.7px;
+}
+
+.payment-banner-name--klarna {
+    font-weight: 900;
+}
+
+.payment-banner-note {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.payment-banner-option--pending .payment-banner-name,
+.payment-banner-option--pending .payment-banner-note {
+    color: var(--payment-gold);
+}
+
+.payment-banner-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes payment-banner-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+/* Pausa vid hovring eller tangentbordsfokus */
+@media (hover: hover) {
+    .payment-banner:hover .payment-banner-track {
+        animation-play-state: paused;
+    }
+}
+
+.payment-banner:focus-within .payment-banner-track {
+    animation-play-state: paused;
+}
+
+@media (max-width: 750px) {
+    .payment-banner {
+        padding: 9px 0;
+    }
+
+    .payment-banner-track {
+        animation-duration: 29s;
+    }
+
+    .payment-banner-group {
+        gap: 22px;
+        padding-right: 22px;
+    }
+
+    .payment-banner-intro,
+    .payment-banner-option {
+        font-size: 11px;
+    }
+
+    .payment-banner-name {
+        font-size: 12px;
+    }
+
+    .payment-banner-note {
+        font-size: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .payment-banner {
+        overflow-x: auto;
+    }
+
+    .payment-banner-track {
+        animation: none;
+        will-change: auto;
+    }
+
+    .payment-banner-group:nth-child(2) {
+        display: none;
+    }
 }
