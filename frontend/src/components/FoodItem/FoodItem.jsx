@@ -53,6 +53,14 @@ const portionInformation = {
             "Värm kycklingen, såsen och riset ordentligt före servering tills allt är genomvarmt."
     },
 
+    "pancit": {
+    quantity: "5 medelstora räkor",
+    contents:
+        "Filippinska wokade nudlar med fem medelstora räkor, färska grönsaker och en smakrik sojabaserad sås.",
+    serving:
+        "Värm tills maten är ordentligt genomvarm före servering."
+},
+
     // ==========================================
     // DESSERTER
     // ==========================================
@@ -364,6 +372,17 @@ const FoodItem = ({
 
     extra:
         "En tropisk filippinsk dessert med söt, saftig mango och mjuka sagopärlor i en len och krämig mangoblandning. En perfekt balans mellan fruktig sötma och krämighet, serverad kall för en härligt uppfriskande smakupplevelse."
+},
+
+"pancit": {
+    ingredients:
+        "Nudlar, räkor, färska grönsaker, vitlök, lök och en smakrik filippinsk sås baserad på soja och kryddor.",
+
+    allergens:
+        "Innehåller SKALDJUR, SOJA och VETE. Kontrollera även övriga ingredienser för eventuella allergener.",
+
+    extra:
+        "Pancit är en älskad filippinsk nudelrätt som ofta serveras vid familjesammankomster och festliga tillfällen. Våra nudlar wokas tillsammans med saftiga räkor, krispiga grönsaker och en fyllig, smakrik sås. En härlig kombination av traditionella filippinska smaker som ger en autentisk smakupplevelse i varje tugga."
 },
 
     
