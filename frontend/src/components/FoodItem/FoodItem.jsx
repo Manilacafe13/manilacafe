@@ -158,7 +158,7 @@ const portionInformation = {
     },
 
     "ube pandesal med ost": {
-        quantity: "4 stycken",
+        quantity: "3 stycken",
         contents:
             "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
         serving:
@@ -168,7 +168,7 @@ const portionInformation = {
     },
 
     "ube pandesal": {
-        quantity: "4 stycken",
+        quantity: "3 stycken",
         contents:
             "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
         serving:
