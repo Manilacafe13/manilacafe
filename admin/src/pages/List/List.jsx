@@ -1,6 +1,8 @@
+// Manila Café admin: intern receptredigerare för produkter.
 import React, {
   useCallback,
   useEffect,
+  useRef,
   useState
 } from 'react'
 
@@ -36,6 +38,149 @@ const List = () => {
 
   const [stockValues, setStockValues] =
     useState({})
+
+  // Recept är interna och hämtas endast från adminskyddad endpoint.
+  const [recipeProductId, setRecipeProductId] = useState(null)
+  const [recipeIngredients, setRecipeIngredients] = useState([])
+  const [recipeSteps, setRecipeSteps] = useState([])
+  const [recipeLoading, setRecipeLoading] = useState(false)
+  const [recipeSaving, setRecipeSaving] = useState(false)
+  const [recipeError, setRecipeError] = useState('')
+  const recipeRequestRef = useRef(0)
+  const recipeFieldKeyRef = useRef(0)
+
+  const recipeProduct = list.find(item => item._id === recipeProductId) || null
+
+  const newIngredient = (entry = {}) => ({
+    _key: ++recipeFieldKeyRef.current,
+    name: String(entry.name || ''),
+    amount: String(entry.amount || ''),
+    unit: String(entry.unit || '')
+  })
+
+  const newStep = (text = '') => ({
+    _key: ++recipeFieldKeyRef.current,
+    text: String(text)
+  })
+
+  const closeRecipe = () => {
+    if (recipeSaving) return
+    recipeRequestRef.current += 1
+    setRecipeProductId(null)
+    setRecipeError('')
+  }
+
+  const openRecipe = async (product) => {
+    const requestId = ++recipeRequestRef.current
+    setRecipeProductId(product._id)
+    setRecipeIngredients([newIngredient()])
+    setRecipeSteps([newStep()])
+    setRecipeError('')
+    setRecipeLoading(true)
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setRecipeError('Du behöver logga in som administratör.')
+      setRecipeLoading(false)
+      return
+    }
+
+    try {
+      const response = await axios.get(`${url}/api/kitchen-recipe/list`, {
+        headers: { token, Authorization: `Bearer ${token}` }
+      })
+      if (!response.data?.success || !Array.isArray(response.data.data)) {
+        throw new Error(response.data?.message || 'Recepten kunde inte hämtas.')
+      }
+
+      // Ignorera gamla svar ifall användaren hunnit byta eller stänga redigeraren.
+      if (requestId !== recipeRequestRef.current) return
+      const existing = response.data.data.find(recipe =>
+        String(recipe.foodId?._id || recipe.foodId || '') === String(product._id)
+      )
+
+      setRecipeIngredients(existing?.ingredients?.length
+        ? existing.ingredients.map(newIngredient)
+        : [newIngredient()])
+      setRecipeSteps(existing?.steps?.length
+        ? existing.steps.map(step => newStep(typeof step === 'string' ? step : step?.text || ''))
+        : [newStep()])
+    } catch (error) {
+      if (requestId !== recipeRequestRef.current) return
+      setRecipeError(error.response?.status === 404
+        ? 'Recept-API:t hittades inte. Kontrollera att backend är publicerad.'
+        : (error.response?.data?.message || error.message || 'Recepten kunde inte hämtas.'))
+    } finally {
+      if (requestId === recipeRequestRef.current) setRecipeLoading(false)
+    }
+  }
+
+  const updateRecipeIngredient = (key, field, value) => {
+    setRecipeIngredients(previous => previous.map(entry =>
+      entry._key === key ? { ...entry, [field]: value } : entry
+    ))
+  }
+
+  const updateRecipeStep = (key, value) => {
+    setRecipeSteps(previous => previous.map(step =>
+      step._key === key ? { ...step, text: value } : step
+    ))
+  }
+
+  const saveRecipe = async (event) => {
+    event.preventDefault()
+    if (!recipeProductId || recipeSaving || recipeLoading || recipeError) return
+
+    const ingredients = recipeIngredients.map(({ name, amount, unit }) => ({
+      name: name.trim(), amount: amount.trim(), unit: unit.trim()
+    })).filter(entry => entry.name || entry.amount || entry.unit)
+
+    if (ingredients.some(entry => !entry.name)) {
+      toast.error('Fyll i namnet på varje ingrediens som har en mängd eller enhet.')
+      return
+    }
+
+    const steps = recipeSteps.map(step => step.text.trim()).filter(Boolean)
+    if (!ingredients.length && !steps.length) {
+      toast.error('Skriv minst en ingrediens eller ett tillagningssteg.')
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      toast.error('Du behöver logga in som administratör.')
+      return
+    }
+
+    setRecipeSaving(true)
+    try {
+      const response = await axios.post(`${url}/api/kitchen-recipe/save`, {
+        foodId: recipeProductId, ingredients, steps
+      }, {
+        headers: { token, Authorization: `Bearer ${token}` }
+      })
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Receptet kunde inte sparas.')
+      }
+      toast.success('Receptet har sparats.')
+      recipeRequestRef.current += 1
+      setRecipeProductId(null)
+      setRecipeError('')
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || 'Receptet kunde inte sparas.')
+    } finally {
+      setRecipeSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!recipeProductId) return
+    const onEscape = event => {
+      if (event.key === 'Escape') closeRecipe()
+    }
+    document.addEventListener('keydown', onEscape)
+    return () => document.removeEventListener('keydown', onEscape)
+  }, [recipeProductId, recipeSaving])
 
 
   // ======================================================
@@ -791,39 +936,27 @@ const List = () => {
               </div>
 
 
-              {/* ======================================== */}
-              {/* DELETE */}
-              {/* ======================================== */}
+              {/* RECEPT OCH PRODUKTÅTGÄRDER */}
+              <div className="list-item-actions">
+                <button
+                  type="button"
+                  className="list-recipe-button"
+                  onClick={() => void openRecipe(item)}
+                  aria-label={`Redigera internt recept för ${item.name}`}
+                >
+                  📖 Recept
+                </button>
 
-              <button
-
-                type="button"
-
-                className="delete-food-button"
-
-                disabled={
-                  removingId ===
-                  item._id
-                }
-
-                onClick={() =>
-                  removeFood(
-                    item._id
-                  )
-                }
-
-              >
-
-                {
-                  removingId ===
-                  item._id
-
-                    ? "..."
-
-                    : "×"
-                }
-
-              </button>
+                <button
+                  type="button"
+                  className="delete-food-button"
+                  aria-label={`Ta bort ${item.name}`}
+                  disabled={removingId === item._id}
+                  onClick={() => removeFood(item._id)}
+                >
+                  {removingId === item._id ? '…' : '×'}
+                </button>
+              </div>
 
 
             </div>
@@ -835,6 +968,154 @@ const List = () => {
 
       </div>
 
+      {/* Receptredigeraren visas bara efter klick och påverkar inte produktlistans layout. */}
+      {recipeProduct && (
+        <div className="mc-recipe-overlay" onMouseDown={event => {
+          if (event.target === event.currentTarget) closeRecipe()
+        }}>
+          <section
+            className="mc-recipe-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mc-recipe-title"
+          >
+            <div className="mc-recipe-header">
+              <div>
+                <span className="mc-recipe-eyebrow">INTERNT KÖKSRECEPT</span>
+                <h2 id="mc-recipe-title">{recipeProduct.name}</h2>
+                <p>Syns bara i adminpanelen, aldrig för kunder.</p>
+              </div>
+              <button
+                type="button"
+                className="mc-recipe-close"
+                onClick={closeRecipe}
+                disabled={recipeSaving}
+                aria-label="Stäng recept"
+                autoFocus
+              >×</button>
+            </div>
+
+            {recipeLoading ? (
+              <p className="mc-recipe-message" role="status">Hämtar recept…</p>
+            ) : recipeError ? (
+              <div className="mc-recipe-message mc-recipe-message--error" role="alert">
+                <p>{recipeError}</p>
+                <button type="button" onClick={() => void openRecipe(recipeProduct)}>
+                  Försök igen
+                </button>
+              </div>
+            ) : (
+              <form className="mc-recipe-form" onSubmit={saveRecipe}>
+                <div className="mc-recipe-scroll">
+                  <section className="mc-recipe-section">
+                    <div className="mc-recipe-section-heading">
+                      <div>
+                        <h3>🥣 Ingredienser</h3>
+                        <p>Fyll i mängd, enhet och namn på varje ingrediens.</p>
+                      </div>
+                    </div>
+
+                    <div className="mc-recipe-ingredients">
+                      {recipeIngredients.map((ingredient, index) => (
+                        <div className="mc-recipe-ingredient" key={ingredient._key}>
+                          <span className="mc-recipe-row-number">{index + 1}</span>
+                          <label>
+                            <span>Mängd</span>
+                            <input
+                              value={ingredient.amount}
+                              maxLength={40}
+                              placeholder="420"
+                              onChange={event => updateRecipeIngredient(ingredient._key, 'amount', event.target.value)}
+                            />
+                          </label>
+                          <label>
+                            <span>Enhet</span>
+                            <input
+                              value={ingredient.unit}
+                              maxLength={30}
+                              placeholder="g"
+                              onChange={event => updateRecipeIngredient(ingredient._key, 'unit', event.target.value)}
+                            />
+                          </label>
+                          <label className="mc-recipe-ingredient-name">
+                            <span>Ingrediens</span>
+                            <input
+                              value={ingredient.name}
+                              maxLength={120}
+                              placeholder="Vetemjöl"
+                              onChange={event => updateRecipeIngredient(ingredient._key, 'name', event.target.value)}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="mc-recipe-remove-row"
+                            aria-label={`Ta bort ingrediens ${index + 1}`}
+                            onClick={() => setRecipeIngredients(previous => previous.filter(row => row._key !== ingredient._key))}
+                          >×</button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="mc-recipe-add"
+                      disabled={recipeIngredients.length >= 80}
+                      onClick={() => setRecipeIngredients(previous => [...previous, newIngredient()])}
+                    >+ Lägg till ingrediens</button>
+                  </section>
+
+                  <section className="mc-recipe-section">
+                    <div className="mc-recipe-section-heading">
+                      <div>
+                        <h3>👩‍🍳 Tillagning</h3>
+                        <p>Ett kort och tydligt steg i taget.</p>
+                      </div>
+                    </div>
+
+                    <div className="mc-recipe-steps">
+                      {recipeSteps.map((step, index) => (
+                        <div className="mc-recipe-step" key={step._key}>
+                          <span className="mc-recipe-row-number">{index + 1}</span>
+                          <label>
+                            <span>Steg {index + 1}</span>
+                            <textarea
+                              rows={2}
+                              maxLength={800}
+                              value={step.text}
+                              placeholder="Beskriv vad som ska göras…"
+                              onChange={event => updateRecipeStep(step._key, event.target.value)}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="mc-recipe-remove-row"
+                            aria-label={`Ta bort steg ${index + 1}`}
+                            onClick={() => setRecipeSteps(previous => previous.filter(row => row._key !== step._key))}
+                          >×</button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="mc-recipe-add"
+                      disabled={recipeSteps.length >= 50}
+                      onClick={() => setRecipeSteps(previous => [...previous, newStep()])}
+                    >+ Lägg till steg</button>
+                  </section>
+                </div>
+
+                <div className="mc-recipe-footer">
+                  <button type="button" className="mc-recipe-cancel" onClick={closeRecipe} disabled={recipeSaving}>
+                    Avbryt
+                  </button>
+                  <button type="submit" className="mc-recipe-save" disabled={recipeSaving}>
+                    {recipeSaving ? 'Sparar…' : 'Spara recept'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+        </div>
+      )}
 
     </div>
 
