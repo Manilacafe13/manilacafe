@@ -12,6 +12,7 @@ import orderRouter from "./routes/orderRoute.js";
 import futureProductRouter from "./routes/futureProductRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import discountRouter from "./routes/discountRoute.js";
+import kitchenRecipeRouter from "./routes/kitchenRecipeRoute.js";
 
 import {
   stripeWebhook
@@ -294,6 +295,15 @@ app.use(
   discountRouter);
 
 // ======================================================
+// INTERNAL KITCHEN RECIPES (ADMIN ONLY)
+// ======================================================
+
+app.use(
+  "/api/kitchen-recipe",
+  kitchenRecipeRouter
+);
+
+// ======================================================
 // FUTURE PRODUCTS / CUSTOMER VOTING
 // ======================================================
 
@@ -314,7 +324,7 @@ app.get(
     res
       .status(200)
       .send(
-        "Manila Café API Working"
+        "Manila CafÃ© API Working"
       );
 
   }
@@ -429,7 +439,7 @@ app.use(
         success: false,
 
         message:
-          "Bilden får vara högst 5 MB."
+          "Bilden fÃ¥r vara hÃ¶gst 5 MB."
 
       });
 
@@ -442,7 +452,7 @@ app.use(
 
     if (
       error.message ===
-      "Endast bildfiler är tillåtna."
+      "Endast bildfiler Ã¤r tillÃ¥tna."
     ) {
 
       return res.status(400).json({

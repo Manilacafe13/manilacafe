@@ -53,6 +53,45 @@ const orderPriority = (order) => {
 const totalQuantity = (items) =>
   (Array.isArray(items) ? items : []).reduce((total, item) => total + Number(item.quantity || 0), 0)
 
+// Recept hämtas separat från den skyddade admin-endpointen, aldrig via kundens orderdata.
+// API-avtal för nästa steg: GET /api/kitchen-recipe/list
+// { success: true, data: [{ foodId, name, ingredients: [{ name, amount, unit }], steps: [string] }] }
+const recipeId = (value) => String(value?._id || value || '').trim()
+const normalizeName = (value) => String(value || '').trim().toLocaleLowerCase('sv-SE')
+
+const findRecipeForItem = (item, recipes) => {
+  const itemIds = [
+    item.foodId, item.productId, item.food?._id,
+    item.product?._id, item.id, item._id
+  ].map(recipeId).filter(Boolean)
+
+  const byId = recipes.find(recipe =>
+    itemIds.includes(recipeId(recipe.foodId || recipe.productId || recipe.food?._id))
+  )
+  if (byId) return byId
+
+  // Reserv för äldre orderrader som enbart innehåller produktnamn.
+  return recipes.find(recipe => normalizeName(recipe.name) === normalizeName(item.name)) || null
+}
+
+const ingredientLabel = (ingredient) => {
+  if (typeof ingredient === 'string') return ingredient
+  if (!ingredient || typeof ingredient !== 'object') return ''
+  return [ingredient.amount ?? ingredient.quantity, ingredient.unit, ingredient.name]
+    .filter(value => value !== undefined && value !== null && String(value).trim() !== '')
+    .join(' ')
+}
+
+const recipeSteps = (recipe) => {
+  if (Array.isArray(recipe?.steps)) {
+    return recipe.steps.map(step => typeof step === 'string' ? step : (step?.text || '')).filter(Boolean)
+  }
+  if (typeof recipe?.instructions === 'string') {
+    return recipe.instructions.split(/\n+/).map(step => step.trim()).filter(Boolean)
+  }
+  return []
+}
+
 const Orders = ({ url }) => {
   const backendUrl = (
     url || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000' : '')
@@ -66,6 +105,11 @@ const Orders = ({ url }) => {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('requested')
   const [expandedId, setExpandedId] = useState(null)
+  const [kitchenOrderId, setKitchenOrderId] = useState(null)
+  const [kitchenRecipes, setKitchenRecipes] = useState([])
+  const [kitchenLoading, setKitchenLoading] = useState(false)
+  const [kitchenLoaded, setKitchenLoaded] = useState(false)
+  const [kitchenError, setKitchenError] = useState('')
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [lastChecked, setLastChecked] = useState(null)
 
@@ -76,6 +120,7 @@ const Orders = ({ url }) => {
   const mountedRef = useRef(false)
   const soundEnabledRef = useRef(false)
   const audioContextRef = useRef(null)
+  const fetchingRecipesRef = useRef(false)
 
   const playChime = useCallback(async () => {
     const context = audioContextRef.current
@@ -174,6 +219,50 @@ const Orders = ({ url }) => {
     }
   }, [backendUrl, playChime])
 
+  const fetchKitchenRecipes = useCallback(async () => {
+    if (fetchingRecipesRef.current) return
+    const token = localStorage.getItem('token')
+    if (!token || !backendUrl) {
+      setKitchenError('Logga in som administratör för att se recepten.')
+      return
+    }
+
+    fetchingRecipesRef.current = true
+    setKitchenLoading(true)
+    setKitchenError('')
+
+    try {
+      const response = await axios.get(`${backendUrl}/api/kitchen-recipe/list`, {
+        headers: { token, Authorization: `Bearer ${token}` }
+      })
+      if (!response.data?.success || !Array.isArray(response.data.data)) {
+        throw new Error(response.data?.message || 'Recepten kunde inte hämtas.')
+      }
+      if (mountedRef.current) {
+        setKitchenRecipes(response.data.data)
+        setKitchenLoaded(true)
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        setKitchenError(err.response?.status === 404
+          ? 'Receptfunktionen behöver kopplas till backend. Vi gör det i nästa steg.'
+          : (err.response?.data?.message || err.message || 'Recepten kunde inte hämtas.'))
+      }
+    } finally {
+      fetchingRecipesRef.current = false
+      if (mountedRef.current) setKitchenLoading(false)
+    }
+  }, [backendUrl])
+
+  const toggleKitchen = (orderId) => {
+    if (kitchenOrderId === orderId) {
+      setKitchenOrderId(null)
+      return
+    }
+    setKitchenOrderId(orderId)
+    if (!kitchenLoaded) void fetchKitchenRecipes()
+  }
+
   useEffect(() => {
     mountedRef.current = true
     void fetchAllOrders()
@@ -205,6 +294,7 @@ const Orders = ({ url }) => {
         order._id === orderId ? { ...order, status: response.data.data?.status || status } : order
       ))
       setExpandedId(current => current === orderId ? null : current)
+      setKitchenOrderId(null)
       toast.success(COMPLETED.has(status) ? 'Ordern är klar och finns nu i Arkiv.' : 'Orderstatus uppdaterad.')
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Orderstatus kunde inte sparas.')
@@ -265,7 +355,7 @@ const Orders = ({ url }) => {
       <section className="mc-orders-counts" aria-label="Orderstatusöversikt">
         {TABS.map(item => (
           <button type="button" key={item.id} className={`mc-orders-stat ${tab === item.id ? 'is-active' : ''}`}
-            onClick={() => { setTab(item.id); setExpandedId(null) }} aria-pressed={tab === item.id}>
+            onClick={() => { setTab(item.id); setExpandedId(null); setKitchenOrderId(null) }} aria-pressed={tab === item.id}>
             <strong>{counts[item.id]}</strong><span>{item.title}</span>
           </button>
         ))}
@@ -304,6 +394,7 @@ const Orders = ({ url }) => {
           {visibleOrders.map(order => {
             const pickup = isPickupOrder(order)
             const expanded = expandedId === order._id
+            const kitchenOpen = kitchenOrderId === order._id
             const group = getGroup(order)
             const statusOptions = [
               'Beställning mottagen', 'Förbereds',
@@ -338,7 +429,10 @@ const Orders = ({ url }) => {
                 )}
 
                 <div className="mc-order-buttons">
-                  <button type="button" className="mc-order-details-button" onClick={() => setExpandedId(expanded ? null : order._id)}
+                  <button type="button" className="mc-order-details-button" onClick={() => {
+                     setExpandedId(expanded ? null : order._id)
+                     setKitchenOrderId(null)
+                   }}
                     aria-expanded={expanded} aria-controls={`mc-order-details-${order._id}`}>
                     {expanded ? 'Dölj detaljer ↑' : 'Visa detaljer ↓'}
                   </button>
@@ -379,8 +473,69 @@ const Orders = ({ url }) => {
                           <strong>{formatMoney(Number(item.quantity || 0) * Number(item.price || 0))}</strong>
                         </div>
                       ))}
-                    </section>
-                    <div className="mc-order-totals">
+                     </section>
+
+                     {/* Avsiktligt stängd som standard: recept visas bara när personalen väljer det. */}
+                     <section className="mc-order-kitchen" aria-label="Interna recept">
+                       <button type="button" className="mc-order-kitchen-toggle"
+                         onClick={() => toggleKitchen(order._id)}
+                         aria-expanded={kitchenOpen}
+                         aria-controls={`mc-order-kitchen-${order._id}`}>
+                         <span className="mc-order-kitchen-toggle-label">📖 Ingredienser & tillagning</span>
+                         <span aria-hidden="true">{kitchenOpen ? '−' : '+'}</span>
+                       </button>
+
+                       {kitchenOpen && (
+                         <div className="mc-order-kitchen-body" id={`mc-order-kitchen-${order._id}`}>
+                           {kitchenLoading ? (
+                             <p className="mc-order-kitchen-info">Hämtar recepten…</p>
+                           ) : kitchenError ? (
+                             <div className="mc-order-kitchen-info" role="status">
+                               <p>{kitchenError}</p>
+                               <button type="button" onClick={() => void fetchKitchenRecipes()}>Försök igen</button>
+                             </div>
+                           ) : (
+                             <div className="mc-order-kitchen-recipes">
+                               {(Array.isArray(order.items) ? order.items : []).map((item, index) => {
+                                 const recipe = findRecipeForItem(item, kitchenRecipes)
+                                 const ingredients = Array.isArray(recipe?.ingredients)
+                                   ? recipe.ingredients.map(ingredientLabel).filter(Boolean)
+                                   : []
+                                 const steps = recipeSteps(recipe)
+                                 return (
+                                   <section className="mc-order-kitchen-product" key={`${order._id}-recipe-${index}`}>
+                                     <div className="mc-order-kitchen-product-title">
+                                       <strong>{item.name || 'Produkt'}{item.flavor ? ` – ${item.flavor}` : ''}</strong>
+                                       <span>{Number(item.quantity || 0)} st</span>
+                                     </div>
+                                     {!recipe ? (
+                                       <p className="mc-order-kitchen-info">Inget recept har lagts in för den här produkten ännu.</p>
+                                     ) : (
+                                       <div className="mc-order-kitchen-columns">
+                                         <div>
+                                           <h4>Ingredienser</h4>
+                                           {ingredients.length ? (
+                                             <ul>{ingredients.map((ingredient, i) => <li key={i}>{ingredient}</li>)}</ul>
+                                           ) : <p className="mc-order-kitchen-info">Inga ingredienser registrerade.</p>}
+                                         </div>
+                                         <div>
+                                           <h4>Tillagning</h4>
+                                           {steps.length ? (
+                                             <ol>{steps.map((step, i) => <li key={i}>{step}</li>)}</ol>
+                                           ) : <p className="mc-order-kitchen-info">Ingen tillagning registrerad.</p>}
+                                         </div>
+                                       </div>
+                                     )}
+                                   </section>
+                                 )
+                               })}
+                             </div>
+                           )}
+                         </div>
+                       )}
+                     </section>
+
+                     <div className="mc-order-totals">
                       <span>Delsumma <strong>{formatMoney(order.subtotal)}</strong></span>
                       <span>Moms ({order.vatRate ?? 6} %) <strong>{formatMoney(order.vatAmount)}</strong></span>
                       <span>Totalt <strong>{formatMoney(order.amount)}</strong></span>
