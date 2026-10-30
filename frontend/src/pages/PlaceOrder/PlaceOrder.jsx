@@ -6,6 +6,7 @@ import React, {
 } from 'react'
 import './PlaceOrder.css'
 import './PlaceOrderSimplified.css'
+import './PlaceOrderCustomizations.css'
 import { StoreContext } from '../../context/StoreContext'
 import axios from 'axios'
 const MAX_ITEM_QUANTITY = 99
@@ -332,8 +333,40 @@ const PlaceOrder = () => {
     token,
     cartItems,
     food_list,
+    // Customized lines are kept separately from the ordinary cart.
+    customizedCartItems = {},
+    getCustomizedCartEntries,
+    customizationCheckoutReady = false,
     url
   } = useContext(StoreContext)
+
+  // The customized cart helper validates options against the current
+  // product configuration. Prices are ONLY estimates here.
+  // Never use frontend prices as the authoritative Stripe amount.
+  const customizedEntries =
+    typeof getCustomizedCartEntries === 'function'
+      ? getCustomizedCartEntries()
+      : []
+
+  const savedCustomizedLineCount = Object.keys(customizedCartItems || {}).length
+  const hasCustomizedEntries = savedCustomizedLineCount > 0 || customizedEntries.length > 0
+  const invalidCustomizedEntries = (
+    savedCustomizedLineCount !== customizedEntries.length ||
+    customizedEntries.some(entry =>
+    entry.invalidCustomization === true ||
+    entry.price === null ||
+    !Number.isFinite(Number(entry.price)) ||
+    Number(entry.price) < 0
+    )
+  )
+
+  // Defensive gate: old order endpoints do not understand extra options.
+  // The ready flag must remain false until the SERVER validates, reprices,
+  // persists and passes selections to every payment and order flow.
+  const customizedCheckoutBlocked = hasCustomizedEntries && (
+    customizationCheckoutReady !== true || invalidCustomizedEntries
+  )
+
   // ======================================================
   // CUSTOMER DATA
   // ======================================================
@@ -391,12 +424,24 @@ const PlaceOrder = () => {
   // ======================================================
   // TOTALS
   // ======================================================
-  const subtotal =
-    getTotalCartAmount()
-  const vatAmount =
-    getVatAmount()
-  const total =
-    getTotalWithVat()
+  const normalSubtotal = getTotalCartAmount()
+  const customizedSubtotal = customizedEntries.reduce((sum, entry) => {
+    if (entry.invalidCustomization || entry.price === null ||
+        !Number.isFinite(Number(entry.price)) ||
+        !Number.isInteger(Number(entry.quantity)) ||
+        Number(entry.quantity) < 1) {
+      return sum
+    }
+    return sum + Number(entry.price) * Number(entry.quantity)
+  }, 0)
+
+  const subtotal = Number((normalSubtotal + customizedSubtotal).toFixed(2))
+  const vatAmount = hasCustomizedEntries
+    ? Number((subtotal * 0.06).toFixed(2))
+    : getVatAmount()
+  const total = hasCustomizedEntries
+    ? Number((subtotal + vatAmount).toFixed(2))
+    : getTotalWithVat()
   // Rabattförhandsvisning. Backend beräknar alltid slutpriset på nytt.
   const productDiscount = appliedDiscount?.code === discountCode.trim().toUpperCase()
     ? Math.min(total, appliedDiscount.amount)
@@ -510,26 +555,17 @@ const PlaceOrder = () => {
   // ======================================================
   // TOTAL PRODUCT QUANTITY
   // ======================================================
-  const totalQuantity =
-    useMemo(() => {
-      return Object.values(
-        cartItems || {}
-      ).reduce(
-        (sum, quantity) => {
-          const value =
-            Number(quantity)
-          return (
-            sum +
-            (
-              Number.isFinite(value)
-                ? value
-                : 0
-            )
-          )
-        },
-        0
-      )
-    }, [cartItems])
+  const totalQuantity = useMemo(() => {
+    const normalCount = Object.values(cartItems || {}).reduce((sum, value) => {
+      const quantity = Number(value)
+      return sum + (Number.isInteger(quantity) && quantity > 0 ? quantity : 0)
+    }, 0)
+    const customCount = Object.values(customizedCartItems || {}).reduce((sum, entry) => {
+      const quantity = Number(entry?.quantity)
+      return sum + (Number.isInteger(quantity) && quantity > 0 ? quantity : 0)
+    }, 0)
+    return normalCount + customCount
+  }, [cartItems, customizedCartItems])
   // ======================================================
   // LARGE ORDER
   // ======================================================
@@ -538,50 +574,33 @@ const PlaceOrder = () => {
   // ======================================================
   // SAME-DAY STOCK CHECK
   // ======================================================
-  const sameDayAvailable =
-    useMemo(() => {
-      if (
-        !cartItems ||
-        Object.keys(cartItems).length === 0
-      ) {
+  const sameDayAvailable = useMemo(() => {
+    // Aggregate original and customized quantities by product ID: if a
+    // customer orders 2 ordinary and 3 customized, stock must cover 5.
+    const quantities = new Map()
+    for (const [productId, rawQuantity] of Object.entries(cartItems || {})) {
+      const quantity = Number(rawQuantity)
+      if (!Number.isInteger(quantity) || quantity < 1) continue
+      quantities.set(productId, (quantities.get(productId) || 0) + quantity)
+    }
+    for (const item of Object.values(customizedCartItems || {})) {
+      const quantity = Number(item?.quantity)
+      const productId = item?.productId
+      if (!productId || !Number.isInteger(quantity) || quantity < 1) continue
+      quantities.set(productId, (quantities.get(productId) || 0) + quantity)
+    }
+    if (quantities.size === 0 || invalidCustomizedEntries) return false
+
+    for (const [productId, quantity] of quantities.entries()) {
+      const product = food_list.find(item => item._id === productId)
+      if (!product || !Number.isInteger(Number(product.sameDayStock)) ||
+          Number(product.sameDayStock) < quantity) {
         return false
       }
-      for (
-        const [itemId, quantityValue]
-        of Object.entries(cartItems)
-      ) {
-        const quantity =
-          Number(quantityValue)
-        if (
-          !Number.isFinite(quantity) ||
-          quantity <= 0
-        ) {
-          continue
-        }
-        const product =
-          food_list.find(
-            (item) =>
-              item._id === itemId
-          )
-        if (!product) {
-          return false
-        }
-        const stock =
-          Number(
-            product.sameDayStock || 0
-          )
-        if (
-          !Number.isFinite(stock) ||
-          stock < quantity
-        ) {
-          return false
-        }
-      }
-      return true
-    }, [
-      cartItems,
-      food_list
-    ])
+    }
+    return true
+  }, [cartItems, customizedCartItems, food_list, invalidCustomizedEntries])
+
   // ======================================================
   // FORCE LARGE ORDER FOR 10+ PRODUCTS
   // ======================================================
@@ -783,6 +802,15 @@ const getAvailableTimeSlots = () => {
     if (isLoading) {
       return
     }
+
+    // Critical: blocking only the button is insufficient. Direct form
+    // submissions must never drop customized selections at checkout.
+    if (customizedCheckoutBlocked) {
+      alert(invalidCustomizedEntries
+        ? 'Några kundval gäller inte längre. Uppdatera varukorgen innan betalning.'
+        : 'Betalning med anpassade produkter är inte aktiverad ännu. Ta bort de anpassade raderna i varukorgen för att fortsätta.')
+      return
+    }
     if (discountCode.trim() && appliedDiscount?.code !== discountCode.trim().toUpperCase()) {
       alert("Kontrollera rabattkoden med knappen Använd kod, eller ta bort den.")
       return
@@ -791,8 +819,7 @@ const getAvailableTimeSlots = () => {
     // CHECK CART
     // ==================================================
     if (
-      !cartItems ||
-      Object.keys(cartItems).length === 0 ||
+      totalQuantity <= 0 ||
       subtotal <= 0
     ) {
       alert(
@@ -945,20 +972,27 @@ const getAvailableTimeSlots = () => {
       // ==================================================
       // CREATE ORDER ITEMS FROM CART
       // ==================================================
-      const orderItems =
-        Object.entries(cartItems)
-          .filter(
-            ([itemId, quantity]) =>
-              itemId &&
-              Number(quantity) > 0
-          )
-          .map(
-            ([itemId, quantity]) => ({
-              itemId,
-              quantity:
-                Number(quantity)
-            })
-          )
+      const normalOrderItems = Object.entries(cartItems || {})
+        .filter(([itemId, quantity]) => itemId && Number(quantity) > 0)
+        .map(([itemId, quantity]) => ({ itemId, quantity: Number(quantity) }))
+
+      // Contract for the NEXT backend stage. Each customized row is an
+      // independent item with only IDs and quantities, never client prices.
+      // Backend MUST validate option ownership/availability/maxQuantity,
+      // reprice from MongoDB and store the choice snapshot before Stripe.
+      const customizedOrderItems = customizedEntries.map(entry => ({
+        itemId: entry.productId,
+        quantity: Number(entry.quantity),
+        customizations: {
+          removedIngredientIds: entry.removedIngredientIds,
+          extras: entry.extras.map(extra => ({
+            optionId: extra.optionId,
+            quantity: extra.quantity
+          }))
+        }
+      }))
+
+      const orderItems = [...normalOrderItems, ...customizedOrderItems]
       // ==================================================
       // CHECK ORDER ITEMS
       // ==================================================
@@ -1102,16 +1136,30 @@ const getAvailableTimeSlots = () => {
   // ======================================================
   // SIMPLIFIED CHECKOUT: method > date/time > details/payment
   // ======================================================
-  const cartPreview = Object.entries(cartItems || {})
-    .filter(([, quantity]) => Number(quantity) > 0)
-    .map(([itemId, quantity]) => ({
-      id: itemId,
-      quantity: Number(quantity),
-      name: food_list.find((item) => item._id === itemId)?.name || "Produkt"
+  const cartPreview = [
+    ...Object.entries(cartItems || {})
+      .filter(([, quantity]) => Number(quantity) > 0)
+      .map(([itemId, quantity]) => ({
+        id: itemId,
+        quantity: Number(quantity),
+        name: food_list.find(item => item._id === itemId)?.name || 'Produkt',
+        isCustomized: false
+      })),
+    ...customizedEntries.map(entry => ({
+      id: entry.cartKey,
+      quantity: Number(entry.quantity),
+      name: entry.name,
+      isCustomized: true,
+      invalid: entry.invalidCustomization,
+      error: entry.customizationError,
+      removedIngredients: entry.removedIngredients || [],
+      extras: entry.extras || []
     }))
+  ]
 
   const prettyTime = (time) => time ? time.replace("-", "–") : "Inte vald"
-  const canPay = subtotal > 0 && !isLoading && Boolean(requestedTime) &&
+  const canPay = subtotal > 0 && !customizedCheckoutBlocked &&
+    !isLoading && Boolean(requestedTime) &&
     Boolean(getRequestedDate()) && availableTimeSlots.includes(requestedTime) &&
     (deliveryMethod !== "delivery" || (deliveryAddressComplete && Boolean(deliveryZone)))
 
@@ -1136,6 +1184,18 @@ const getAvailableTimeSlots = () => {
         ))}
       </nav>
 
+      {customizedCheckoutBlocked && (
+        <div className="mc-checkout-custom-warning" role="alert">
+          <strong>{invalidCustomizedEntries
+            ? 'Några kundval behöver uppdateras.'
+            : 'Anpassade produkter kan ännu inte betalas.'}</strong>
+          <p>{invalidCustomizedEntries
+            ? 'Ett tillval har ändrats eller är inte längre tillgängligt.'
+            : 'Vi slutför serverns stöd för tillval och säkra betalningar. Vanliga produkter går fortfarande att beställa.'}</p>
+          <a href="/cart">Gå tillbaka till varukorgen</a>
+        </div>
+      )}
+
       <div className="mc-layout">
         <main className="mc-panel">
           {checkoutStep === 1 && (
@@ -1157,7 +1217,7 @@ const getAvailableTimeSlots = () => {
                   <span className="mc-option-check" aria-hidden="true">✓</span>
                 </label>
               </div>
-              <button type="button" className="mc-primary" disabled={subtotal <= 0} onClick={() => { setStepError(""); setCheckoutStep(2); }}>
+              <button type="button" className="mc-primary" disabled={subtotal <= 0 || customizedCheckoutBlocked} onClick={() => { setStepError(""); setCheckoutStep(2); }}>
                 Fortsätt till datum och tid <span aria-hidden="true">→</span>
               </button>
             </section>
@@ -1282,8 +1342,30 @@ const getAvailableTimeSlots = () => {
           </div>
           <div className="mc-product-list">
             {cartPreview.map((item) => (
-              <div key={item.id} className="mc-product-item">
+              <div key={item.id} className="mc-product-item mc-checkout-product-entry">
                 <span>{item.quantity} × {item.name}</span>
+                {item.isCustomized && (
+                  <div className="mc-checkout-custom-details">
+                    {item.invalid ? (
+                      <small role="status" className="mc-checkout-custom-invalid">
+                        {item.error || 'Anpassningen behöver uppdateras.'}
+                      </small>
+                    ) : (
+                      <>
+                        {item.removedIngredients.length > 0 && (
+                          <small>Utan: {item.removedIngredients.join(', ')}</small>
+                        )}
+                        {item.extras.length > 0 && (
+                          <small>
+                            Extra: {item.extras.map(extra =>
+                              `${extra.quantity} × ${extra.name}`
+                            ).join(', ')}
+                          </small>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {cartPreview.length === 0 && <p>Din varukorg är tom.</p>}
@@ -1302,6 +1384,12 @@ const getAvailableTimeSlots = () => {
           <div className="mc-summary-total"><span>Totalt</span><strong>{checkoutTotal.toFixed(2)} kr</strong></div>
           {deliveryMethod === "delivery" && deliveryZone && !qualifiesForFreeDelivery && amountUntilFreeDelivery > 0 && (
             <p className="mc-free-delivery">{amountUntilFreeDelivery.toFixed(0)} kr kvar till fri leverans</p>
+          )}
+          {hasCustomizedEntries && (
+            <p className="mc-checkout-estimate">
+              Anpassade produktpriser är preliminära. Backend måste kontrollera
+              valen och beräkna slutpriset före betalning.
+            </p>
           )}
           <p className="mc-summary-note">Inga dolda avgifter. Du ser alltid totalen innan betalning.</p>
         </aside>

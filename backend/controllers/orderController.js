@@ -45,6 +45,154 @@ const LARGE_ORDER_LIMIT = 10;
 
 const FREE_DELIVERY_THRESHOLD = 600;
 
+const MAX_ORDER_LINES = 200;
+const MAX_CUSTOM_OPTIONS = 30;
+const MAX_EXTRA_QUANTITY = 10;
+const MAX_OPTION_PRICE = 100000;
+
+// ======================================================
+// FAS 2 - SERVER-VALIDERA PRODUKTANPASSNINGAR
+// ======================================================
+
+// Ordern fÃ¥r enbart innehÃ¥lla IDs och antal frÃ¥n kunden.
+// Namn och priser tas alltid frÃ¥n MongoDB, aldrig frÃ¥n req.body.
+const isPlainObject = (value) =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const normalizeOrderSelection = (raw) => {
+  if (
+    !isPlainObject(raw) ||
+    !Array.isArray(raw.removedIngredientIds) ||
+    !Array.isArray(raw.extras) ||
+    raw.removedIngredientIds.length > MAX_CUSTOM_OPTIONS ||
+    raw.extras.length > MAX_CUSTOM_OPTIONS
+  ) {
+    throw new Error("Ogiltiga produktanpassningar.");
+  }
+
+  const removedIngredientIds = [];
+  const removedSeen = new Set();
+  for (const id of raw.removedIngredientIds) {
+    if (typeof id !== "string" || !mongoose.isValidObjectId(id)) {
+      throw new Error("Ogiltigt ingrediens-ID.");
+    }
+    const cleanId = id.toLowerCase();
+    if (removedSeen.has(cleanId)) {
+      throw new Error("En ingrediens har valts flera gÃ¥nger.");
+    }
+    removedSeen.add(cleanId);
+    removedIngredientIds.push(cleanId);
+  }
+  removedIngredientIds.sort();
+
+  const extras = [];
+  const extraSeen = new Set();
+  for (const extra of raw.extras) {
+    if (
+      !isPlainObject(extra) ||
+      typeof extra.optionId !== "string" ||
+      !mongoose.isValidObjectId(extra.optionId) ||
+      !Number.isInteger(extra.quantity) ||
+      extra.quantity < 1 ||
+      extra.quantity > MAX_EXTRA_QUANTITY
+    ) {
+      throw new Error("Ogiltigt tillval eller antal.");
+    }
+    const optionId = extra.optionId.toLowerCase();
+    if (extraSeen.has(optionId)) {
+      throw new Error("Samma tillval har valts flera gÃ¥nger.");
+    }
+    extraSeen.add(optionId);
+    extras.push({ optionId, quantity: extra.quantity });
+  }
+  extras.sort((a, b) => a.optionId.localeCompare(b.optionId));
+
+  if (!removedIngredientIds.length && !extras.length) {
+    throw new Error("VÃ¤lj minst en anpassning eller bestÃ¤ll standardprodukten.");
+  }
+
+  return { removedIngredientIds, extras };
+};
+
+const getOrderSelectionKey = (productId, selection) => {
+  if (!selection) return `${productId}:standard`;
+  return `${productId}:custom:${selection.removedIngredientIds.join(".")}:${
+    selection.extras.map(e => `${e.optionId}x${e.quantity}`).join(".")
+  }`;
+};
+
+// Schema-spÃ¤rr: gamla orderModel.js skulle annars tyst kasta bort
+// anpassningarna nÃ¤r ordern sparas. Det fÃ¥r aldrig leda till betalning.
+const orderSchemaSupportsCustomizations = () => {
+  const itemSchema = orderModel.schema.path("items")?.schema;
+  return Boolean(
+    itemSchema?.path("customizations.removedIngredients") &&
+    itemSchema?.path("customizations.extras")
+  );
+};
+
+const resolveProductSelection = (product, selection) => {
+  const config = product.customizations;
+  if (!config || config.enabled !== true) {
+    throw new Error(`${product.name} kan inte anpassas just nu.`);
+  }
+
+  const removableMap = new Map(
+    (Array.isArray(config.removableIngredients) ? config.removableIngredients : [])
+      .filter(o => o?._id && o.available !== false)
+      .map(o => [String(o._id).toLowerCase(), o])
+  );
+  const extrasMap = new Map(
+    (Array.isArray(config.extras) ? config.extras : [])
+      .filter(o => o?._id && o.available !== false)
+      .map(o => [String(o._id).toLowerCase(), o])
+  );
+
+  const removedIngredients = selection.removedIngredientIds.map(optionId => {
+    const option = removableMap.get(optionId);
+    if (!option) throw new Error(`Ett bortval fÃ¶r ${product.name} Ã¤r inte lÃ¤ngre tillgÃ¤ngligt.`);
+    return { optionId: option._id, name: String(option.name || "") };
+  });
+
+  let extraCents = 0;
+  const extras = selection.extras.map(({ optionId, quantity }) => {
+    const option = extrasMap.get(optionId);
+    if (!option) throw new Error(`Ett tillval fÃ¶r ${product.name} Ã¤r inte lÃ¤ngre tillgÃ¤ngligt.`);
+    const price = Number(option.price);
+    const maxQuantity = Number(option.maxQuantity ?? 1);
+    if (
+      !Number.isFinite(price) || price < 0 || price > MAX_OPTION_PRICE ||
+      !Number.isInteger(maxQuantity) || maxQuantity < 1 ||
+      maxQuantity > MAX_EXTRA_QUANTITY || quantity > maxQuantity
+    ) {
+      throw new Error(`Ett tillval fÃ¶r ${product.name} har Ã¤ndrats.`);
+    }
+    extraCents += Math.round(price * 100) * quantity;
+    return { optionId: option._id, name: String(option.name || ""), quantity,
+      price: Math.round(price * 100) / 100 };
+  });
+
+  return { removedIngredients, extras, extraCents };
+};
+
+// Gruppvis lagerhantering behÃ¶vs nÃ¤r samma produkt bestÃ¤lls bÃ¥de
+// som standardprodukt och som flera anpassade varianter.
+const groupStockByProduct = (items) => {
+  const grouped = new Map();
+  for (const item of items) {
+    const id = String(item._id);
+    const quantity = Number(item.quantity);
+    if (!mongoose.isValidObjectId(id) || !Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error("INVALID_STOCK_ITEM");
+    }
+    const existing = grouped.get(id);
+    if (existing) existing.quantity += quantity;
+    else grouped.set(id, { _id: item._id, name: item.name, quantity });
+  }
+  return [...grouped.values()];
+};
+
+
 
 // ======================================================
 // DELIVERY ZONES
@@ -54,43 +202,43 @@ const DELIVERY_ZONES = {
 
   frolunda: {
     id: "frolunda",
-    label: "Frölunda",
+    label: "FrÃ¶lunda",
     fee: 0
   },
 
   west: {
     id: "west",
-    label: "Västra Göteborg",
+    label: "VÃ¤stra GÃ¶teborg",
     fee: 39
   },
 
   central: {
     id: "central",
-    label: "Centrala Göteborg",
+    label: "Centrala GÃ¶teborg",
     fee: 59
   },
 
   hisingen: {
     id: "hisingen",
-    label: "Hisingen / Norra Göteborg",
+    label: "Hisingen / Norra GÃ¶teborg",
     fee: 59
   },
 
   south: {
     id: "south",
-    label: "Södra Göteborg / Mölndal",
+    label: "SÃ¶dra GÃ¶teborg / MÃ¶lndal",
     fee: 49
   },
 
   east: {
     id: "east",
-    label: "västra Götteborg",
+    label: "vÃ¤stra GÃ¶tteborg",
     fee: 69
   },
 
   northeast: {
     id: "northeast",
-    label: "Nordvästra Göteborg / Angered",
+    label: "NordvÃ¤stra GÃ¶teborg / Angered",
     fee: 79
   },
 
@@ -114,7 +262,7 @@ const DELIVERY_ZONES = {
 
   grabo: {
     id: "grabo",
-    label: "Gråbo",
+    label: "GrÃ¥bo",
     fee: 150
   }
 
@@ -140,11 +288,11 @@ const normalizeZipcode = (value = "") =>
 
 
 // ======================================================
-// GRÃ…BO POSTCODES
+// GRÃƒâ€¦BO POSTCODES
 //
 // Viktigt:
-// 443 anvÃ¤nds Ã¤ven av Lerum och Stenkullen.
-// DÃ¤rfÃ¶r kontrollerar vi GrÃ¥bo EXAKT innan 443-zonen.
+// 443 anvÃƒÂ¤nds ÃƒÂ¤ven av Lerum och Stenkullen.
+// DÃƒÂ¤rfÃƒÂ¶r kontrollerar vi GrÃƒÂ¥bo EXAKT innan 443-zonen.
 // ======================================================
 
 const GRABO_ZIPCODES = [
@@ -181,14 +329,14 @@ const getDeliveryZone = ({
     normalizeZipcode(zipcode);
 
 
-  // Vi behÃ¶ver ett riktigt postnummer fÃ¶r sÃ¤ker zonberÃ¤kning
+  // Vi behÃƒÂ¶ver ett riktigt postnummer fÃƒÂ¶r sÃƒÂ¤ker zonberÃƒÂ¤kning
   if (normalizedZip.length !== 5) {
     return null;
   }
 
 
   // ====================================================
-  // 1. FRÃ–LUNDA
+  // 1. FRÃƒâ€“LUNDA
   // GRATIS
   // ====================================================
 
@@ -200,8 +348,8 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 2. GRÃ…BO
-  // Kontrollera fÃ¶re Lerum eftersom bÃ¥da anvÃ¤nder 443
+  // 2. GRÃƒâ€¦BO
+  // Kontrollera fÃƒÂ¶re Lerum eftersom bÃƒÂ¥da anvÃƒÂ¤nder 443
   // ====================================================
 
   if (
@@ -215,7 +363,7 @@ const getDeliveryZone = ({
   // 3. KUNGSBACKA / HEDE
   //
   // Kungsbacka = 434-serien.
-  // HedeomrÃ¥det i Kungsbacka fÃ¥ngas dÃ¤rfÃ¶r hÃ¤r ocksÃ¥.
+  // HedeomrÃƒÂ¥det i Kungsbacka fÃƒÂ¥ngas dÃƒÂ¤rfÃƒÂ¶r hÃƒÂ¤r ocksÃƒÂ¥.
   // ====================================================
 
   if (
@@ -247,7 +395,7 @@ const getDeliveryZone = ({
   }
 
 
-  // 443 som INTE redan matchats som GrÃ¥bo
+  // 443 som INTE redan matchats som GrÃƒÂ¥bo
   if (
     normalizedZip.startsWith("443")
   ) {
@@ -256,15 +404,15 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 6. HISINGEN / NORRA GÃ–TEBORG
+  // 6. HISINGEN / NORRA GÃƒâ€“TEBORG
   //
   // Lundby
   // Backa
-  // BiskopsgÃ¥rden
+  // BiskopsgÃƒÂ¥rden
   // Tuve
-  // KÃ¤rra
+  // KÃƒÂ¤rra
   // Torslanda
-  // SÃ¤ve m.fl.
+  // SÃƒÂ¤ve m.fl.
   // ====================================================
 
   const hisingenPrefixes = [
@@ -286,7 +434,7 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 7. NORDÃ–STRA GÃ–TEBORG
+  // 7. NORDÃƒâ€“STRA GÃƒâ€“TEBORG
   //
   // Angered
   // Gunnilse
@@ -301,13 +449,13 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 8. SÃ–DRA GÃ–TEBORG / MÃ–LNDAL
+  // 8. SÃƒâ€“DRA GÃƒâ€“TEBORG / MÃƒâ€“LNDAL
   //
   // Askim
-  // HovÃ¥s
+  // HovÃƒÂ¥s
   // Billdal
-  // MÃ¶lndal
-  // KÃ¥llered
+  // MÃƒÂ¶lndal
+  // KÃƒÂ¥llered
   //
   // Lindome ligger separat ovan.
   // ====================================================
@@ -330,12 +478,12 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 9. Ã–STRA GÃ–TEBORG
+  // 9. Ãƒâ€“STRA GÃƒâ€“TEBORG
   //
   // Kortedala
-  // BergsjÃ¶n
+  // BergsjÃƒÂ¶n
   // Gamlestaden
-  // delar av Ã–rgryte / HÃ¤rlanda
+  // delar av Ãƒâ€“rgryte / HÃƒÂ¤rlanda
   // ====================================================
 
   const eastPrefixes = [
@@ -356,10 +504,10 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 10. CENTRALA GÃ–TEBORG
+  // 10. CENTRALA GÃƒâ€“TEBORG
   //
   // Centrum
-  // LinnÃ©
+  // LinnÃƒÂ©
   // Vasastaden
   // Johanneberg
   // Guldheden m.fl.
@@ -382,15 +530,15 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 11. VäsTRA GöTEBORG
+  // 11. VÃ¤sTRA GÃ¶TEBORG
   //
   // Majorna
-  // Högsbo
-  // Näset
+  // HÃ¶gsbo
+  // NÃ¤set
   // Angered
-  // Fiskebäckk m.fl.
+  // FiskebÃ¤ckk m.fl.
   //
-  // 421 Frölunda har redan fÃ¥ngats ovan.
+  // 421 FrÃ¶lunda har redan fÃƒÂ¥ngats ovan.
   // ====================================================
 
   const westPrefixes = [
@@ -411,13 +559,13 @@ const getDeliveryZone = ({
   // ====================================================
   // CITY FALLBACK
   //
-  // AnvÃ¤nds endast nÃ¤r postnumret inte fÃ¥ngats ovan.
-  // Vi anvÃ¤nder INTE bara "GÃ¶teborg", eftersom det
-  // inte sÃ¤ger vilken del av GÃ¶teborg kunden bor i.
+  // AnvÃƒÂ¤nds endast nÃƒÂ¤r postnumret inte fÃƒÂ¥ngats ovan.
+  // Vi anvÃƒÂ¤nder INTE bara "GÃƒÂ¶teborg", eftersom det
+  // inte sÃƒÂ¤ger vilken del av GÃƒÂ¶teborg kunden bor i.
   // ====================================================
 
   if (
-    normalizedCity.includes("gråbo")
+    normalizedCity.includes("grÃ¥bo")
   ) {
     return DELIVERY_ZONES.grabo;
   }
@@ -503,15 +651,15 @@ const getAllowedTimeSlotsForDate = (dateString) => {
 
 const ALLOWED_ORDER_STATUSES = [
 
-  "Beställning mottagen",
+  "BestÃ¤llning mottagen",
 
-"Förbereds",
+"FÃ¶rbereds",
 
-"Redo för upphämtning",
+"Redo fÃ¶r upphÃ¤mtning",
 
-"Upphämtad",
+"UpphÃ¤mtad",
 
-"På väg",
+"PÃ¥ vÃ¤g",
 
 "Levererad",
 
@@ -782,16 +930,16 @@ const getStripeValidationMessage = (error) => {
   return "Stripe-sessionen saknas.";
 
 case "STRIPE_ORDER_MISMATCH":
-  return "Stripe-betalningen matchar inte beställningen.";
+  return "Stripe-betalningen matchar inte bestÃ¤llningen.";
 
 case "STRIPE_SESSION_MISMATCH":
-  return "Stripe-sessionen matchar inte beställningen.";
+  return "Stripe-sessionen matchar inte bestÃ¤llningen.";
 
 case "STRIPE_NOT_PAID":
-  return "Betalningen är inte genomförd.";
+  return "Betalningen Ã¤r inte genomfÃ¶rd.";
 
 case "STRIPE_AMOUNT_MISMATCH":
-  return "Betalningsbeloppet matchar inte beställningen.";
+  return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
 
 
 
@@ -935,7 +1083,7 @@ const markPaidWithStockWarning = async (
 
       const warning =
 
-        `${productName} Har inte längre tillräcklig dagslager.`;
+        `${productName} Har inte lÃ¤ngre tillrÃ¤cklig dagslager.`;
 
 
 
@@ -947,7 +1095,7 @@ const markPaidWithStockWarning = async (
 
       order.status =
 
-        "Betalning mottagen - lagerkontroll krävs";
+        "Betalning mottagen - lagerkontroll krÃ¤vs";
 
       order.stripeSessionId = stripeSession.id;
 
@@ -1078,110 +1226,30 @@ const processPaidCheckoutSession = async (
 
 
         if (order.fulfillmentType === "same-day") {
+          // En produkt kan ligga pÃ¥ flera rader med olika kundval.
+          // Dra av det SAMMANLAGDA antalet exakt en gÃ¥ng per produkt.
+          const stockLines = groupStockByProduct(order.items);
 
-          for (const item of order.items) {
+          for (const item of stockLines) {
+            const product = await foodModel.findById(item._id).session(mongoSession);
+            const sameDayStock = Number(product?.sameDayStock || 0);
+            if (!product || !Number.isFinite(sameDayStock) ||
+                sameDayStock < item.quantity) {
+              throw new Error(`SAME_DAY_STOCK:${item.name}`);
+            }
+          }
 
-            const product = await foodModel
-
-              .findById(item._id)
-
-              .session(mongoSession);
-
-
-
-            const quantity = Number(item.quantity);
-
-            const sameDayStock = Number(
-
-              product?.sameDayStock || 0
-
+          for (const item of stockLines) {
+            const updateResult = await foodModel.updateOne(
+              { _id: item._id, sameDayStock: { $gte: item.quantity } },
+              { $inc: { sameDayStock: -item.quantity } },
+              { session: mongoSession }
             );
-
-
-
-            if (
-
-              !product ||
-
-              !Number.isInteger(quantity) ||
-
-              quantity <= 0 ||
-
-              !Number.isFinite(sameDayStock) ||
-
-              sameDayStock < quantity
-
-            ) {
-
-              throw new Error(
-
-                `SAME_DAY_STOCK:${item.name}`
-
-              );
-
-            }
-
-          }
-
-
-
-          for (const item of order.items) {
-
-            const quantity = Number(item.quantity);
-
-
-
-            const updateResult =
-
-              await foodModel.updateOne(
-
-                {
-
-                  _id: item._id,
-
-                  sameDayStock: {
-
-                    $gte: quantity
-
-                  }
-
-                },
-
-                {
-
-                  $inc: {
-
-                    sameDayStock: -quantity
-
-                  }
-
-                },
-
-                {
-
-                  session: mongoSession
-
-                }
-
-              );
-
-
-
             if (updateResult.modifiedCount !== 1) {
-
-              throw new Error(
-
-                `SAME_DAY_STOCK:${item.name}`
-
-              );
-
+              throw new Error(`SAME_DAY_STOCK:${item.name}`);
             }
-
           }
-
         }
-
-
 
         await redeemOrderDiscount(order, mongoSession);
 
@@ -1451,7 +1519,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Din varukorg är tom."
+        message: "Din varukorg Ã¤r tom."
 
       });
 
@@ -1473,7 +1541,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Välj avhämtning eller leverans."
+        message: "VÃ¤lj avhÃ¤mtning eller leverans."
 
       });
 
@@ -1557,7 +1625,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Namn, e-post och telefonnummer måste fyllas i."
+          "Namn, e-post och telefonnummer mÃ¥ste fyllas i."
 
       });
 
@@ -1579,7 +1647,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Förnamn eller efternamn är för långt."
+          "FÃ¶rnamn eller efternamn Ã¤r fÃ¶r lÃ¥ngt."
 
       });
 
@@ -1675,7 +1743,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Leveransadressen innehåller för långa uppgifter."
+          "Leveransadressen innehÃ¥ller fÃ¶r lÃ¥nga uppgifter."
 
       });
 
@@ -1697,7 +1765,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Fullständig leveransadress måste fyllas i."
+          "FullstÃ¤ndig leveransadress mÃ¥ste fyllas i."
 
       });
 
@@ -1715,7 +1783,7 @@ const placeOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            "Vi levererar tyvärr inte till den här adressen."
+            "Vi levererar tyvÃ¤rr inte till den hÃ¤r adressen."
         });
       }
     }
@@ -1738,7 +1806,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt beställningsalternativ."
+        message: "Ogiltigt bestÃ¤llningsalternativ."
 
       });
 
@@ -1752,7 +1820,7 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt beställningsdatum."
+        message: "Ogiltigt bestÃ¤llningsdatum."
 
       });
 
@@ -1784,7 +1852,7 @@ const placeOrder = async (req, res) => {
 
           allowedTimeSlots.length === 0
 
-            ? "ManilaCafe  har stängt på vald datumet."
+            ? "ManilaCafe  har stÃ¤ngt pÃ¥ vald datumet."
 
             : "Ogiltig vald tid."
 
@@ -1818,7 +1886,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Beställning för idag måste ha dagens datum."
+          "BestÃ¤llning fÃ¶r idag mÃ¥ste ha dagens datum."
 
       });
 
@@ -1840,7 +1908,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Beställning för imorgon måste ha morgondagens datum."
+          "BestÃ¤llning fÃ¶r imorgon mÃ¥ste ha morgondagens datum."
 
       });
 
@@ -1862,7 +1930,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          "Större beställningar måste göras minst 48 timmar i förskott."
+          "StÃ¶rre bestÃ¤llningar mÃ¥ste gÃ¶ras minst 48 timmar i fÃ¶rskott."
 
       });
 
@@ -1880,267 +1948,152 @@ const placeOrder = async (req, res) => {
 
         success: false,
 
-        message: "Stripe är inte konfigurerat."
+        message: "Stripe Ã¤r inte konfigurerat."
 
       });
 
     }
 
 
+
+    // ==================================================
+    // ORDER ITEMS - VALIDERING OCH DEDUPLICERING
+    // ==================================================
+    if (items.length > MAX_ORDER_LINES) {
+      return res.status(400).json({
+        success: false,
+        message: "FÃ¶r mÃ¥nga produktrader i bestÃ¤llningen."
+      });
+    }
 
     const normalizedItems = [];
-
-    const productIds = [];
-
-
-
-    for (const item of items) {
-
-      const productId =
-
-        item?._id || item?.id || item?.itemId;
-
-
-
-      const quantity = Number(item?.quantity);
-
-
-
-      if (
-
-        !productId ||
-
-        !mongoose.isValidObjectId(productId)
-
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message: "Ogiltigt produkt-ID."
-
-        });
-
-      }
-
-
-
-      if (
-
-        !Number.isInteger(quantity) ||
-
-        quantity <= 0 ||
-
-        quantity > MAX_ITEM_QUANTITY
-
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-
-            `Du kan beställa högst ${MAX_ITEM_QUANTITY} st av samma produkt.`
-
-        });
-
-      }
-
-
-
-      const idString = productId.toString();
-
-
-
-      normalizedItems.push({
-
-        productId: idString,
-
-        quantity
-
-      });
-
-
-
-      productIds.push(idString);
-
-    }
-
-
-
-    const uniqueProductIds = [
-
-      ...new Set(productIds)
-
-    ];
-
-
-
-    if (
-
-      uniqueProductIds.length !==
-
-      productIds.length
-
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-
-          "Samma produkt får inte förekomma flera gånger i beställningen."
-
-      });
-
-    }
-
-
-
-    const products = await foodModel.find({
-
-      _id: {
-
-        $in: uniqueProductIds
-
-      }
-
-    });
-
-
-
-    const productMap = new Map(
-
-      products.map((product) => [
-
-        product._id.toString(),
-
-        product
-
-      ])
-
-    );
-
-
-
-    const verifiedItems = [];
-
-    let subtotal = 0;
-
-    let totalQuantity = 0;
-
-
-
-    for (const item of normalizedItems) {
-
-      const product = productMap.get(
-
-        item.productId
-
-      );
-
-
-
-      if (!product) {
-
-        return res.status(404).json({
-
-          success: false,
-
-          message:
-
-            "En eller flera produkter kunde inte hittas."
-
-        });
-
-      }
-
-
-
-      const price = Number(product.price);
-
-
-
-      if (
-
-        !Number.isFinite(price) ||
-
-        price < 0
-
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message: "Ogiltigt produktpris."
-
-        });
-
-      }
-
-
-
-      if (fulfillmentType === "same-day") {
-
-        const sameDayStock = Number(
-
-          product.sameDayStock || 0
-
-        );
-
-
-
-        if (
-
-          !Number.isFinite(sameDayStock) ||
-
-          sameDayStock < item.quantity
-
-        ) {
-
-          return res.status(409).json({
-
-            success: false,
-
-            message:
-
-              `${product.name} finns inte i tillräcklig antal för beställning idag.`
-
-          });
-
+    const productIds = new Set();
+    const uniqueLines = new Set();
+    const quantitiesByProduct = new Map();
+    let hasCustomizations = false;
+
+    try {
+      for (const item of items) {
+        if (!isPlainObject(item)) throw new Error("Ogiltig produktrad.");
+        const productId = item._id || item.id || item.itemId;
+        const quantity = item.quantity;
+
+        if (typeof productId !== "string" || !mongoose.isValidObjectId(productId)) {
+          throw new Error("Ogiltigt produkt-ID.");
+        }
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_ITEM_QUANTITY) {
+          throw new Error(`Du kan bestÃ¤lla hÃ¶gst ${MAX_ITEM_QUANTITY} st av samma produkt.`);
         }
 
+        const idString = productId.toLowerCase();
+        const selection = Object.prototype.hasOwnProperty.call(item, "customizations")
+          ? normalizeOrderSelection(item.customizations)
+          : null;
+        if (selection) hasCustomizations = true;
+
+        const key = getOrderSelectionKey(idString, selection);
+        if (uniqueLines.has(key)) {
+          throw new Error("Samma produktvariant fÃ¥r inte fÃ¶rekomma flera gÃ¥nger.");
+        }
+        uniqueLines.add(key);
+
+        const productQuantity = (quantitiesByProduct.get(idString) || 0) + quantity;
+        if (productQuantity > MAX_ITEM_QUANTITY) {
+          throw new Error(`Du kan bestÃ¤lla hÃ¶gst ${MAX_ITEM_QUANTITY} st av samma produkt, inklusive alla varianter.`);
+        }
+        quantitiesByProduct.set(idString, productQuantity);
+
+        normalizedItems.push({ productId: idString, quantity, selection });
+        productIds.add(idString);
       }
-
-
-
-      subtotal += price * item.quantity;
-
-      totalQuantity += item.quantity;
-
-
-
-      verifiedItems.push({
-
-        _id: product._id,
-
-        name: product.name,
-
-        price,
-
-        quantity: item.quantity,
-
-        image: product.image
-
+    } catch (validationError) {
+      return res.status(400).json({
+        success: false,
+        message: validationError.message
       });
-
     }
 
+    // SÃ¤kerhetsstopp: aktivera aldrig anpassade betalningar innan
+    // orderModel har tvÃ¥ snapshot-arrayer fÃ¶r kundvalen.
+    if (hasCustomizations && !orderSchemaSupportsCustomizations()) {
+      return res.status(503).json({
+        success: false,
+        message: "Produktanpassningar Ã¤r Ã¤nnu inte aktiverade i ordersystemet."
+      });
+    }
 
+    const products = await foodModel.find({ _id: { $in: [...productIds] } });
+    const productMap = new Map(
+      products.map(product => [String(product._id).toLowerCase(), product])
+    );
+
+    const verifiedItems = [];
+    let subtotalCents = 0;
+    let totalQuantity = 0;
+
+    try {
+      for (const item of normalizedItems) {
+        const product = productMap.get(item.productId);
+        if (!product) {
+          return res.status(404).json({
+            success: false,
+            message: "En eller flera produkter kunde inte hittas."
+          });
+        }
+
+        const basePrice = Number(product.price);
+        if (!Number.isFinite(basePrice) || basePrice < 0 || basePrice > 100000) {
+          throw new Error(`Ogiltigt produktpris fÃ¶r ${product.name}.`);
+        }
+
+        const snapshot = item.selection
+          ? resolveProductSelection(product, item.selection)
+          : null;
+
+        const unitCents = Math.round(basePrice * 100) + (snapshot?.extraCents || 0);
+        if (!Number.isSafeInteger(unitCents) || unitCents > 10000000) {
+          throw new Error(`Priset fÃ¶r ${product.name} Ã¤r fÃ¶r hÃ¶gt.`);
+        }
+
+        subtotalCents += unitCents * item.quantity;
+        totalQuantity += item.quantity;
+
+        verifiedItems.push({
+          _id: product._id,
+          name: product.name,
+          price: unitCents / 100,
+          quantity: item.quantity,
+          image: product.image,
+          ...(snapshot ? {
+            customizations: {
+              removedIngredients: snapshot.removedIngredients,
+              extras: snapshot.extras
+            }
+          } : {})
+        });
+      }
+    } catch (validationError) {
+      return res.status(400).json({
+        success: false,
+        message: validationError.message
+      });
+    }
+
+    // Lagerkrav kontrolleras pÃ¥ summerat antal, inte varje variant fÃ¶r sig.
+    if (fulfillmentType === "same-day") {
+      for (const [productId, quantity] of quantitiesByProduct) {
+        const product = productMap.get(productId);
+        const stock = Number(product?.sameDayStock || 0);
+        if (!Number.isInteger(stock) || stock < quantity) {
+          return res.status(409).json({
+            success: false,
+            message: `${product.name} finns inte i tillrÃ¤ckligt antal fÃ¶r bestÃ¤llning idag.`
+          });
+        }
+      }
+    }
+
+    const subtotal = subtotalCents / 100;
 
     if (
 
@@ -2156,7 +2109,7 @@ const placeOrder = async (req, res) => {
 
         message:
 
-          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en störrre beställning.`
+          `BestÃ¤llningar med ${LARGE_ORDER_LIMIT} produkter eller fler mÃ¥ste gÃ¶ras som en stÃ¶rrre bestÃ¤llning.`
 
       });
 
@@ -2193,7 +2146,7 @@ const placeOrder = async (req, res) => {
       if (!discount) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden är ogiltig."
+          message: "Rabattkoden Ã¤r ogiltig."
         });
       }
 
@@ -2203,7 +2156,7 @@ const placeOrder = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden har gått ut."
+          message: "Rabattkoden har gÃ¥tt ut."
         });
       }
 
@@ -2214,11 +2167,11 @@ const placeOrder = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Rabattkoden har nått sin användningsgräns."
+          message: "Rabattkoden har nÃ¥tt sin anvÃ¤ndningsgrÃ¤ns."
         });
       }
 
-      // ProduktvÃ¤rde inklusive moms, fÃ¶re rabatt
+      // ProduktvÃƒÂ¤rde inklusive moms, fÃƒÂ¶re rabatt
       const productTotalBeforeDiscount = roundMoney(
         subtotal + roundMoney(subtotal * VAT_RATE)
       );
@@ -2230,7 +2183,7 @@ const placeOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            `Rabattkoden kräver ett produktköp på minst ${discount.minOrderAmount} kr.`
+            `Rabattkoden krÃ¤ver ett produktkÃ¶p pÃ¥ minst ${discount.minOrderAmount} kr.`
         });
       }
 
@@ -2251,13 +2204,13 @@ const placeOrder = async (req, res) => {
 
     const roundedSubtotal = roundMoney(subtotal);
 
-    // Produkter inklusive moms, fÃ¶re rabatt
+    // Produkter inklusive moms, fÃƒÂ¶re rabatt
     const productTotalBeforeDiscount = roundMoney(
       roundedSubtotal +
       roundMoney(roundedSubtotal * VAT_RATE)
     );
 
-    // Rabatt gÃ¤ller endast produkter, inte leverans
+    // Rabatt gÃƒÂ¤ller endast produkter, inte leverans
     const discountAmount = appliedDiscount
       ? calculateProductDiscount(
           productTotalBeforeDiscount,
@@ -2265,12 +2218,12 @@ const placeOrder = async (req, res) => {
         )
       : 0;
 
-    // ProduktvÃ¤rde inklusive moms, efter rabatt
+    // ProduktvÃƒÂ¤rde inklusive moms, efter rabatt
     const productTotal = roundMoney(
       productTotalBeforeDiscount - discountAmount
     );
 
-    // RÃ¤kna om moms efter rabatt
+    // RÃƒÂ¤kna om moms efter rabatt
     const roundedVat = roundMoney(
       productTotal * VAT_RATE / (1 + VAT_RATE)
     );
@@ -2279,7 +2232,7 @@ const placeOrder = async (req, res) => {
       productTotal - roundedVat
     );
 
-    // Fri leverans baseras pÃ¥ produktvÃ¤rdet efter rabatt
+    // Fri leverans baseras pÃƒÂ¥ produktvÃƒÂ¤rdet efter rabatt
     const qualifiesForFreeDelivery =
       productTotal >= FREE_DELIVERY_THRESHOLD;
 
@@ -2343,7 +2296,7 @@ const placeOrder = async (req, res) => {
         zipcode
       },
 
-     status: "Inväntar betalning",
+     status: "InvÃ¤ntar betalning",
       payment: false,
       paymentMethod: "Stripe"
     });
@@ -2357,7 +2310,7 @@ const placeOrder = async (req, res) => {
 
     const lineItems = [];
 
-    // Produktvärrdet efter rabatt, exklusive moms
+    // ProduktvÃ¤rrdet efter rabatt, exklusive moms
     const productNetCents = Math.round(
       subtotalAfterDiscount * 100
     );
@@ -2391,7 +2344,7 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // Leveransavgift pÃ¥verkas inte av rabatten
+    // Leveransavgift pÃƒÂ¥verkas inte av rabatten
     if (roundedDeliveryFee > 0) {
       lineItems.push({
         price_data: {
@@ -2409,8 +2362,8 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // Kontrollera att Stripe fÃ¥r exakt samma belopp
-    // som sparats pÃ¥ ordern.
+    // Kontrollera att Stripe fÃƒÂ¥r exakt samma belopp
+    // som sparats pÃƒÂ¥ ordern.
     const stripeTotalCents = lineItems.reduce(
       (sum, item) =>
         sum +
@@ -2428,8 +2381,8 @@ const placeOrder = async (req, res) => {
       );
     }
 
-    // Stripe Checkout krÃ¤ver ett positivt belopp
-    // i detta betalningsflÃ¶de.
+    // Stripe Checkout krÃƒÂ¤ver ett positivt belopp
+    // i detta betalningsflÃƒÂ¶de.
     if (expectedTotalCents <= 0) {
       throw new Error("ORDER_TOTAL_MUST_BE_POSITIVE");
     }
@@ -2458,7 +2411,7 @@ const placeOrder = async (req, res) => {
       });
     } catch (reservationError) {
       if (reservationError.message === "DISCOUNT_UNAVAILABLE") {
-        return res.status(409).json({ success: false, message: "Rabattkoden är inte längre tillgänglig." });
+        return res.status(409).json({ success: false, message: "Rabattkoden Ã¤r inte lÃ¤ngre tillgÃ¤nglig." });
       }
       throw reservationError;
     } finally {
@@ -2521,7 +2474,7 @@ const placeOrder = async (req, res) => {
           deliveryZone:
             deliveryZone?.id || "pickup",
           deliveryZoneLabel:
-            deliveryZone?.label || "Avhämtning",
+            deliveryZone?.label || "AvhÃ¤mtning",
           freeDelivery:
             (
               deliveryMethod === "delivery" &&
@@ -2617,7 +2570,7 @@ const placeOrder = async (req, res) => {
 
       success: true,
 
-      message: "Beställningen har skapats.",
+      message: "BestÃ¤llningen har skapats.",
 
       subtotal: roundedSubtotal,
 
@@ -2658,7 +2611,7 @@ const placeOrder = async (req, res) => {
 
       message:
 
-        "Ett fel uppstod nä beställningen skulle skapas."
+        "Ett fel uppstod nÃ¤ bestÃ¤llningen skulle skapas."
 
     });
 
@@ -2718,7 +2671,7 @@ const verifyOrder = async (req, res) => {
 
         success: false,
 
-        message: "Betalningen avbröts."
+        message: "Betalningen avbrÃ¶ts."
 
       });
 
@@ -2770,7 +2723,7 @@ const verifyOrder = async (req, res) => {
 
         success: false,
 
-        message: "Stripe är inte konfigurerat."
+        message: "Stripe Ã¤r inte konfigurerat."
 
       });
 
@@ -2802,7 +2755,7 @@ const verifyOrder = async (req, res) => {
 
         message:
 
-          "Stripe-betalningen matchar inte beställningen."
+          "Stripe-betalningen matchar inte bestÃ¤llningen."
 
       });
 
@@ -2830,11 +2783,11 @@ const verifyOrder = async (req, res) => {
 
       message: result.warning
 
-        ? "Betalningen lyckades, men ordern behöver lagerkontrolleras."
+        ? "Betalningen lyckades, men ordern behÃ¶ver lagerkontrolleras."
 
         : result.alreadyProcessed
 
-          ? "Beställningen är redan betald."
+          ? "BestÃ¤llningen Ã¤r redan betald."
 
           : "Betalningen lyckades.",
 
@@ -2884,7 +2837,7 @@ const verifyOrder = async (req, res) => {
 
         message:
 
-          "Beställningen kunde inte hittas."
+          "BestÃ¤llningen kunde inte hittas."
 
       });
 
@@ -2898,7 +2851,7 @@ const verifyOrder = async (req, res) => {
 
       message:
 
-        "Ett fel uppstod när betalningen skulle verifieras."
+        "Ett fel uppstod nÃ¤r betalningen skulle verifieras."
 
     });
 
@@ -3206,7 +3159,7 @@ const userOrders = async (req, res) => {
 
         success: false,
 
-        message: "Du måste vara inloggad."
+        message: "Du mÃ¥ste vara inloggad."
 
       });
 
@@ -3220,7 +3173,7 @@ const userOrders = async (req, res) => {
 
         success: false,
 
-        message: "Ogiltigt användar-ID."
+        message: "Ogiltigt anvÃ¤ndar-ID."
 
       });
 
@@ -3264,7 +3217,7 @@ const userOrders = async (req, res) => {
 
       message:
 
-        "Beställningarna kunde inte hämtas."
+        "BestÃ¤llningarna kunde inte hÃ¤mtas."
 
     });
 
@@ -3314,7 +3267,7 @@ const listOrders = async (req, res) => {
 
       message:
 
-        "Beställningarna kunde inte hämtas."
+        "BestÃ¤llningarna kunde inte hÃ¤mtas."
 
     });
 
@@ -3344,7 +3297,7 @@ const updateStatus = async (req, res) => {
 
         success: false,
 
-        message: "Order-ID och status krävs."
+        message: "Order-ID och status krÃ¤vs."
 
       });
 
@@ -3426,7 +3379,7 @@ const updateStatus = async (req, res) => {
 
         message:
 
-          "Beställningen kunde inte hittas."
+          "BestÃ¤llningen kunde inte hittas."
 
       });
 

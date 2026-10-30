@@ -1,0 +1,122 @@
+/* Manila CafÃ© â€“ kundval i produktlistan. Alla selektorer Ã¤r isolerade. */
+.mc-customization-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 1px solid #d7cce2;
+  border-radius: 9px;
+  background: #f5f0fa;
+  color: #4c2869;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mc-customization-button:hover { background: #eae0f5; }
+.mc-customization-button:disabled { opacity: .6; cursor: not-allowed; }
+.mc-customization-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: rgba(23, 15, 31, .7);
+}
+.mc-customization-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  max-height: min(92dvh, 950px);
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 20px 70px rgba(0,0,0,.25);
+  color: #27212d;
+}
+.mc-customization-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #eee7f1;
+}
+.mc-customization-eyebrow { color: #754b96; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.mc-customization-header h2 { margin: 4px 0 7px; font-size: clamp(19px, 3vw, 25px); }
+.mc-customization-header p { margin: 0; font-size: 13px; color: #665b6a; }
+.mc-customization-close {
+  border: 0; border-radius: 8px; background: #f6f2f8; color: #362540;
+  font: inherit; font-size: 27px; line-height: 1; width: 36px; height: 36px;
+  flex: 0 0 auto; cursor: pointer;
+}
+.mc-customization-form { display: flex; min-height: 0; flex-direction: column; }
+.mc-customization-scroll { overflow-y: auto; min-height: 0; padding: 20px 24px; }
+.mc-customization-switch {
+  display: flex; gap: 13px; align-items: center; border: 1px solid #ddd0e8;
+  padding: 14px; border-radius: 12px; background: #faf7fd; cursor: pointer;
+}
+.mc-customization-switch input { width: 18px; height: 18px; accent-color: #683b85; }
+.mc-customization-switch span { display: grid; gap: 3px; }
+.mc-customization-switch strong { font-size: 14px; }
+.mc-customization-switch small { font-size: 12px; color: #645d67; }
+.mc-customization-section { padding: 22px 0 0; }
+.mc-customization-section + .mc-customization-section { margin-top: 20px; border-top: 1px solid #eee7f1; }
+.mc-customization-section-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.mc-customization-section-header h3 { font-size: 16px; margin: 0 0 4px; }
+.mc-customization-section-header p { font-size: 12px; margin: 0; color: #6a5f71; }
+.mc-customization-section-header > span { font-size: 12px; color: #6a5f71; white-space: nowrap; }
+.mc-customization-option {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto 35px;
+  align-items: end;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f2edf4;
+}
+.mc-customization-option--extra { grid-template-columns: 22px minmax(150px, 1fr) 95px 90px auto 35px; }
+.mc-customization-index { font-size: 12px; color: #84768a; padding-bottom: 11px; }
+.mc-customization-option label:not(.mc-customization-available) { min-width: 0; display: grid; gap: 5px; }
+.mc-customization-option label:not(.mc-customization-available) > span { color: #584e5f; font-size: 11px; font-weight: 700; }
+.mc-customization-option input[type='text'], .mc-customization-option input[type='number'] {
+  width: 100%; min-width: 0; box-sizing: border-box; min-height: 40px;
+  border: 1px solid #d9cde0; border-radius: 8px; padding: 8px 10px;
+  font: inherit; font-size: 14px; background: white; color: #26202e;
+}
+.mc-customization-option input:focus-visible, .mc-customization-add:focus-visible,
+.mc-customization-close:focus-visible, .mc-customization-button:focus-visible,
+.mc-customization-remove:focus-visible { outline: 2px solid #704599; outline-offset: 2px; }
+.mc-customization-available { display: inline-flex; align-items: center; gap: 6px; padding-bottom: 9px; white-space: nowrap; font-size: 12px; cursor: pointer; }
+.mc-customization-available input { accent-color: #683b85; width: 16px; height: 16px; }
+.mc-customization-remove { height: 40px; border: 1px solid #f1d5d5; border-radius: 8px; background: #fff5f5; color: #ae3c46; font-size: 22px; cursor: pointer; }
+.mc-customization-add {
+  margin-top: 12px; padding: 10px 12px; background: #f5f0fa; border: 1px solid #e0d3eb;
+  color: #4c2869; border-radius: 8px; font: inherit; font-size: 13px;
+  font-weight: 700; cursor: pointer;
+}
+.mc-customization-add:disabled { opacity: .5; cursor: not-allowed; }
+.mc-customization-note { font-size: 12px; line-height: 1.5; color: #65576b; margin: 24px 0 0; }
+.mc-customization-error { border-radius: 8px; border: 1px solid #f2b8be; background: #fff2f4; color: #9d2339; padding: 12px; font-size: 13px; }
+.mc-customization-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee7f1; padding: 16px 24px; }
+.mc-customization-footer button { border-radius: 9px; min-height: 42px; padding: 10px 17px; font: inherit; font-weight: 700; cursor: pointer; }
+.mc-customization-cancel { border: 1px solid #dfd8e2; background: #fff; color: #514857; }
+.mc-customization-save { border: 1px solid #593076; background: #593076; color: white; }
+.mc-customization-footer button:disabled { opacity: .6; cursor: not-allowed; }
+@media (max-width: 720px) {
+  .mc-customization-overlay { padding: 8px; align-items: stretch; }
+  .mc-customization-dialog { max-height: calc(100dvh - 16px); border-radius: 14px; }
+  .mc-customization-header { padding: 17px 16px 14px; }
+  .mc-customization-scroll { padding: 15px 16px; }
+  .mc-customization-footer { padding: 13px 16px; }
+  .mc-customization-option { grid-template-columns: 20px minmax(0,1fr) auto 35px; }
+  .mc-customization-option--extra { grid-template-columns: 20px minmax(0,1fr) 35px; }
+  .mc-customization-option--extra .mc-customization-name { grid-column: 2; }
+  .mc-customization-option--extra .mc-customization-remove { grid-column: 3; grid-row: 1; }
+  .mc-customization-option--extra .mc-customization-price { grid-column: 2; grid-row: 2; }
+  .mc-customization-option--extra .mc-customization-quantity { grid-column: 2; grid-row: 3; }
+  .mc-customization-option--extra .mc-customization-available { grid-column: 2; grid-row: 4; }
+}

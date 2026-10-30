@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import './Orders.css'
+import './OrdersCustomizations.css'
 
 // Terminal status är vårt arkiv: ordern ligger kvar i MongoDB och i kundhistoriken.
 const COMPLETED = new Set(['Levererad', 'Upphämtad'])
@@ -52,6 +53,94 @@ const orderPriority = (order) => {
 }
 const totalQuantity = (items) =>
   (Array.isArray(items) ? items : []).reduce((total, item) => total + Number(item.quantity || 0), 0)
+
+// ======================================================
+// FAS 2: KUNDVAL FRÅN SPARAD ORDER (INTE FRÅN PRODUKTKATALOGEN)
+// ======================================================
+// Dessa är ögonblicksbilder från orderModel.js. Vi visar därför exakt
+// de namn, antal och priser som sparades när ordern skapades, även om
+// ett tillval senare byter namn eller försvinner från menyn.
+const getCustomerChoices = (item) => {
+  const raw = item?.customizations
+  const removedIngredients = (Array.isArray(raw?.removedIngredients)
+    ? raw.removedIngredients : [])
+    .filter(option => typeof option?.name === 'string' && option.name.trim())
+
+  const extras = (Array.isArray(raw?.extras) ? raw.extras : [])
+    .filter(option => typeof option?.name === 'string' && option.name.trim())
+
+  return {
+    removedIngredients,
+    extras,
+    hasChoices: removedIngredients.length > 0 || extras.length > 0
+  }
+}
+
+const getCustomerChoicePreview = (item) => {
+  const { removedIngredients, extras } = getCustomerChoices(item)
+  return [
+    ...removedIngredients.map(option => `Utan ${option.name}`),
+    ...extras.map(option => {
+      const count = Number(option.quantity)
+      const quantityLabel = Number.isInteger(count) && count > 0 ? `${count} × ` : ''
+      return `Extra ${quantityLabel}${option.name}`
+    })
+  ].join(' · ')
+}
+
+// Lägg kundens faktiska matönskemål före receptet, inte bakom en tooltip.
+const OrderCustomerChoices = ({ item }) => {
+  const { removedIngredients, extras, hasChoices } = getCustomerChoices(item)
+  if (!hasChoices) return null
+
+  const portions = Number(item.quantity)
+  return (
+    <section className="mc-order-customer-choices" aria-label="Kundens produktanpassningar">
+      <div className="mc-order-customer-choices-heading">
+        <strong>⚠ Kundens ändringar</strong>
+        <small>Gäller per portion</small>
+      </div>
+      {removedIngredients.length > 0 && (
+        <div className="mc-order-choices-group mc-order-choices-group--remove">
+          <strong>TA BORT – SKA INTE INGÅ</strong>
+          <ul>
+            {removedIngredients.map((option, index) => (
+              <li key={String(option.optionId || index)}>
+                <span aria-hidden="true">−</span> Utan {option.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {extras.length > 0 && (
+        <div className="mc-order-choices-group mc-order-choices-group--extra">
+          <strong>LÄGG TILL – PER PORTION</strong>
+          <ul>
+            {extras.map((option, index) => {
+              const count = Number(option.quantity)
+              const validCount = Number.isInteger(count) && count > 0
+              const price = Number(option.price)
+              const validPrice = option.price !== null && option.price !== undefined &&
+                Number.isFinite(price) && price >= 0
+              return (
+                <li key={String(option.optionId || index)}>
+                  <span aria-hidden="true">+</span>
+                  {validCount ? `${count} × ` : ''}{option.name}
+                  {validPrice && <small>({formatMoney(price)} / st, exkl. moms)</small>}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+      {Number.isInteger(portions) && portions > 1 && (
+        <p className="mc-order-choices-portions">
+          Samma anpassningar gäller alla {portions} portioner på den här raden.
+        </p>
+      )}
+    </section>
+  )
+}
 
 // Recept hämtas separat från den skyddade admin-endpointen, aldrig via kundens orderdata.
 // API-avtal för nästa steg: GET /api/kitchen-recipe/list
@@ -321,7 +410,11 @@ const Orders = ({ url }) => {
       if (!term) return true
       return [orderNumber(order._id), orderName(order), order.address?.email,
         order.address?.phone, order.address?.street,
-        ...(Array.isArray(order.items) ? order.items.map(item => item.name) : [])]
+        ...(Array.isArray(order.items) ? order.items.flatMap(item => {
+          const choices = getCustomerChoices(item)
+          return [item.name, ...choices.removedIngredients.map(option => option.name),
+            ...choices.extras.map(option => option.name)]
+        }) : [])]
         .some(value => String(value || '').toLocaleLowerCase('sv-SE').includes(term))
     })
     .sort((a, b) => sort === 'requested'
@@ -402,6 +495,8 @@ const Orders = ({ url }) => {
               'Avbruten'
             ]
             const currentStatus = order.status || 'Inväntar betalning'
+            const hasCustomerChoices = (Array.isArray(order.items) ? order.items : [])
+              .some(item => getCustomerChoices(item).hasChoices)
             return (
               <article className={`mc-order-card mc-order-card--${group}`} key={order._id}>
                 <div className="mc-order-top">
@@ -412,9 +507,21 @@ const Orders = ({ url }) => {
                   <strong>{orderName(order)}</strong>
                   <span>{pickup ? '📍 Avhämtning' : '🚗 Leverans'} · {formatDay(order.requestedDate)} · {order.requestedTime || 'Tid saknas'}</span>
                 </div>
+                {hasCustomerChoices && (
+                  <p className="mc-order-choices-notice">
+                    ⚠ Anpassad beställning – kontrollera kundvalen innan du lagar maten.
+                  </p>
+                )}
                 <div className="mc-order-summary-items">
                   {(Array.isArray(order.items) ? order.items : []).slice(0, 2).map((item, index) => (
-                    <span key={`${order._id}-${index}`}>{Number(item.quantity || 0)} × {item.name || 'Produkt'}{item.flavor ? ` (${item.flavor})` : ''}</span>
+                    <span key={`${order._id}-${index}`}>
+                      {Number(item.quantity || 0)} × {item.name || 'Produkt'}{item.flavor ? ` (${item.flavor})` : ''}
+                      {getCustomerChoices(item).hasChoices && (
+                        <small className="mc-order-choices-preview">
+                          {getCustomerChoicePreview(item)}
+                        </small>
+                      )}
+                    </span>
                   ))}
                   {(order.items?.length || 0) > 2 && <small>+ {order.items.length - 2} fler produktrader</small>}
                 </div>
@@ -468,8 +575,11 @@ const Orders = ({ url }) => {
                       {(Array.isArray(order.items) ? order.items : []).map((item, index) => (
                         <div className="mc-order-product" key={`${order._id}-detail-${index}`}>
                           {item.image ? <img src={getImageUrl(item.image)} alt="" loading="lazy" /> : <span className="mc-order-image-placeholder">📦</span>}
-                          <div><strong>{item.name || 'Produkt'}{item.flavor ? ` – ${item.flavor}` : ''}</strong>
-                            <span>{Number(item.quantity || 0)} st × {formatMoney(item.price)}</span></div>
+                          <div className="mc-order-product-content">
+                            <strong>{item.name || 'Produkt'}{item.flavor ? ` – ${item.flavor}` : ''}</strong>
+                            <span>{Number(item.quantity || 0)} st × {formatMoney(item.price)}</span>
+                            <OrderCustomerChoices item={item} />
+                          </div>
                           <strong>{formatMoney(Number(item.quantity || 0) * Number(item.price || 0))}</strong>
                         </div>
                       ))}
@@ -487,6 +597,19 @@ const Orders = ({ url }) => {
 
                        {kitchenOpen && (
                          <div className="mc-order-kitchen-body" id={`mc-order-kitchen-${order._id}`}>
+                           {hasCustomerChoices && (
+                             <div className="mc-order-kitchen-customer-summary">
+                               <h3>⚠ Kundens ändringar – kontrollera före tillagning</h3>
+                               {(Array.isArray(order.items) ? order.items : []).map((item, index) =>
+                                 getCustomerChoices(item).hasChoices ? (
+                                   <div className="mc-order-kitchen-choice-line" key={`${order._id}-choices-${index}`}>
+                                     <strong>{Number(item.quantity || 0)} × {item.name || 'Produkt'}</strong>
+                                     <OrderCustomerChoices item={item} />
+                                   </div>
+                                 ) : null
+                               )}
+                             </div>
+                           )}
                            {kitchenLoading ? (
                              <p className="mc-order-kitchen-info">Hämtar recepten…</p>
                            ) : kitchenError ? (

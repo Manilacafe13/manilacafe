@@ -1,0 +1,181 @@
+/* Fas 2: produktanpassningar i orderpanelen. BehÃ¥ll befintliga Orders.css. */
+
+.mc-orders .mc-order-choices-notice {
+  margin: 12px 0 9px;
+  padding: 10px 12px;
+  background: #fff5db;
+  color: #6d440c;
+  border: 1px solid #e9c98a;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.mc-orders .mc-order-choices-preview {
+  display: block;
+  margin-top: 4px;
+  color: #8b470d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mc-orders .mc-order-product-content {
+  min-width: 0;
+  flex: 1 1 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.mc-orders .mc-order-customer-choices {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 9px;
+  padding: 12px;
+  border: 1px solid #e7c998;
+  border-left: 4px solid #ce8128;
+  border-radius: 10px;
+  background: #fffbf4;
+  text-align: left;
+  color: #3b3025;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mc-orders .mc-order-customer-choices-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+}
+
+.mc-orders .mc-order-customer-choices-heading strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.mc-orders .mc-order-customer-choices-heading small,
+.mc-orders .mc-order-choices-group small {
+  color: #655b4e;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.mc-orders .mc-order-choices-group + .mc-order-choices-group {
+  margin-top: 10px;
+}
+
+.mc-orders .mc-order-choices-group > strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  margin: 0 0 4px;
+}
+
+.mc-orders .mc-order-choices-group--remove > strong {
+  color: #9d2828;
+}
+
+.mc-orders .mc-order-choices-group--extra > strong {
+  color: #236448;
+}
+
+.mc-orders .mc-order-choices-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mc-orders .mc-order-choices-group li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #292522;
+}
+
+.mc-orders .mc-order-choices-group li > span {
+  display: inline-flex;
+  justify-content: center;
+  flex: 0 0 18px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 18px;
+  background: #ffe5e5;
+  color: #9d2828;
+}
+
+.mc-orders .mc-order-choices-group--extra li > span {
+  background: #e3f3e9;
+  color: #236448;
+}
+
+.mc-orders .mc-order-choices-portions {
+  margin: 9px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #eadfcf;
+  color: #665342;
+  font-size: 12px;
+}
+
+.mc-orders .mc-order-kitchen-customer-summary {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #e7c998;
+  border-radius: 12px;
+  background: #fff9ef;
+}
+
+.mc-orders .mc-order-kitchen-customer-summary > h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.mc-orders .mc-order-kitchen-choice-line + .mc-order-kitchen-choice-line {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid #e9dacc;
+}
+
+.mc-orders .mc-order-kitchen-choice-line > strong {
+  display: block;
+  font-size: 13px;
+}
+
+.mc-orders .mc-order-kitchen-choice-line .mc-order-customer-choices {
+  margin-top: 6px;
+  background: #fff;
+}
+
+@media (max-width: 650px) {
+  .mc-orders .mc-order-product-content {
+    flex-basis: 100%;
+  }
+  .mc-orders .mc-order-customer-choices {
+    padding: 10px;
+  }
+  .mc-orders .mc-order-customer-choices-heading {
+    gap: 2px 8px;
+  }
+  .mc-orders .mc-order-choices-group li {
+    font-size: 12px;
+  }
+  .mc-orders .mc-order-kitchen-customer-summary {
+    padding: 10px;
+  }
+}

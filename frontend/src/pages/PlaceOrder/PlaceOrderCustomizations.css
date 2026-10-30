@@ -1,0 +1,73 @@
+/* Manila CafÃ© â€“ checkout summary for product customizations.
+   All selectors are local to the checkout to avoid changing other pages. */
+
+.manila-checkout .mc-checkout-product-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+
+.manila-checkout .mc-checkout-product-entry > span {
+  overflow-wrap: anywhere;
+}
+
+.manila-checkout .mc-checkout-custom-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 12px;
+  border-left: 2px solid #dbc8b0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.manila-checkout .mc-checkout-custom-details small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #5b534c;
+}
+
+.manila-checkout .mc-checkout-custom-details .mc-checkout-custom-invalid {
+  color: #a52222;
+  font-weight: 600;
+}
+
+.manila-checkout .mc-checkout-custom-warning {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #e1b9b9;
+  border-radius: 12px;
+  background: #fff8f7;
+  color: #6f2727;
+  line-height: 1.5;
+}
+
+.manila-checkout .mc-checkout-custom-warning p {
+  margin: 6px 0 8px;
+}
+
+.manila-checkout .mc-checkout-custom-warning a {
+  text-decoration: underline;
+  font-weight: 600;
+  color: inherit;
+}
+
+.manila-checkout .mc-checkout-estimate {
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #655a50;
+}
+
+@media (max-width: 600px) {
+  .manila-checkout .mc-checkout-custom-warning {
+    padding: 12px;
+  }
+
+  .manila-checkout .mc-checkout-custom-details {
+    padding-left: 9px;
+  }
+}

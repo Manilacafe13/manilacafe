@@ -2,6 +2,82 @@ import mongoose from "mongoose";
 
 
 // ======================================================
+// FAS 2: SNAPSHOTS AV KUNDVAL
+// ======================================================
+// Ordern ska bevara de val kunden betalade fÃ¶r Ã¤ven om en
+// produkt eller ett tillval senare Ã¤ndras i adminpanelen.
+// Backend berÃ¤knar och kontrollerar alltid priser och val.
+
+const MAX_ORDER_CUSTOMIZATION_OPTIONS = 30;
+
+const uniqueOptionSnapshots = (options) => {
+  if (options === undefined) return true;
+  if (!Array.isArray(options) || options.length > MAX_ORDER_CUSTOMIZATION_OPTIONS) {
+    return false;
+  }
+
+  const optionIds = options.map((option) =>
+    String(option?.optionId || "").toLowerCase()
+  );
+
+  return optionIds.every(Boolean) &&
+    new Set(optionIds).size === optionIds.length;
+};
+
+// En ingrediens som kunden valt att INTE fÃ¥.
+const removedIngredientSnapshotSchema = new mongoose.Schema(
+  {
+    optionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      maxlength: 100
+    }
+  },
+  { _id: false }
+);
+
+// Ett extra tillval med namn, antal och styckpris vid kÃ¶pet.
+const extraSnapshotSchema = new mongoose.Schema(
+  {
+    optionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      maxlength: 100
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 10,
+      validate: {
+        validator: Number.isInteger,
+        message: "Antalet extra tillval mÃ¥ste vara ett heltal."
+      }
+    },
+    // Pris per tillval exklusive moms. SÃ¤tts av backend.
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100000
+    }
+  },
+  { _id: false }
+);
+
+// ======================================================
 // ORDER ITEM SCHEMA
 // ======================================================
 
@@ -48,6 +124,29 @@ const orderItemSchema = new mongoose.Schema(
     image: {
       type: String,
       default: ""
+    },
+
+    // Valfritt fÃ¶r vanliga produkter. Finns endast nÃ¤r kunden
+    // har gjort anpassningar av just denna orderrad.
+    // AnvÃ¤nd explicita nestade paths sÃ¥ att orderController.js
+    // kan verifiera schema-stÃ¶det fÃ¶re Stripe-betalningen.
+    customizations: {
+      removedIngredients: {
+        type: [removedIngredientSnapshotSchema],
+        default: undefined,
+        validate: {
+          validator: uniqueOptionSnapshots,
+          message: "Ogiltiga eller dubbla bortvalda ingredienser."
+        }
+      },
+      extras: {
+        type: [extraSnapshotSchema],
+        default: undefined,
+        validate: {
+          validator: uniqueOptionSnapshots,
+          message: "Ogiltiga eller dubbla extra tillval."
+        }
+      }
     }
 
   },
@@ -104,13 +203,13 @@ const addressSchema = new mongoose.Schema(
     // ==================================================
 
     /*
-      Dessa fält krävs endast när kunden
-      väljer delivery.
+      Dessa fÃ¤lt krÃ¤vs endast nÃ¤r kunden
+      vÃ¤ljer delivery.
 
-      Vid pickup behöver kunden inte
+      Vid pickup behÃ¶ver kunden inte
       ange leveransadress.
 
-      Den kontrollen görs i
+      Den kontrollen gÃ¶rs i
       orderController.js.
     */
 
@@ -155,12 +254,12 @@ const orderSchema = new mongoose.Schema(
     // ==================================================
 
     /*
-      userId är valfritt.
+      userId Ã¤r valfritt.
 
       Inloggad kund:
-      userId innehåller kundens MongoDB-ID.
+      userId innehÃ¥ller kundens MongoDB-ID.
 
-      Gästkund:
+      GÃ¤stkund:
       userId blir null.
 
       Kundens namn, e-post och telefonnummer
@@ -213,8 +312,8 @@ const orderSchema = new mongoose.Schema(
       = kunden vill ha ordern imorgon
 
       large-order
-      = större beställning,
-        minst 48 timmar framåt
+      = stÃ¶rre bestÃ¤llning,
+        minst 48 timmar framÃ¥t
     */
 
     fulfillmentType: {
@@ -237,10 +336,10 @@ const orderSchema = new mongoose.Schema(
 
     /*
       pickup
-      = kunden hämtar beställningen
+      = kunden hÃ¤mtar bestÃ¤llningen
 
       delivery
-      = beställningen levereras
+      = bestÃ¤llningen levereras
         till kundens adress
     */
 
@@ -275,14 +374,14 @@ const orderSchema = new mongoose.Schema(
 // ==================================================
 
 /*
-  Manila Café öppettider:
+  Manila CafÃ© Ã¶ppettider:
 
-  Måndag - söndag:
+  MÃ¥ndag - sÃ¶ndag:
   10:00 - 23:00
 
-  Samma tider gäller alla dagar.
+  Samma tider gÃ¤ller alla dagar.
 
-  Tillåtna tider kontrolleras även i
+  TillÃ¥tna tider kontrolleras Ã¤ven i
   orderController.js.
 */
 
@@ -357,7 +456,7 @@ discountType: {
   default: null
 },
 
-// Rabattens ursprungliga värde
+// Rabattens ursprungliga vÃ¤rde
 // Exempel: 15 (%) eller 30 (kr)
 discountValue: {
   type: Number,
@@ -429,20 +528,20 @@ discountValue: {
       type: String,
 
       enum: [
-        "Inväntar betalning",
+        "InvÃ¤ntar betalning",
         "Betalning mottagen",
-        "Betalning mottagen - lagerkontroll krävs",
-        "Beställning mottagen",
-        "Förbereds",
-        "Redo för upphämtning",
-        "Upphämtad",
-        "På väg",
+        "Betalning mottagen - lagerkontroll krÃ¤vs",
+        "BestÃ¤llning mottagen",
+        "FÃ¶rbereds",
+        "Redo fÃ¶r upphÃ¤mtning",
+        "UpphÃ¤mtad",
+        "PÃ¥ vÃ¤g",
         "Levererad",
         "Avbruten"
       ],
 
       default:
-        "Inväntar betalning",
+        "InvÃ¤ntar betalning",
 
       trim: true
     },
@@ -541,22 +640,22 @@ discountValue: {
 // INDEXES
 // ======================================================
 
-// Kundens senaste orders först.
-// Gästorders har userId: null.
+// Kundens senaste orders fÃ¶rst.
+// GÃ¤storders har userId: null.
 orderSchema.index({
   userId: 1,
   createdAt: -1
 });
 
 
-// Sortering efter önskat datum
+// Sortering efter Ã¶nskat datum
 orderSchema.index({
   requestedDate: 1,
   fulfillmentType: 1
 });
 
 
-// Sortering efter avhämtning / leverans
+// Sortering efter avhÃ¤mtning / leverans
 orderSchema.index({
   requestedDate: 1,
   deliveryMethod: 1
@@ -564,7 +663,7 @@ orderSchema.index({
 
 
 // Stripe Checkout Session ska endast
-// kunna tillhöra en order.
+// kunna tillhÃ¶ra en order.
 orderSchema.index(
   {
     stripeSessionId: 1
@@ -577,7 +676,7 @@ orderSchema.index(
 
 
 // Stripe Payment Intent ska endast
-// kunna tillhöra en order.
+// kunna tillhÃ¶ra en order.
 orderSchema.index(
   {
     stripePaymentIntentId: 1

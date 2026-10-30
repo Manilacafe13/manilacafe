@@ -4,7 +4,8 @@ import {
   addFood,
   listFood,
   removeFood,
-  updateStock
+  updateStock,
+  updateFoodCustomizations
 } from "../controllers/foodControllers.js";
 
 import multer from "multer";
@@ -118,7 +119,7 @@ const upload = multer({
 
     return cb(
       new Error(
-        "Endast bildfiler är tillåtna."
+        "Endast bildfiler Ã¤r tillÃ¥tna."
       ),
       false
     );
@@ -175,6 +176,26 @@ foodRouter.post(
   adminAuth,
 
   updateStock
+
+);
+
+
+// ======================================================
+// UPDATE PRODUCT CUSTOMIZATIONS - ADMIN
+// ======================================================
+// POST /api/food/customizations
+// JSON: { id: "productId", customizations: { enabled, removableIngredients, extras } }
+// Customer-facing product lists remain on GET /list.
+
+foodRouter.post(
+
+  "/customizations",
+
+  authMiddleware,
+
+  adminAuth,
+
+  updateFoodCustomizations
 
 );
 

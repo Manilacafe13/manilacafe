@@ -1,0 +1,48 @@
+/* Manila CafÃ© â€“ fas 2. Komplettering till befintliga Cart.css. */
+
+.mc-cart-column-headings { margin-bottom: 12px; }
+.mc-cart-line .mc-cart-grid { align-items: start; }
+.mc-cart-product-info { min-width: 0; overflow-wrap: anywhere; }
+.mc-cart-product-info strong { display: block; font-weight: 650; line-height: 1.4; }
+.mc-cart-line .mc-cart-cell--image img { width: 55px; height: 55px; object-fit: cover; border-radius: 9px; }
+.mc-cart-no-image { display: inline-block; max-width: 80px; font-size: 11px; color: #777; }
+.mc-cart-custom-label { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 650; color: #5c477e; }
+.mc-cart-choices { margin-top: 7px; font-size: 12px; line-height: 1.5; color: #525252; }
+.mc-cart-choices p { margin: 0 0 4px; }
+.mc-cart-choice-label { font-weight: 650; color: #222; }
+.mc-cart-choices ul { margin: 3px 0 0 14px; padding: 0; list-style-type: disc; }
+.mc-cart-choices li { margin: 3px 0; }
+.mc-cart-extra-price { color: #5a5a5a; }
+.mc-cart-mobile-label { display: none; }
+.mc-cart-line .mc-cart-cell--price,
+.mc-cart-line .mc-cart-cell--quantity,
+.mc-cart-line .mc-cart-cell--total { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.mc-cart-line .mc-cart-cell--remove { cursor: pointer; }
+.mc-cart-line .mc-cart-cell--remove:disabled { opacity: .45; cursor: not-allowed; }
+.mc-cart-empty { padding: 20px 0; color: #5d5d5d; }
+.mc-cart-invalid { margin: 8px 0 13px; padding: 10px 12px; border: 1px solid #e9c1b3; border-radius: 8px; color: #842c20; background: #fff7f2; font-size: 13px; line-height: 1.5; }
+.mc-cart-checkout-warning { margin: 14px 0; padding: 10px 12px; border-radius: 8px; background: #fff7ed; color: #7b3e0c; font-size: 13px; line-height: 1.5; }
+.mc-cart-estimate { color: #555; font-size: 12px; line-height: 1.5; margin-top: 12px; }
+
+@media (max-width: 670px) {
+  .mc-cart-column-headings { display: none !important; }
+  .cart .mc-cart-line .mc-cart-grid {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "image name remove"
+      "image price remove"
+      "image quantity total";
+    gap: 6px 10px;
+    align-items: start;
+    padding: 12px 0;
+  }
+  .mc-cart-cell--image { grid-area: image; }
+  .mc-cart-cell--name { grid-area: name; }
+  .mc-cart-cell--price { grid-area: price; }
+  .mc-cart-cell--quantity { grid-area: quantity; }
+  .mc-cart-cell--total { grid-area: total; justify-self: end; text-align: right; }
+  .mc-cart-cell--remove { grid-area: remove; justify-self: end; align-self: start; }
+  .mc-cart-mobile-label { display: inline; color: #666; font-size: 12px; }
+  .mc-cart-line .mc-cart-cell--image img { width: 56px; height: 56px; }
+}

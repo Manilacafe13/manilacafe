@@ -6,44 +6,33 @@ import { StoreContext } from '../../context/StoreContext'
 
 // Visa bara betalningsmetoder som finns eller tydligt markeras som kommande.
 // Billie är aktiverat. Swish-ansökan väntar fortfarande på godkännande.
-// Logotyper för betalningsmetoderna från Dinteros offentliga varumärkesmaterial.
-// Swish markeras fortfarande som kommande tills Stripe-ansökan har godkänts.
 const paymentOptions = [
   { id: 'visa', name: 'VISA' },
   { id: 'mastercard', name: 'Mastercard' },
-  {
-    id: 'klarna',
-    name: 'Klarna',
-    logo: 'https://cdn.prod.website-files.com/65200b28053a7ec77284becf/677e9b8acc860057a17089e0_KlarnaLogo.svg'
-  },
-  {
-    id: 'billie',
-    name: 'Billie',
-    logo: 'https://cdn.prod.website-files.com/65200b28053a7ec77284becf/68f89a9b2acab0826189c36d_Billie%20%281%29.svg',
-    note: 'för företag'
-  },
-  {
-    id: 'swish',
-    name: 'Swish',
-    logo: 'https://cdn.prod.website-files.com/65200b28053a7ec77284becf/65fd521b0fc28b127f908dcd_Swish.svg',
-    note: 'kommer snart',
-    pending: true
-  }
+  { id: 'klarna', name: 'Klarna.' },
+  { id: 'billie', name: 'Billie', note: 'för företag' },
+  { id: 'swish', name: 'Swish', note: 'kommer snart', pending: true }
 ]
 
 const Navbar = ({ setShowLogin }) => {
   const [menu, setMenu] = useState('home')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  const { cartItems = {}, token, setToken } = useContext(StoreContext)
+  const { cartItems = {}, customizedCartItems = {}, token, setToken } = useContext(StoreContext)
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Antal produkter i varukorgen
-  const cartCount = Object.values(cartItems).reduce(
-    (total, quantity) => total + Number(quantity || 0),
+  // Antal produkter i varukorgen: både vanliga och kundanpassade rader.
+  // Kunden ska få samma gröna prick oavsett hur produkten lagts till.
+  const regularCount = Object.values(cartItems).reduce(
+    (total, quantity) => total + Math.max(0, Number(quantity) || 0),
     0
   )
+  const customizedCount = Object.values(customizedCartItems).reduce(
+    (total, line) => total + Math.max(0, Number(line?.quantity) || 0),
+    0
+  )
+  const cartCount = regularCount + customizedCount
 
   const handleMenuClick = (menuName) => {
     setMenu(menuName)
@@ -114,20 +103,9 @@ const Navbar = ({ setShowLogin }) => {
                   className={`payment-banner-option${option.pending ? ' payment-banner-option--pending' : ''}`}
                   key={`${copy}-${option.id}`}
                 >
-                  {option.logo ? (
-                    <span className="payment-banner-logo-wrap">
-                      <img
-                        src={option.logo}
-                        alt={option.name}
-                        className={`payment-banner-logo payment-banner-logo--${option.id}`}
-                        decoding="async"
-                      />
-                    </span>
-                  ) : (
-                    <span className={`payment-banner-name payment-banner-name--${option.id}`}>
-                      {option.name}
-                    </span>
-                  )}
+                  <span className={`payment-banner-name payment-banner-name--${option.id}`}>
+                    {option.name}
+                  </span>
                   {option.note && (
                     <span className="payment-banner-note">{option.note}</span>
                   )}
@@ -192,7 +170,7 @@ const Navbar = ({ setShowLogin }) => {
             <Link
               to="/cart"
               onClick={() => setShowProfileMenu(false)}
-              aria-label="Öppna varukorgen"
+              aria-label={`Öppna varukorgen${cartCount > 0 ? `, ${cartCount} produkter` : ""}`}
             >
               <img src={assets.basket_icon} alt="" aria-hidden="true" />
             </Link>

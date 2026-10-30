@@ -7,10 +7,15 @@ import React, {
 } from 'react'
 
 import './List.css'
+import './ListCustomizations.css'
 import axios from "axios"
 import { toast } from "react-toastify"
 
 const MAX_SAME_DAY_STOCK = 10000
+const MAX_CUSTOMIZATION_OPTIONS = 30
+const MAX_OPTION_NAME_LENGTH = 100
+const MAX_EXTRA_QUANTITY = 10
+const MAX_PRICE = 100000
 
 
 const List = () => {
@@ -38,6 +43,195 @@ const List = () => {
 
   const [stockValues, setStockValues] =
     useState({})
+
+  // ==============================================
+  // KUNDVAL / PRODUKTANPASSNINGAR
+  // ==============================================
+  // Detta är kundsynliga alternativ, aldrig interna köksrecept.
+  const [customizationProductId, setCustomizationProductId] = useState(null)
+  const [customizationsEnabled, setCustomizationsEnabled] = useState(false)
+  const [removableIngredients, setRemovableIngredients] = useState([])
+  const [extraOptions, setExtraOptions] = useState([])
+  const [customizationSaving, setCustomizationSaving] = useState(false)
+  const [customizationError, setCustomizationError] = useState('')
+  const customizationFieldKeyRef = useRef(0)
+
+  const customizationProduct =
+    list.find(item => item._id === customizationProductId) || null
+
+  const createRemovableIngredient = (option = {}) => ({
+    _key: ++customizationFieldKeyRef.current,
+    ...(option._id ? { _id: String(option._id) } : {}),
+    name: String(option.name ?? ''),
+    available: option.available !== false
+  })
+
+  const createExtraOption = (option = {}) => ({
+    _key: ++customizationFieldKeyRef.current,
+    ...(option._id ? { _id: String(option._id) } : {}),
+    name: String(option.name ?? ''),
+    price: option.price == null ? '' : String(option.price),
+    maxQuantity: option.maxQuantity == null ? '1' : String(option.maxQuantity),
+    available: option.available !== false
+  })
+
+  const openCustomizations = product => {
+    if (customizationSaving || recipeSaving) return
+    // Endast en redigerare visas åt gången.
+    if (recipeProductId) closeRecipe()
+    const customization = product.customizations || {}
+    setCustomizationProductId(product._id)
+    setCustomizationsEnabled(customization.enabled === true)
+    setRemovableIngredients(
+      (Array.isArray(customization.removableIngredients)
+        ? customization.removableIngredients : []).map(createRemovableIngredient)
+    )
+    setExtraOptions(
+      (Array.isArray(customization.extras)
+        ? customization.extras : []).map(createExtraOption)
+    )
+    setCustomizationError('')
+  }
+
+  const closeCustomizations = () => {
+    if (customizationSaving) return
+    setCustomizationProductId(null)
+    setCustomizationError('')
+  }
+
+  const updateRemovableIngredient = (key, field, value) => {
+    setRemovableIngredients(previous => previous.map(row =>
+      row._key === key ? { ...row, [field]: value } : row
+    ))
+  }
+
+  const updateExtraOption = (key, field, value) => {
+    setExtraOptions(previous => previous.map(row =>
+      row._key === key ? { ...row, [field]: value } : row
+    ))
+  }
+
+  const validateNames = (items, label) => {
+    const names = new Set()
+    for (const row of items) {
+      const name = row.name.trim()
+      if (!name || name.length > MAX_OPTION_NAME_LENGTH) {
+        throw new Error(`${label}: ange ett namn (högst ${MAX_OPTION_NAME_LENGTH} tecken).`)
+      }
+      const key = name.toLocaleLowerCase('sv')
+      if (names.has(key)) throw new Error(`${label}: namnet ${name} förekommer flera gånger.`)
+      names.add(key)
+    }
+  }
+
+  const saveCustomizations = async event => {
+    event.preventDefault()
+    if (!customizationProductId || customizationSaving) return
+    setCustomizationError('')
+
+    let customizations
+    try {
+      if (removableIngredients.length > MAX_CUSTOMIZATION_OPTIONS ||
+          extraOptions.length > MAX_CUSTOMIZATION_OPTIONS) {
+        throw new Error(`Högst ${MAX_CUSTOMIZATION_OPTIONS} alternativ i varje grupp.`)
+      }
+      validateNames(removableIngredients, 'Ingredienser')
+      validateNames(extraOptions, 'Tillval')
+
+      const extras = extraOptions.map(row => {
+        const priceText = row.price.trim().replace(',', '.')
+        const price = Number(priceText)
+        const maxQuantity = Number(row.maxQuantity)
+        if (!priceText || !/^(?:\d+)(?:\.\d{1,2})?$/.test(priceText) ||
+            !Number.isFinite(price) || price > MAX_PRICE) {
+          throw new Error(`Ange ett giltigt pris (0–${MAX_PRICE} kr, max två decimaler) för ${row.name}.`)
+        }
+        if (!Number.isInteger(maxQuantity) || maxQuantity < 1 || maxQuantity > MAX_EXTRA_QUANTITY) {
+          throw new Error(`Maxantal för ${row.name} måste vara 1–${MAX_EXTRA_QUANTITY}.`)
+        }
+        return {
+          ...(row._id ? { _id: row._id } : {}),
+          name: row.name.trim(),
+          available: row.available,
+          price,
+          maxQuantity
+        }
+      })
+
+      customizations = {
+        enabled: customizationsEnabled,
+        removableIngredients: removableIngredients.map(row => ({
+          ...(row._id ? { _id: row._id } : {}),
+          name: row.name.trim(),
+          available: row.available
+        })),
+        extras
+      }
+    } catch (error) {
+      setCustomizationError(error.message)
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setCustomizationError('Du behöver logga in som administratör.')
+      return
+    }
+
+    try {
+      setCustomizationSaving(true)
+      const response = await axios.post(`${url}/api/food/customizations`, {
+        id: customizationProductId,
+        customizations
+      }, {
+        headers: { token, Authorization: `Bearer ${token}` }
+      })
+
+      if (!response.data?.success || !response.data?.data) {
+        throw new Error(response.data?.message || 'Alternativen kunde inte sparas.')
+      }
+
+      // Kontrollera att backend faktiskt sparade kundvalen.
+      // En gammal foodModel.js kan tyst ignorera okända fält i Mongoose.
+      const savedProduct = response.data.data
+      const savedChoices = savedProduct.customizations
+      if (!savedChoices ||
+          savedChoices.enabled !== customizations.enabled ||
+          !Array.isArray(savedChoices.removableIngredients) ||
+          !Array.isArray(savedChoices.extras) ||
+          savedChoices.removableIngredients.length !== customizations.removableIngredients.length ||
+          savedChoices.extras.length !== customizations.extras.length ||
+          [...savedChoices.removableIngredients, ...savedChoices.extras]
+            .some(option => !option._id)) {
+        throw new Error('Backend sparade inte kundvalen. Kontrollera backend/models/foodModel.js och starta om backend.')
+      }
+      setList(previous => previous.map(item =>
+        item._id === savedProduct._id ? savedProduct : item
+      ))
+      toast.success('Kundvalen har sparats.')
+      setCustomizationProductId(null)
+      setCustomizationError('')
+    } catch (error) {
+      setCustomizationError(error.response?.status === 404
+        ? 'Anpassnings-API:t hittades inte. Kontrollera att backend är publicerad.'
+        : error.response?.status === 401
+          ? 'Inloggningen har gått ut. Logga in igen.'
+          : error.response?.status === 403
+            ? 'Du saknar administratörsbehörighet.'
+            : error.response?.data?.message || error.message || 'Kundvalen kunde inte sparas.')
+    } finally {
+      setCustomizationSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!customizationProductId) return
+    const onEscape = event => {
+      if (event.key === 'Escape' && !customizationSaving) closeCustomizations()
+    }
+    document.addEventListener('keydown', onEscape)
+    return () => document.removeEventListener('keydown', onEscape)
+  }, [customizationProductId, customizationSaving])
 
   // Recept är interna och hämtas endast från adminskyddad endpoint.
   const [recipeProductId, setRecipeProductId] = useState(null)
@@ -71,6 +265,8 @@ const List = () => {
   }
 
   const openRecipe = async (product) => {
+    if (customizationSaving) return
+    if (customizationProductId) closeCustomizations()
     const requestId = ++recipeRequestRef.current
     setRecipeProductId(product._id)
     setRecipeIngredients([newIngredient()])
@@ -940,6 +1136,16 @@ const List = () => {
               <div className="list-item-actions">
                 <button
                   type="button"
+                  className="mc-customization-button"
+                  onClick={() => openCustomizations(item)}
+                  aria-label={`Redigera kundval för ${item.name}`}
+                  disabled={customizationSaving}
+                >
+                  ⚙️ Kundval
+                </button>
+
+                <button
+                  type="button"
                   className="list-recipe-button"
                   onClick={() => void openRecipe(item)}
                   aria-label={`Redigera internt recept för ${item.name}`}
@@ -967,6 +1173,192 @@ const List = () => {
 
 
       </div>
+
+      {/* Separat redigerare för kundsynliga produktanpassningar. */}
+      {customizationProduct && (
+        <div className="mc-customization-overlay" onMouseDown={event => {
+          if (event.target === event.currentTarget) closeCustomizations()
+        }}>
+          <section
+            className="mc-customization-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mc-customization-title"
+          >
+            <div className="mc-customization-header">
+              <div>
+                <span className="mc-customization-eyebrow">KUNDANPASSNINGAR</span>
+                <h2 id="mc-customization-title">{customizationProduct.name}</h2>
+                <p>Bestäm vad kunden får välja bort eller lägga till.</p>
+              </div>
+              <button
+                type="button"
+                className="mc-customization-close"
+                onClick={closeCustomizations}
+                disabled={customizationSaving}
+                aria-label="Stäng kundval"
+              >×</button>
+            </div>
+
+            <form className="mc-customization-form" onSubmit={saveCustomizations}>
+              <div className="mc-customization-scroll">
+                <label className="mc-customization-switch">
+                  <input
+                    type="checkbox"
+                    checked={customizationsEnabled}
+                    onChange={event => setCustomizationsEnabled(event.target.checked)}
+                    disabled={customizationSaving}
+                  />
+                  <span>
+                    <strong>Aktivera kundanpassningar</strong>
+                    <small>Avstängt = alternativen visas inte för kunden.</small>
+                  </span>
+                </label>
+
+                <section className="mc-customization-section">
+                  <div className="mc-customization-section-header">
+                    <div>
+                      <h3>Välj bort ingredienser</h3>
+                      <p>Lista endast sådant som går att ta bort ur denna produkt.</p>
+                    </div>
+                    <span>{removableIngredients.length}/{MAX_CUSTOMIZATION_OPTIONS}</span>
+                  </div>
+                  {removableIngredients.map((ingredient, index) => (
+                    <div className="mc-customization-option" key={ingredient._key}>
+                      <span className="mc-customization-index">{index + 1}</span>
+                      <label className="mc-customization-name">
+                        <span>Ingrediens</span>
+                        <input
+                          type="text"
+                          value={ingredient.name}
+                          placeholder="T.ex. majs"
+                          maxLength={MAX_OPTION_NAME_LENGTH}
+                          onChange={event => updateRemovableIngredient(ingredient._key, 'name', event.target.value)}
+                          disabled={customizationSaving}
+                        />
+                      </label>
+                      <label className="mc-customization-available">
+                        <input
+                          type="checkbox"
+                          checked={ingredient.available}
+                          onChange={event => updateRemovableIngredient(ingredient._key, 'available', event.target.checked)}
+                          disabled={customizationSaving}
+                        />
+                        <span>Valbar</span>
+                      </label>
+                      <button
+                        type="button"
+                        className="mc-customization-remove"
+                        aria-label={`Ta bort ingrediensval ${index + 1}`}
+                        disabled={customizationSaving}
+                        onClick={() => setRemovableIngredients(previous => previous.filter(row => row._key !== ingredient._key))}
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="mc-customization-add"
+                    onClick={() => setRemovableIngredients(previous => [...previous, createRemovableIngredient()])}
+                    disabled={customizationSaving || removableIngredients.length >= MAX_CUSTOMIZATION_OPTIONS}
+                  >+ Lägg till ingrediensval</button>
+                </section>
+
+                <section className="mc-customization-section">
+                  <div className="mc-customization-section-header">
+                    <div>
+                      <h3>Extra tillval</h3>
+                      <p>Priser anges exklusive moms. Maxantal gäller per produkt.</p>
+                    </div>
+                    <span>{extraOptions.length}/{MAX_CUSTOMIZATION_OPTIONS}</span>
+                  </div>
+                  {extraOptions.map((extra, index) => (
+                    <div className="mc-customization-option mc-customization-option--extra" key={extra._key}>
+                      <span className="mc-customization-index">{index + 1}</span>
+                      <label className="mc-customization-name">
+                        <span>Tillval</span>
+                        <input
+                          type="text"
+                          value={extra.name}
+                          maxLength={MAX_OPTION_NAME_LENGTH}
+                          placeholder="T.ex. extra mango"
+                          onChange={event => updateExtraOption(extra._key, 'name', event.target.value)}
+                          disabled={customizationSaving}
+                        />
+                      </label>
+                      <label className="mc-customization-price">
+                        <span>Pris (kr)</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={extra.price}
+                          placeholder="15,00"
+                          onChange={event => updateExtraOption(extra._key, 'price', event.target.value)}
+                          disabled={customizationSaving}
+                        />
+                      </label>
+                      <label className="mc-customization-quantity">
+                        <span>Maxantal</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max={MAX_EXTRA_QUANTITY}
+                          step="1"
+                          value={extra.maxQuantity}
+                          onChange={event => updateExtraOption(extra._key, 'maxQuantity', event.target.value)}
+                          disabled={customizationSaving}
+                        />
+                      </label>
+                      <label className="mc-customization-available">
+                        <input
+                          type="checkbox"
+                          checked={extra.available}
+                          onChange={event => updateExtraOption(extra._key, 'available', event.target.checked)}
+                          disabled={customizationSaving}
+                        />
+                        <span>Valbar</span>
+                      </label>
+                      <button
+                        type="button"
+                        className="mc-customization-remove"
+                        aria-label={`Ta bort tillval ${index + 1}`}
+                        disabled={customizationSaving}
+                        onClick={() => setExtraOptions(previous => previous.filter(row => row._key !== extra._key))}
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="mc-customization-add"
+                    onClick={() => setExtraOptions(previous => [...previous, createExtraOption()])}
+                    disabled={customizationSaving || extraOptions.length >= MAX_CUSTOMIZATION_OPTIONS}
+                  >+ Lägg till tillval</button>
+                </section>
+
+                <p className="mc-customization-note">
+                  Köksreceptet ändras inte. Kundval syns på produktsidan först när
+                  produktanpassningar har kopplats till varukorg och kassa.
+                </p>
+                {customizationError && (
+                  <p className="mc-customization-error" role="alert">{customizationError}</p>
+                )}
+              </div>
+              <div className="mc-customization-footer">
+                <button
+                  type="button"
+                  className="mc-customization-cancel"
+                  onClick={closeCustomizations}
+                  disabled={customizationSaving}
+                >Avbryt</button>
+                <button
+                  type="submit"
+                  className="mc-customization-save"
+                  disabled={customizationSaving}
+                >{customizationSaving ? 'Sparar…' : 'Spara kundval'}</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {/* Receptredigeraren visas bara efter klick och påverkar inte produktlistans layout. */}
       {recipeProduct && (

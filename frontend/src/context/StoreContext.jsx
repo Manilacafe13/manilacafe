@@ -5,6 +5,14 @@ import {
 } from "react";
 
 import axios from "axios";
+import {
+    CUSTOMIZED_CART_STORAGE_KEY,
+    MAX_CART_QUANTITY,
+    sanitizeCustomizedCart,
+    customizationKey,
+    validateSelectionForProduct,
+    buildCustomizedCartEntries
+} from "./customizedCart";
 
 
 export const StoreContext =
@@ -19,7 +27,12 @@ export const StoreContext =
 const VAT_RATE = 0.06;
 
 // Samma maxgräns som backend
-const MAX_ITEM_QUANTITY = 99;
+const MAX_ITEM_QUANTITY = MAX_CART_QUANTITY;
+
+// Kundval aktiverade ENDAST i Vite-utvecklingsläge (npm run dev).
+// Vid produktionsbygge är anpassade köp fortsatt spärrade tills
+// Stripe, orderlagring och Verify-sidan verifierats med ett testköp.
+const CUSTOMIZED_CHECKOUT_READY = import.meta.env.DEV;
 
 // Guest/local cart storage
 const CART_STORAGE_KEY =
@@ -114,6 +127,21 @@ const getStoredCart = () => {
 
 
 // ======================================================
+// READ SEPARATE CUSTOMIZED CART
+// ======================================================
+
+const getStoredCustomizedCart = () => {
+    try {
+        const raw = localStorage.getItem(CUSTOMIZED_CART_STORAGE_KEY);
+        return raw ? sanitizeCustomizedCart(JSON.parse(raw)) : {};
+    } catch (error) {
+        console.error("Could not read customized cart:", error);
+        return {};
+    }
+};
+
+
+// ======================================================
 // STORE CONTEXT PROVIDER
 // ======================================================
 
@@ -140,6 +168,13 @@ const StoreContextProvider = (props) => {
         () => getStoredCart()
     );
 
+
+    // Separate line items: two versions of the same product are never merged
+    // unless their selected ingredients and extra quantities are identical.
+    // This does not change the existing cartItems object or backend cart API.
+    const [customizedCartItems, setCustomizedCartItems] = useState(
+        () => getStoredCustomizedCart()
+    );
 
     const [
         food_list,
@@ -192,6 +227,81 @@ const StoreContextProvider = (props) => {
 
     }, [cartItems]);
 
+
+    // Keep customized selections separately in localStorage. Never store
+    // customer-controlled prices: all display prices come from food_list.
+    useEffect(() => {
+        try {
+            localStorage.setItem(
+                CUSTOMIZED_CART_STORAGE_KEY,
+                JSON.stringify(sanitizeCustomizedCart(customizedCartItems))
+            );
+        } catch (error) {
+            console.error("Could not save customized cart:", error);
+        }
+    }, [customizedCartItems]);
+
+    // Prepared for the next stages; not exposed to ProductPage yet.
+    // It will only be enabled after Cart + server-side checkout integration.
+    const addToCartCustomized = async (productId, selection) => {
+        if (!CUSTOMIZED_CHECKOUT_READY) {
+            return { success: false, message: "Anpassade köp aktiveras snart." };
+        }
+
+        try {
+            const product = food_list.find(item => item._id === productId);
+            const validated = validateSelectionForProduct(product, selection);
+            const cartKey = customizationKey(productId, validated);
+
+            // Read the latest local cart, avoiding stale event-handler state.
+            const previous = getStoredCustomizedCart();
+            const count = Number(previous[cartKey]?.quantity || 0);
+            if (count >= MAX_ITEM_QUANTITY) {
+                return { success: false, message: "Maxantalet har uppnåtts." };
+            }
+            const next = {
+                ...previous,
+                [cartKey]: {
+                    productId,
+                    removedIngredientIds: validated.removedIngredientIds,
+                    extras: validated.extras,
+                    quantity: count + 1
+                }
+            };
+
+            // Persist before reporting success. Do NOT silently discard options.
+            localStorage.setItem(
+                CUSTOMIZED_CART_STORAGE_KEY,
+                JSON.stringify(sanitizeCustomizedCart(next))
+            );
+            setCustomizedCartItems(next);
+            return { success: true, cartKey };
+        } catch (error) {
+            return {
+                success: false,
+                message: error?.message || "Kundvalen kunde inte sparas."
+            };
+        }
+    };
+
+    const removeFromCartCustomized = cartKey => {
+        setCustomizedCartItems(previous => {
+            if (!previous[cartKey]) return previous;
+            const next = { ...previous };
+            if (next[cartKey].quantity > 1) {
+                next[cartKey] = { ...next[cartKey], quantity: next[cartKey].quantity - 1 };
+            } else {
+                delete next[cartKey];
+            }
+            return next;
+        });
+    };
+
+    const getCustomizedCartEntries = () =>
+        buildCustomizedCartEntries(customizedCartItems, food_list);
+
+    // Must also be called after a successful order when checkout is integrated.
+    const clearCustomizedCart = () => setCustomizedCartItems({});
 
     // ==================================================
     // CLEAR INVALID SESSION
@@ -905,6 +1015,17 @@ const StoreContextProvider = (props) => {
 
         addToCart,
         removeFromCart,
+
+        // Phase 2 customized cart (disabled until the order backend is ready).
+        // Undefined intentionally preserves ProductPage's disabled button.
+        addToCartCustomized: CUSTOMIZED_CHECKOUT_READY
+            ? addToCartCustomized
+            : undefined,
+        customizedCartItems,
+        removeFromCartCustomized,
+        getCustomizedCartEntries,
+        clearCustomizedCart,
+        customizationCheckoutReady: CUSTOMIZED_CHECKOUT_READY,
 
         // Price calculations
         getTotalCartAmount,

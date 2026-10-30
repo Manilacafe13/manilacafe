@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react'
 import './FoodItem.css'
+import './FoodItemCustomizations.css'
 
 import { assets } from '../../assets/assets'
 import { StoreContext } from '../../context/StoreContext'
@@ -158,7 +159,7 @@ const portionInformation = {
     },
 
     "ube pandesal med ost": {
-        quantity: "3 stycken",
+        quantity: "4 stycken",
         contents:
             "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
         serving:
@@ -168,7 +169,7 @@ const portionInformation = {
     },
 
     "ube pandesal": {
-        quantity: "3 stycken",
+        quantity: "4 stycken",
         contents:
             "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
         serving:
@@ -197,18 +198,28 @@ const FoodItem = ({
     price,
     description,
     image,
-    category
+    category,
+    customizations: cardCustomizations
 }) => {
 
     const {
         cartItems = {},
         addToCart,
         removeFromCart,
+        food_list = [],
+        // Delas med ProductPage. Uteblir när betalsystemet inte är klar för kundval.
+        addToCartCustomized,
+        customizationCheckoutReady = false,
         url
     } = useContext(StoreContext)
 
     const [showAllergens, setShowAllergens] = useState(false)
     const [showPortionInfo, setShowPortionInfo] = useState(false)
+    const [showCustomerChoices, setShowCustomerChoices] = useState(false)
+    const [removedIngredientIds, setRemovedIngredientIds] = useState([])
+    const [extraQuantities, setExtraQuantities] = useState({})
+    const [addingCustomized, setAddingCustomized] = useState(false)
+    const [customizationMessage, setCustomizationMessage] = useState('')
 
 
     // ======================================================
@@ -455,6 +466,125 @@ const FoodItem = ({
 
     const quantity = cartItems[id] || 0
 
+
+    // ======================================================
+    // KUNDVAL PÅ PRODUKTKORT
+    // Hämta alltid alternativ från samma offentliga produktdata
+    // som ProductPage och från StoreContext (inte hårdkodade namn).
+    // ======================================================
+
+    const product = food_list.find(item =>
+        [item._id, item.id, item.itemId].some(value =>
+            value != null && String(value) === String(id)
+        )
+    ) || food_list.find(item =>
+        String(item.name || '').trim().toLocaleLowerCase('sv-SE') ===
+            String(name || '').trim().toLocaleLowerCase('sv-SE') &&
+        String(item.category || '') === String(category || '')
+    )
+    const customizationSettings = product?.customizations ?? cardCustomizations ?? {}
+
+    const removableIngredients = Array.isArray(customizationSettings.removableIngredients)
+        ? customizationSettings.removableIngredients.filter(option =>
+            option && option._id && option.available !== false && String(option.name || '').trim()
+        )
+        : []
+
+    const extras = Array.isArray(customizationSettings.extras)
+        ? customizationSettings.extras.filter(option =>
+            option && option._id && option.available !== false &&
+            String(option.name || '').trim() &&
+            Number.isFinite(Number(option.price)) && Number(option.price) >= 0
+        )
+        : []
+
+    const hasCustomerChoices = customizationSettings.enabled === true &&
+        (removableIngredients.length > 0 || extras.length > 0)
+
+    // Filtrera bort ändrade/inaktiverade alternativ innan de skickas.
+    const selectedRemovedIds = hasCustomerChoices
+        ? removableIngredients
+            .filter(option => removedIngredientIds.includes(String(option._id)))
+            .map(option => String(option._id))
+        : []
+
+    const selectedExtras = hasCustomerChoices
+        ? extras.map(option => {
+            const maxQuantity = Math.min(10, Math.max(1, Number(option.maxQuantity) || 1))
+            const count = Math.min(maxQuantity, Math.max(0,
+                Math.floor(Number(extraQuantities[String(option._id)]) || 0)
+            ))
+            return { optionId: String(option._id), quantity: count, unitPrice: Number(option.price) }
+        }).filter(option => option.quantity > 0)
+        : []
+
+    const hasSelectedCustomizations = selectedRemovedIds.length > 0 || selectedExtras.length > 0
+    const calculatedUnitPrice = Number(product?.price ?? price ?? 0) +
+        selectedExtras.reduce((sum, option) => sum + option.unitPrice * option.quantity, 0)
+
+    const money = value => Number(value || 0).toLocaleString('sv-SE', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+    })
+
+    const toggleRemovedIngredient = optionId => {
+        setCustomizationMessage('')
+        setRemovedIngredientIds(previous => previous.includes(optionId)
+            ? previous.filter(value => value !== optionId)
+            : [...previous, optionId])
+    }
+
+    const changeExtraQuantity = (option, delta) => {
+        setCustomizationMessage('')
+        const optionId = String(option._id)
+        const maxQuantity = Math.min(10, Math.max(1, Number(option.maxQuantity) || 1))
+        setExtraQuantities(previous => ({
+            ...previous,
+            [optionId]: Math.max(0, Math.min(maxQuantity, Number(previous[optionId] || 0) + delta))
+        }))
+    }
+
+    const clearSelections = () => {
+        setRemovedIngredientIds([])
+        setExtraQuantities({})
+        setCustomizationMessage('')
+    }
+
+    const addCustomizedItem = async () => {
+        // Säkerhetsgrind: skicka aldrig kundval som en vanlig orderrad.
+        if (!hasCustomerChoices || !hasSelectedCustomizations ||
+            customizationCheckoutReady !== true ||
+            typeof addToCartCustomized !== 'function' || addingCustomized) return
+
+        setAddingCustomized(true)
+        setCustomizationMessage('')
+        try {
+            const result = await addToCartCustomized(id, {
+                removedIngredientIds: selectedRemovedIds,
+                extras: selectedExtras.map(({ optionId, quantity }) => ({ optionId, quantity }))
+            })
+            if (result?.success !== true) {
+                throw new Error(result?.message || 'Det gick inte att spara kundvalen i varukorgen.')
+            }
+            clearSelections()
+            setCustomizationMessage('Anpassningen har lagts i varukorgen.')
+        } catch (error) {
+            setCustomizationMessage(error?.message || 'Kunde inte lägga till anpassningen.')
+        } finally {
+            setAddingCustomized(false)
+        }
+    }
+
+    // Den vanliga plusknappen får aldrig lägga in en oändrad produkt
+    // om kunden redan markerat bortval/tillval.
+    const addOriginalItem = () => {
+        if (hasSelectedCustomizations) {
+            setShowCustomerChoices(true)
+            setCustomizationMessage('Återställ dina val för att lägga till originalet.')
+            return
+        }
+        addToCart(id)
+    }
+
     const productPath =
         category === "Maträtter"
             ? `/matratt/${createSlug(name)}`
@@ -467,7 +597,7 @@ const FoodItem = ({
     return (
 
         <article
-            className="food-item"
+            className={`food-item${hasCustomerChoices ? " food-item--customizable" : ""}`}
             aria-labelledby={`food-title-${id}`}
         >
 
@@ -491,7 +621,7 @@ const FoodItem = ({
                     <button
                         type="button"
                         className="food-item-add-button"
-                        onClick={() => addToCart(id)}
+                        onClick={addOriginalItem}
                         aria-label={`Lägg till ${name} i varukorgen`}
                     >
 
@@ -537,7 +667,7 @@ const FoodItem = ({
                         <button
                             type="button"
                             className="food-item-counter-button"
-                            onClick={() => addToCart(id)}
+                            onClick={addOriginalItem}
                             aria-label={`Lägg till en ${name}`}
                         >
 
@@ -722,6 +852,108 @@ const FoodItem = ({
                     </div>
                 )}
 
+
+                {/* KUNDANPASSNINGAR: synliga direkt på produktkortet när admin aktiverat dem. */}
+                {hasCustomerChoices && (
+                    <section className="mc-food-choices" aria-label={`Kundanpassningar för ${name}`}>
+                        <button
+                            type="button"
+                            className="mc-food-choices-trigger"
+                            aria-expanded={showCustomerChoices}
+                            aria-controls={`mc-food-choices-${id}`}
+                            onClick={() => setShowCustomerChoices(previous => !previous)}
+                        >
+                            <span className="mc-food-choices-trigger-title">
+                                <strong>Vill du ta bort något eller lägga till extra?</strong>
+                            </span>
+                            <span className="mc-food-choices-trigger-icon" aria-hidden="true">{showCustomerChoices ? '−' : '+'}</span>
+                        </button>
+
+                        {showCustomerChoices && (
+                            <div className="mc-food-choices-content" id={`mc-food-choices-${id}`}>
+                                {removableIngredients.length > 0 && (
+                                    <fieldset className="mc-food-choices-fieldset">
+                                        <legend>Ta bort</legend>
+                                        {removableIngredients.map(option => {
+                                            const optionId = String(option._id)
+                                            return (
+                                                <label className="mc-food-choice-check" key={optionId}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedRemovedIds.includes(optionId)}
+                                                        onChange={() => toggleRemovedIngredient(optionId)}
+                                                    />
+                                                    <span>Utan {option.name}</span>
+                                                </label>
+                                            )
+                                        })}
+                                    </fieldset>
+                                )}
+
+                                {extras.length > 0 && (
+                                    <fieldset className="mc-food-choices-fieldset">
+                                        <legend>Lägg till</legend>
+                                        {extras.map(option => {
+                                            const optionId = String(option._id)
+                                            const limit = Math.min(10, Math.max(1, Number(option.maxQuantity) || 1))
+                                            const current = selectedExtras.find(value => value.optionId === optionId)?.quantity || 0
+                                            return (
+                                                <div className="mc-food-choice-extra" key={optionId}>
+                                                    <div className="mc-food-choice-extra-label">
+                                                        <strong>{option.name}</strong>
+                                                        <small>+{money(option.price)} kr/st</small>
+                                                    </div>
+                                                    <div className="mc-food-choice-extra-controls">
+                                                        <button type="button" disabled={current <= 0}
+                                                            aria-label={`Minska ${option.name}`}
+                                                            onClick={() => changeExtraQuantity(option, -1)}>−</button>
+                                                        <output aria-label={`Antal ${option.name}`}>{current}</output>
+                                                        <button type="button" disabled={current >= limit}
+                                                            aria-label={`Öka ${option.name}`}
+                                                            onClick={() => changeExtraQuantity(option, 1)}>+</button>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </fieldset>
+                                )}
+
+                                {selectedExtras.length > 0 && (
+                                    <div className="mc-food-choices-total">
+                                        <span>Pris med extra</span>
+                                        <strong>{money(calculatedUnitPrice)} kr</strong>
+                                    </div>
+                                )}
+                                <p className="mc-food-choices-allergens">
+                                    Bortval garanterar inte att maten är fri från allergener.
+                                </p>
+
+                                {hasSelectedCustomizations && (
+                                    <div className="mc-food-choices-actions">
+                                        <button type="button" className="mc-food-choices-add"
+                                            disabled={addingCustomized || customizationCheckoutReady !== true || typeof addToCartCustomized !== 'function'}
+                                            onClick={addCustomizedItem}>
+                                            {addingCustomized ? 'Lägger till…' : 'Lägg till med val'}
+                                        </button>
+                                        <button type="button" className="mc-food-choices-reset"
+                                            onClick={clearSelections}>Rensa</button>
+                                    </div>
+                                )}
+
+                                {hasSelectedCustomizations && (
+                                    customizationCheckoutReady !== true || typeof addToCartCustomized !== 'function'
+                                ) && (
+                                    <p className="mc-food-choices-warning" role="status">
+                                        Anpassade köp är inte aktiverade ännu.
+                                    </p>
+                                )}
+                                {customizationMessage && (
+                                    <p className="mc-food-choices-message" role="status">{customizationMessage}</p>
+                                )}
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 {/* BOTTOM */}
 
