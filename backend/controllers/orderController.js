@@ -651,15 +651,15 @@ const getAllowedTimeSlotsForDate = (dateString) => {
 
 const ALLOWED_ORDER_STATUSES = [
 
-  "BestÃ¤llning mottagen",
+  "Beställning mottagen",
 
-"FÃ¶rbereds",
+"Förbereds",
 
-"Redo fÃ¶r upphÃ¤mtning",
+"Redo för upphämtning",
 
-"UpphÃ¤mtad",
+"Upphämtad",
 
-"PÃ¥ vÃ¤g",
+"På väg",
 
 "Levererad",
 
@@ -1095,7 +1095,7 @@ const markPaidWithStockWarning = async (
 
       order.status =
 
-        "Betalning mottagen - lagerkontroll krÃ¤vs";
+        "Betalning mottagen - lagerkontroll krävs";
 
       order.stripeSessionId = stripeSession.id;
 
@@ -2296,7 +2296,7 @@ const placeOrder = async (req, res) => {
         zipcode
       },
 
-     status: "InvÃ¤ntar betalning",
+     status: "Inväntar betalning",
       payment: false,
       paymentMethod: "Stripe"
     });

@@ -528,20 +528,20 @@ discountValue: {
       type: String,
 
       enum: [
-        "InvÃ¤ntar betalning",
+        "Inväntar betalning",
         "Betalning mottagen",
-        "Betalning mottagen - lagerkontroll krÃ¤vs",
-        "BestÃ¤llning mottagen",
-        "FÃ¶rbereds",
-        "Redo fÃ¶r upphÃ¤mtning",
-        "UpphÃ¤mtad",
-        "PÃ¥ vÃ¤g",
+        "Betalning mottagen - lagerkontroll krävs",
+        "Beställning mottagen",
+        "Förbereds",
+        "Redo för upphämtning",
+        "Upphämtad",
+        "På väg",
         "Levererad",
         "Avbruten"
       ],
 
       default:
-        "InvÃ¤ntar betalning",
+        "Inväntar betalning",
 
       trim: true
     },
