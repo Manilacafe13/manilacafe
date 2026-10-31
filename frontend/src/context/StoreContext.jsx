@@ -29,10 +29,10 @@ const VAT_RATE = 0.06;
 // Samma maxgräns som backend
 const MAX_ITEM_QUANTITY = MAX_CART_QUANTITY;
 
-// Kundval aktiverade ENDAST i Vite-utvecklingsläge (npm run dev).
-// Vid produktionsbygge är anpassade köp fortsatt spärrade tills
-// Stripe, orderlagring och Verify-sidan verifierats med ett testköp.
-const CUSTOMIZED_CHECKOUT_READY = import.meta.env.DEV;
+// Kundval aktiveras i utvecklingsläge eller via miljövariabel.
+const CUSTOMIZED_CHECKOUT_READY =
+    import.meta.env.DEV ||
+    import.meta.env.VITE_CUSTOMIZED_CHECKOUT_READY === "true";
 
 // Guest/local cart storage
 const CART_STORAGE_KEY =
