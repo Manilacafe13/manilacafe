@@ -34,10 +34,10 @@ const FoodDisplay = ({
   const normalizedCategory = normalizeText(category)
 
   const drinkCategories = [
-    "coffee",
-    "smoothies",
-    "coolers"
-  ]
+  "coffee",
+  "shakes",
+  "kalla dryck"
+]
 
   // ======================================================
   // FILTER PRODUCTS

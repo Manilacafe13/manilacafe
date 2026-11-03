@@ -210,7 +210,7 @@ const portionInformation = {
             "Serveras väl kyld. Isen kan delvis smälta under transporten."
     },
 
-    "ube caramel": {
+    "ube caramel twirl": {
         contents:
             "En kall Ube Caramel ube, mjölk, karamell och is.",
         serving:
@@ -479,7 +479,7 @@ const FoodItem = ({
         extra:
             "En solig mix av mango och ananas med tropisk känsla."
     },
-    "ube caramel": {
+    "ube caramel twirl": {
         ingredients:
             ", mjölk, ube, karamellsås och is.",
         allergens:
