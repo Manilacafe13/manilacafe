@@ -13,6 +13,9 @@ import menu_13 from './menu_13.png'
 import menu_18 from './menu_18.png'
 import menu_19 from './menu_19.png'
 import menu_17 from './menu_17.png'
+import menu_30 from './menu_30.png'
+import menu_31 from './menu_31.png'
+
 
 
 import add_icon_white from './add_icon_white.png'
@@ -122,11 +125,11 @@ export const drink_list = [
     },
     {
         menu_name: "shakes",
-        menu_image: menu_11
+        menu_image: menu_30
     },
     {
         menu_name: "Kalla dryck",
-        menu_image: menu_11
+        menu_image: menu_31
     }
 
 ]
