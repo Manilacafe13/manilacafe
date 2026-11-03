@@ -119,5 +119,14 @@ export const drink_list = [
     {
         menu_name: "Coffee",
         menu_image: menu_11
+    },
+    {
+        menu_name: "shakes",
+        menu_image: menu_11
+    },
+    {
+        menu_name: "Kalla dryck",
+        menu_image: menu_11
     }
+
 ]
