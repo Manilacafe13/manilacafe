@@ -95,7 +95,7 @@ const portionInformation = {
     },
 
     "golden turon & ube ice cream": {
-        quantity: "3 turonrullar med ube-glass",
+        quantity: "4 turonrullar med ube-glass",
         contents:
             "Tre krispiga turonrullar fyllda med banan, serverade med skopor av ube-glass.",
         serving:
@@ -159,7 +159,7 @@ const portionInformation = {
     },
 
     "ube pandesal med ost": {
-        quantity: "4 stycken",
+        quantity: "3 stycken",
         contents:
             "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
         serving:
@@ -169,7 +169,7 @@ const portionInformation = {
     },
 
     "ube pandesal": {
-        quantity: "4 stycken",
+        quantity: "3 stycken",
         contents:
             "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
         serving:
@@ -187,6 +187,48 @@ const portionInformation = {
             "En kall Ube Caramel Latte med espresso, ube, mjölk, karamell och is.",
         serving:
             "Serveras kall. Vi gör vårt bästa för att drycken ska behålla sin temperatur under leveransen, men isen kan delvis smälta under transporten."
+    },
+
+    "passion paradise": {
+        contents:
+            "En fruktig och uppfriskande passionsfruktsdryck med tropisk karaktär, serverad över is.",
+        serving:
+            "Serveras väl kyld. Isen kan delvis smälta under transporten."
+    },
+
+    "strawberry biscoff bliss": {
+        contents:
+            "En krämig jordgubbsshake med smak av Biscoff – en söt och fruktig favorit.",
+        serving:
+            "Serveras väl kyld. Skaka eller rör om försiktigt vid behov."
+    },
+
+    "mango pineapple sunshine": {
+        contents:
+            "En tropisk och svalkande dryck med mango och ananas, serverad över is.",
+        serving:
+            "Serveras väl kyld. Isen kan delvis smälta under transporten."
+    },
+
+    "ube caramel": {
+        contents:
+            "En kall Ube Caramel ube, mjölk, karamell och is.",
+        serving:
+            "Serveras kall. Vi gör vårt bästa för att drycken ska behålla sin temperatur under leveransen, men isen kan delvis smälta under transporten."
+    },
+
+    // Äldre/alternativa produktnamn i admin stöds också.
+    "passion fruit": {
+        contents: "En fruktig och uppfriskande passionsfruktsdryck, serverad över is.",
+        serving: "Serveras väl kyld. Isen kan delvis smälta under transporten."
+    },
+    "strawberry biscoff shake": {
+        contents: "En krämig jordgubbsshake med smak av Biscoff.",
+        serving: "Serveras väl kyld."
+    },
+    "mango pinapple sun": {
+        contents: "En tropisk och svalkande dryck med mango och ananas, serverad över is.",
+        serving: "Serveras väl kyld. Isen kan delvis smälta under transporten."
     }
 
 }
@@ -404,12 +446,63 @@ const FoodItem = ({
     "ube caramel latte": {
         ingredients:
             "Espresso, laktosfri mjölk, ube, karamellsås och is.",
-
         allergens:
             "Innehåller MJÖLK (mjölkprotein). Kontrollera även ubeproduktens och karamellsåsens allergener.",
-
         extra:
             "En kall kaffedryck med ube och karamell."
+    },
+
+    // OBS: Kontrollera ingredienserna mot era faktiska recept innan publicering.
+    "passion paradise": {
+        ingredients:
+            "Passionsfrukt och is. Kontrollera eventuella övriga ingredienser mot receptet.",
+        allergens:
+            "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
+        extra:
+            "En syrlig, tropisk och törstsläckande favorit."
+    },
+
+    "strawberry biscoff bliss": {
+        ingredients:
+            "Jordgubbar och Biscoff-kex. Kontrollera övriga shakeingredienser mot receptet.",
+        allergens:
+            "Biscoff-kex innehåller VETE (gluten) och SOJA. Kontrollera eventuell MJÖLK och andra allergener i hela receptet.",
+        extra:
+            "Krämig jordgubbssmak möter Biscoff-kexens karamelltoner."
+    },
+
+    "mango pineapple sunshine": {
+        ingredients:
+            "Mango, ananas och is. Kontrollera eventuella övriga ingredienser mot receptet.",
+        allergens:
+            "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
+        extra:
+            "En solig mix av mango och ananas med tropisk känsla."
+    },
+    "ube caramel": {
+        ingredients:
+            ", mjölk, ube, karamellsås och is.",
+        allergens:
+            "Innehåller MJÖLK (mjölkprotein). Kontrollera även ubeproduktens och karamellsåsens allergener.",
+        extra:
+            "En kall dryck med ube och karamell."
+    },
+
+    // Alias gör att informationen fungerar även med tidigare namn i admin.
+    "passion fruit": {
+        ingredients: "Passionsfrukt och is. Kontrollera eventuella övriga ingredienser mot receptet.",
+        allergens: "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
+        extra: "En syrlig, tropisk och törstsläckande favorit."
+    },
+    "strawberry biscoff shake": {
+        ingredients: "Jordgubbar och Biscoff-kex. Kontrollera övriga shakeingredienser mot receptet.",
+        allergens: "Biscoff-kex innehåller VETE (gluten) och SOJA. Kontrollera eventuell MJÖLK och andra allergener i hela receptet.",
+        extra: "Krämig jordgubbssmak möter Biscoff-kexens karamelltoner."
+    },
+    "mango pinapple sun": {
+        ingredients: "Mango, ananas och is. Kontrollera eventuella övriga ingredienser mot receptet.",
+        allergens: "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
+        extra: "En solig mix av mango och ananas med tropisk känsla."
     },
 
 
