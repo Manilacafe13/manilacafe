@@ -427,6 +427,19 @@ const FoodItem = ({
         "En tropisk filippinsk dessert med söt, saftig mango och mjuka sagopärlor i en len och krämig mangoblandning. En perfekt balans mellan fruktig sötma och krämighet, serverad kall för en härligt uppfriskande smakupplevelse."
 },
 
+
+"choco sago": {
+    ingredients:
+        "Mjölk, vispgrädde, kakao, mörk choklad, sagopärlor (tapioka), sötad kondenserad mjölk, browniebitar och chokladsås.",
+
+    allergens:
+        "Innehåller MJÖLK. Kan innehålla GLUTEN, ÄGG och SOJA beroende på vilka browniebitar och chokladprodukter som används. Kontrollera samtliga ingredienser för eventuella allergener.",
+
+    extra:
+        "En chokladig twist på den filippinska favoriten Sago! Mjuka sagopärlor möter en fyllig och krämig chokladblandning, toppad med saftiga browniebitar och len chokladsås. En oemotståndlig kombination av choklad, krämighet och härlig konsistens. Serveras kall för den ultimata chokladupplevelsen."
+},
+
+
 "pancit": {
     ingredients:
         "Nudlar, räkor, färska grönsaker, vitlök, lök och en smakrik filippinsk sås baserad på soja och kryddor.",
