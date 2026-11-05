@@ -257,12 +257,16 @@ const Cart = () => {
   // befintliga kassan. PlaceOrder måste först
   // stödja bundles och bekräfta priset från backend.
 const manilaSoloCheckoutBlocked =
-  hasManilaSolo && !import.meta.env.DEV
+  hasManilaSolo &&
+  !(import.meta.env.DEV ||
+    import.meta.env.VITE_MANILA_SOLO_CHECKOUT_READY === 'true')
   const canCheckout =
     subtotal > 0 &&
     !customizedCheckoutBlocked &&
     !invalidCustomizedEntries &&
-    !manilaSoloCheckoutBlocked
+    !manilaSoloCheckoutBlocked &&
+    (!hasManilaSolo ||
+      (!hasMixedCart && !soloHasMissingProducts && soloPriceIsValid))
 
   // ====================================================
   // REMOVE PRODUCT
@@ -694,7 +698,9 @@ const manilaSoloCheckoutBlocked =
 
           {/* MANILA SOLO WARNING */}
 
-          {hasManilaSolo && (
+          {hasManilaSolo &&
+            (hasMixedCart || soloHasMissingProducts ||
+              !soloPriceIsValid || manilaSoloCheckoutBlocked) && (
             <p
               className="mc-cart-checkout-warning"
               role="status"
@@ -703,7 +709,7 @@ const manilaSoloCheckoutBlocked =
                 ? 'Du har både Manila Solo och vanliga produkter i varukorgen. Denna kombination stöds inte ännu. Ta bort paketet för att beställa övriga produkter.'
                 : soloHasMissingProducts || !soloPriceIsValid
                   ? 'Din Manila Solo behöver väljas om. Ta bort paketet och skapa en ny meny.'
-                  : 'Din Manila Solo är sparad! Betalning av paketet aktiveras när kassan är färdigkopplad.'}
+                  : 'Manila Solo öppnar snart för betalning.'}
             </p>
           )}
 
@@ -715,9 +721,7 @@ const manilaSoloCheckoutBlocked =
             onClick={() => navigate('/order')}
             disabled={!canCheckout}
           >
-            {hasManilaSolo
-              ? 'Manila Solo – betalning öppnar snart'
-              : 'Till kassan'}
+            'Till kassan'
           </button>
 
         </div>

@@ -349,7 +349,9 @@ const PlaceOrder = () => {
   // ======================================================
 
   // Aktiveras först efter verifierat Stripe-test.
-  const SOLO_CHECKOUT_READY = import.meta.env.DEV
+  const SOLO_CHECKOUT_READY =
+    import.meta.env.DEV ||
+    import.meta.env.VITE_MANILA_SOLO_CHECKOUT_READY === 'true'
 
   const hasManilaSolo =
     manilaSolo?.type === 'manila-solo'

@@ -97,7 +97,7 @@ const portionInformation = {
     "golden turon & ube ice cream": {
         quantity: "4 turonrullar med ube-glass",
         contents:
-            "Tre krispiga turonrullar fyllda med banan, serverade med skopor av ube-glass.",
+            "Fyra krispiga turonrullar fyllda med banan, serverade med skopor av ube-glass.",
         serving:
             "Värm gärna turon separat om den har svalnat under leveransen. Vi gör vårt bästa för att glassen ska behålla sin konsistens, men viss smältning kan förekomma under transporten."
     },

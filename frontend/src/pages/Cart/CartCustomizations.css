@@ -46,3 +46,38 @@
   .mc-cart-mobile-label { display: inline; color: #666; font-size: 12px; }
   .mc-cart-line .mc-cart-cell--image img { width: 56px; height: 56px; }
 }
+
+/* ======================================================
+   MANILA SOLO — CART
+   ====================================================== */
+
+.mc-cart-solo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 64px;
+  height: 64px;
+
+  border-radius: 12px;
+  background: #f4effa;
+
+  font-size: 30px;
+}
+
+.mc-cart-product-info .mc-cart-choices {
+  overflow-wrap: anywhere;
+}
+
+.mc-cart-product-info .mc-cart-choices p {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .mc-cart-solo-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 25px;
+  }
+}

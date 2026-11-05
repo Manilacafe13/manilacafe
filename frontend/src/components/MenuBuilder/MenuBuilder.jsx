@@ -326,9 +326,7 @@ const MenuBuilder = () => {
     setMessage({
       success: true,
       text:
-        'Din Manila Solo är sparad! ' +
-        'Kopplingen till varukorgen och betalningen ' +
-        'är ännu inte aktiverad.'
+        'Din Manila Solo är sparad i varukorgen! 💜'
     })
   }
 
@@ -725,9 +723,8 @@ const MenuBuilder = () => {
             )}
 
             <p className="mc-menu-builder__note">
-              Du kan spara din meny redan nu.
-              Paketköp och betalning aktiveras när
-              varukorgen och kassan är färdigkopplade.
+              Din meny finns i varukorgen.
+              Fortsätt till kassan när betalningen är tillgänglig.
             </p>
 
           </div>
