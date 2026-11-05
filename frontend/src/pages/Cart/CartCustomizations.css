@@ -169,3 +169,45 @@
     justify-self: end;
   }
 }
+
+/* Manila Solo – håll rubrik och menyval vänsterställda */
+.cart .mc-cart-solo-row .mc-cart-product-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+}
+
+.cart .mc-cart-solo-row .mc-cart-choices {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 10px;
+  text-align: left;
+}
+
+.cart .mc-cart-solo-row .mc-cart-choices > p {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  grid-column: auto;
+  grid-row: auto;
+  justify-self: start;
+}
+
+@media (max-width: 750px) {
+  .cart .mc-cart-solo-row .mc-cart-choices > p {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .cart .mc-cart-solo-row .mc-cart-choices > p::before {
+    content: none;
+  }
+}
+
