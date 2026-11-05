@@ -721,7 +721,7 @@ const manilaSoloCheckoutBlocked =
             onClick={() => navigate('/order')}
             disabled={!canCheckout}
           >
-            'Till kassan'
+            Till kassan
           </button>
 
         </div>
