@@ -793,3 +793,32 @@
   }
 
 }
+
+
+/* MANILA SOLO - CART CONFIRMATION */
+.mc-menu-builder__cart-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 12px 20px;
+  margin-top: 14px;
+  border-radius: 12px;
+  background: #247a50;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.mc-menu-builder__cart-link:hover {
+  background: #1b6040;
+  color: #fff;
+}
+
+@media (max-width: 670px) {
+  .mc-menu-builder__cart-link {
+    width: 100%;
+  }
+}

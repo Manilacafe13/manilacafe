@@ -18,7 +18,7 @@ const Navbar = ({ setShowLogin }) => {
   const [menu, setMenu] = useState('home')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  const { cartItems = {}, customizedCartItems = {}, token, setToken } = useContext(StoreContext)
+  const { cartItems = {}, customizedCartItems = {}, manilaSolo, token, setToken } = useContext(StoreContext)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -32,7 +32,10 @@ const Navbar = ({ setShowLogin }) => {
     (total, line) => total + Math.max(0, Number(line?.quantity) || 0),
     0
   )
-  const cartCount = regularCount + customizedCount
+  const cartCount =
+    regularCount +
+    customizedCount +
+    (manilaSolo?.type === 'manila-solo' ? 1 : 0)
 
   const handleMenuClick = (menuName) => {
     setMenu(menuName)

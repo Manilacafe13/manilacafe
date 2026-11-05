@@ -318,7 +318,7 @@ const MenuBuilder = () => {
         success: false,
         text:
           result?.message ||
-          'Kunde inte spara din Manila Solo.'
+          'Kunde inte lägga till Manila Solo i varukorgen.'
       })
       return
     }
@@ -326,7 +326,7 @@ const MenuBuilder = () => {
     setMessage({
       success: true,
       text:
-        'Din Manila Solo är sparad i varukorgen! 💜'
+        'Din Manila Solo har lagts till i varukorgen! 💜'
     })
   }
 
@@ -346,7 +346,7 @@ const MenuBuilder = () => {
 
       setMessage({
         success: true,
-        text: 'Din sparade Manila Solo har tagits bort.'
+        text: 'Manila Solo har tagits bort från varukorgen.'
       })
     } else {
       setMessage({
@@ -686,8 +686,8 @@ const MenuBuilder = () => {
                 {!isComplete
                   ? `Välj alla 3 produkter (${selectedCount}/3)`
                   : isSaved
-                    ? '✓ Manila Solo sparad'
-                    : 'Spara min Manila Solo 💜'}
+                    ? '✓ Tillagd i varukorgen'
+                    : 'Lägg till i varukorgen 🛒'}
               </button>
 
             </div>
@@ -701,8 +701,14 @@ const MenuBuilder = () => {
                 onClick={handleRemoveSolo}
                 style={{ marginTop: 15 }}
               >
-                Ta bort sparad Manila Solo
+                Ta bort Manila Solo från varukorgen
               </button>
+            )}
+
+            {manilaSolo && (
+              <Link to="/cart" className="mc-menu-builder__cart-link">
+                🛒 Visa varukorgen
+              </Link>
             )}
 
             {/* MESSAGE */}
@@ -723,8 +729,8 @@ const MenuBuilder = () => {
             )}
 
             <p className="mc-menu-builder__note">
-              Din meny finns i varukorgen.
-              Fortsätt till kassan när betalningen är tillgänglig.
+              Välj dina tre produkter och klicka på
+              Lägg till i varukorgen för att fortsätta.
             </p>
 
           </div>

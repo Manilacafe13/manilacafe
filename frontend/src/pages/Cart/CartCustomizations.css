@@ -81,3 +81,91 @@
     font-size: 25px;
   }
 }
+
+
+/* MANILA SOLO - RESPONSIVE CART LAYOUT */
+.mc-cart-solo-row .mc-cart-product-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.mc-cart-solo-row .mc-cart-product-info > strong {
+  display: block;
+  line-height: 1.45;
+  font-size: 16px;
+}
+
+.mc-cart-solo-row .mc-cart-custom-label {
+  display: block;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mc-cart-solo-row .mc-cart-choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.mc-cart-solo-row .mc-cart-choices p {
+  display: block;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mc-cart-solo-row .mc-cart-choice-label {
+  display: block;
+  margin-bottom: 3px;
+}
+
+@media (max-width: 670px) {
+  .cart .mc-cart-solo-row .mc-cart-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "image remove"
+      "name name"
+      "price quantity"
+      "total total";
+    gap: 12px 14px;
+    align-items: start;
+    padding: 18px 8px;
+  }
+
+  .mc-cart-solo-row .mc-cart-cell--image {
+    grid-area: image;
+  }
+
+  .mc-cart-solo-row .mc-cart-cell--name {
+    grid-area: name;
+    width: 100%;
+  }
+
+  .mc-cart-solo-row .mc-cart-cell--price {
+    grid-area: price;
+  }
+
+  .mc-cart-solo-row .mc-cart-cell--quantity {
+    grid-area: quantity;
+  }
+
+  .mc-cart-solo-row .mc-cart-cell--total {
+    grid-area: total;
+    justify-self: start;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .mc-cart-solo-row .mc-cart-cell--remove {
+    grid-area: remove;
+    justify-self: end;
+  }
+}

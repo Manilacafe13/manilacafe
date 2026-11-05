@@ -333,7 +333,7 @@ const manilaSoloCheckoutBlocked =
         {/* ============================================ */}
 
         {hasManilaSolo && (
-          <div className="cart-item-wrapper mc-cart-line">
+          <div className="cart-item-wrapper mc-cart-line mc-cart-solo-row">
 
             <div className="cart-items-title cart-items-item mc-cart-grid">
 
