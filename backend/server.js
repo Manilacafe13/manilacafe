@@ -110,6 +110,12 @@ const allowedOrigins = [
 const uniqueAllowedOrigins = [
   ...new Set(allowedOrigins)
 ];
+// Allow Manila Cafe Vercel preview deployments
+const isManilaCafeVercelOrigin = (origin) => {
+  return /^https:\/\/manilacafe-[a-z0-9-]+-manilacafe\.vercel\.app$/.test(
+    origin
+  );
+};
 
 
 // ======================================================
@@ -135,12 +141,11 @@ const corsOptions = {
     const normalizedOrigin =
       normalizeOrigin(origin);
 
-
-    if (
-      uniqueAllowedOrigins.includes(
-        normalizedOrigin
-      )
-    ) {
+if (
+  uniqueAllowedOrigins.includes(normalizedOrigin) ||
+  isManilaCafeVercelOrigin(normalizedOrigin)
+) {
+      
 
       return callback(
         null,
