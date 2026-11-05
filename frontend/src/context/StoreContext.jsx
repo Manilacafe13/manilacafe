@@ -39,6 +39,77 @@ const CART_STORAGE_KEY =
     "manilaCafeCart";
 
 
+const MANILA_SOLO_STORAGE_KEY = "manilaCafeSolo";
+const MANILA_SOLO_PRICE = 249;
+
+const SOLO_DRINK_CATEGORIES = new Set([
+    "coffee",
+    "shakes",
+    "kalla dryck"
+]);
+
+const normalizeSoloText = (value = "") =>
+    String(value)
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+const getSoloProductGroup = (product) => {
+    const category = normalizeSoloText(product?.category);
+
+    if (category === "matratter") return "meal";
+
+    if (SOLO_DRINK_CATEGORIES.has(category)) {
+        return "drink";
+    }
+
+    return "dessert";
+};
+
+const getStoredManilaSolo = () => {
+    try {
+        const raw = localStorage.getItem(
+            MANILA_SOLO_STORAGE_KEY
+        );
+
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw);
+
+        if (
+            !parsed ||
+            parsed.type !== "manila-solo" ||
+            !["mealId", "dessertId", "drinkId"].every(
+                key =>
+                    typeof parsed[key] === "string" &&
+                    /^[a-f0-9]{24}$/i.test(parsed[key])
+            )
+        ) {
+            return null;
+        }
+
+        const ids = [
+            parsed.mealId,
+            parsed.dessertId,
+            parsed.drinkId
+        ].map(id => id.toLowerCase());
+
+        if (new Set(ids).size !== 3) return null;
+
+        return {
+            type: "manila-solo",
+            mealId: ids[0],
+            dessertId: ids[1],
+            drinkId: ids[2]
+        };
+    } catch {
+        return null;
+    }
+};
+
+
+
 // ======================================================
 // CLEAN CART DATA
 // ======================================================
@@ -181,6 +252,11 @@ const StoreContextProvider = (props) => {
         setFoodList
     ] = useState([]);
 
+    const [manilaSolo, setManilaSolo] = useState(
+        () => getStoredManilaSolo()
+    );
+
+
 
     const [
         token,
@@ -302,6 +378,192 @@ const StoreContextProvider = (props) => {
 
     // Must also be called after a successful order when checkout is integrated.
     const clearCustomizedCart = () => setCustomizedCartItems({});
+
+
+    // ======================================================
+    // MANILA SOLO — ADD / REMOVE
+    // ======================================================
+
+    const addManilaSolo = (selection) => {
+        try {
+            if (
+                !selection ||
+                typeof selection !== "object" ||
+                Array.isArray(selection)
+            ) {
+                throw new Error("Ogiltiga menyval.");
+            }
+
+            const required = [
+                "mealId",
+                "dessertId",
+                "drinkId"
+            ];
+
+            if (
+                Object.keys(selection).length !== 3 ||
+                required.some(
+                    key =>
+                        typeof selection[key] !== "string" ||
+                        !/^[a-f0-9]{24}$/i.test(selection[key])
+                )
+            ) {
+                throw new Error(
+                    "Välj en maträtt, en dessert och en dryck."
+                );
+            }
+
+            const ids = required.map(
+                key => selection[key].toLowerCase()
+            );
+
+            if (new Set(ids).size !== 3) {
+                throw new Error("Ogiltig produktkombination.");
+            }
+
+            const expectedGroups = [
+                "meal",
+                "dessert",
+                "drink"
+            ];
+
+            const products = ids.map((id, index) => {
+                const product = food_list.find(
+                    item =>
+                        String(item._id).toLowerCase() === id
+                );
+
+                if (!product) {
+                    throw new Error(
+                        "En vald produkt är inte tillgänglig."
+                    );
+                }
+
+                if (
+                    product.available === false ||
+                    product.isAvailable === false ||
+                    getSoloProductGroup(product) !==
+                    expectedGroups[index]
+                ) {
+                    throw new Error(
+                        `${product.name} kan inte väljas här.`
+                    );
+                }
+
+                return product;
+            });
+
+            // Extra skydd för den stora Ube Cake.
+            // Backend måste också kontrollera produkt-ID.
+            const excludedNames = new Set([
+                "large ube cake",
+                "ube cake large",
+                "stor ube cake",
+                "ube cake stor",
+                "ube cake large size"
+            ]);
+
+            if (
+                products.some(product =>
+                    excludedNames.has(
+                        normalizeSoloText(product.name)
+                    )
+                )
+            ) {
+                throw new Error(
+                    "Stor Ube Cake ingår inte i Manila Solo."
+                );
+            }
+
+            // Första versionen stöder inte blandade
+            // varukorgar. Skydda befintliga kundval.
+            const hasRegularItems = Object.values(
+                cartItems
+            ).some(quantity => Number(quantity) > 0);
+
+            const hasCustomizedItems = Object.values(
+                customizedCartItems
+            ).some(item => Number(item?.quantity) > 0);
+
+            if (hasRegularItems || hasCustomizedItems) {
+                throw new Error(
+                    "Töm den vanliga varukorgen innan du lägger till Manila Solo."
+                );
+            }
+
+            const bundle = {
+                type: "manila-solo",
+                mealId: ids[0],
+                dessertId: ids[1],
+                drinkId: ids[2]
+            };
+
+            localStorage.setItem(
+                MANILA_SOLO_STORAGE_KEY,
+                JSON.stringify(bundle)
+            );
+
+            setManilaSolo(bundle);
+
+            return {
+                success: true,
+                message: "Manila Solo har sparats."
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message:
+                    error.message ||
+                    "Kunde inte spara Manila Solo."
+            };
+        }
+    };
+
+    const removeManilaSolo = () => {
+        try {
+            localStorage.removeItem(
+                MANILA_SOLO_STORAGE_KEY
+            );
+            setManilaSolo(null);
+
+            return { success: true };
+        } catch {
+            return {
+                success: false,
+                message: "Kunde inte ta bort Manila Solo."
+            };
+        }
+    };
+
+    
+const getManilaSoloOrderPayload = () => {
+    if (!manilaSolo) return null;
+
+    return {
+        bundle: {
+            type: "manila-solo",
+            mealId: manilaSolo.mealId,
+            dessertId: manilaSolo.dessertId,
+            drinkId: manilaSolo.drinkId
+        },
+        items: [
+            {
+                itemId: manilaSolo.mealId,
+                quantity: 1
+            },
+            {
+                itemId: manilaSolo.dessertId,
+                quantity: 1
+            },
+            {
+                itemId: manilaSolo.drinkId,
+                quantity: 1
+            }
+        ]
+    };
+};
+
+
 
     // ==================================================
     // CLEAR INVALID SESSION
@@ -1004,49 +1266,53 @@ const StoreContextProvider = (props) => {
     // CONTEXT VALUES
     // ==================================================
 
-    const contextValue = {
+    
+const contextValue = {
 
-        // Products
-        food_list,
+    // Products
+    food_list,
 
-        // Cart
-        cartItems,
-        setCartItems,
+    // Cart
+    cartItems,
+    setCartItems,
+    addToCart,
+    removeFromCart,
 
-        addToCart,
-        removeFromCart,
+    // Phase 2 customized cart
+    addToCartCustomized: CUSTOMIZED_CHECKOUT_READY
+        ? addToCartCustomized
+        : undefined,
+    customizedCartItems,
+    removeFromCartCustomized,
+    getCustomizedCartEntries,
+    clearCustomizedCart,
+    customizationCheckoutReady: CUSTOMIZED_CHECKOUT_READY,
 
-        // Phase 2 customized cart (disabled until the order backend is ready).
-        // Undefined intentionally preserves ProductPage's disabled button.
-        addToCartCustomized: CUSTOMIZED_CHECKOUT_READY
-            ? addToCartCustomized
-            : undefined,
-        customizedCartItems,
-        removeFromCartCustomized,
-        getCustomizedCartEntries,
-        clearCustomizedCart,
-        customizationCheckoutReady: CUSTOMIZED_CHECKOUT_READY,
+    // Manila Solo
+    manilaSolo,
+    manilaSoloPrice: MANILA_SOLO_PRICE,
+    addManilaSolo,
+    removeManilaSolo,
+    getManilaSoloOrderPayload,
 
-        // Price calculations
-        getTotalCartAmount,
-        getVatAmount,
-        getTotalWithVat,
+    // Price calculations
+    getTotalCartAmount,
+    getVatAmount,
+    getTotalWithVat,
+    vatRate: VAT_RATE,
 
-        vatRate:
-            VAT_RATE,
+    // Backend functions
+    fetchFoodList,
+    loadCartData,
 
-        // Backend functions
-        fetchFoodList,
-        loadCartData,
+    // Backend URL
+    url,
 
-        // Backend URL
-        url,
+    // Authentication
+    token,
+    setToken
 
-        // Authentication
-        token,
-        setToken
-
-    };
+};
 
 
     // ==================================================

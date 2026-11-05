@@ -337,8 +337,67 @@ const PlaceOrder = () => {
     customizedCartItems = {},
     getCustomizedCartEntries,
     customizationCheckoutReady = false,
-    url
+    url,
+    manilaSolo,
+    manilaSoloPrice = 249,
+    getManilaSoloOrderPayload,
   } = useContext(StoreContext)
+
+
+  // ======================================================
+  // MANILA SOLO
+  // ======================================================
+
+  // Aktiveras först efter verifierat Stripe-test.
+  const SOLO_CHECKOUT_READY = import.meta.env.DEV
+
+  const hasManilaSolo =
+    manilaSolo?.type === 'manila-solo'
+
+  const soloProductIds = hasManilaSolo
+    ? [
+      manilaSolo.mealId,
+      manilaSolo.dessertId,
+      manilaSolo.drinkId
+    ]
+    : []
+
+  const soloProducts = soloProductIds.map(id =>
+    food_list.find(
+      product => String(product._id) === String(id)
+    )
+  )
+
+  const soloValid =
+    hasManilaSolo &&
+    soloProducts.length === 3 &&
+    soloProducts.every(Boolean) &&
+    Number(manilaSoloPrice) === 249
+
+  const soloTotal = soloValid ? 249 : 0
+  const soloSubtotal = soloValid
+    ? 234.91
+    : 0
+  const soloVat = soloValid
+    ? 14.09
+    : 0
+
+  const hasOtherCartItems =
+    Object.values(cartItems || {}).some(
+      quantity => Number(quantity) > 0
+    ) ||
+    Object.values(customizedCartItems || {}).some(
+      item => Number(item?.quantity) > 0
+    )
+
+  const soloCheckoutBlocked =
+    hasManilaSolo &&
+    (
+      !SOLO_CHECKOUT_READY ||
+      !soloValid ||
+      hasOtherCartItems
+    )
+
 
   // The customized cart helper validates options against the current
   // product configuration. Prices are ONLY estimates here.
@@ -353,10 +412,10 @@ const PlaceOrder = () => {
   const invalidCustomizedEntries = (
     savedCustomizedLineCount !== customizedEntries.length ||
     customizedEntries.some(entry =>
-    entry.invalidCustomization === true ||
-    entry.price === null ||
-    !Number.isFinite(Number(entry.price)) ||
-    Number(entry.price) < 0
+      entry.invalidCustomization === true ||
+      entry.price === null ||
+      !Number.isFinite(Number(entry.price)) ||
+      Number(entry.price) < 0
     )
   )
 
@@ -427,21 +486,40 @@ const PlaceOrder = () => {
   const normalSubtotal = getTotalCartAmount()
   const customizedSubtotal = customizedEntries.reduce((sum, entry) => {
     if (entry.invalidCustomization || entry.price === null ||
-        !Number.isFinite(Number(entry.price)) ||
-        !Number.isInteger(Number(entry.quantity)) ||
-        Number(entry.quantity) < 1) {
+      !Number.isFinite(Number(entry.price)) ||
+      !Number.isInteger(Number(entry.quantity)) ||
+      Number(entry.quantity) < 1) {
       return sum
     }
     return sum + Number(entry.price) * Number(entry.quantity)
   }, 0)
 
-  const subtotal = Number((normalSubtotal + customizedSubtotal).toFixed(2))
-  const vatAmount = hasCustomizedEntries
-    ? Number((subtotal * 0.06).toFixed(2))
+
+  const subtotal = Number((
+    normalSubtotal +
+    customizedSubtotal +
+    soloSubtotal
+  ).toFixed(2))
+
+  const regularSubtotal =
+    normalSubtotal + customizedSubtotal
+
+  const regularVat = hasCustomizedEntries
+    ? Number((regularSubtotal * 0.06).toFixed(2))
     : getVatAmount()
-  const total = hasCustomizedEntries
-    ? Number((subtotal + vatAmount).toFixed(2))
+
+  const vatAmount = Number((
+    regularVat + soloVat
+  ).toFixed(2))
+
+  const regularTotal = hasCustomizedEntries
+    ? Number((regularSubtotal + regularVat).toFixed(2))
     : getTotalWithVat()
+
+  const total = Number((
+    regularTotal + soloTotal
+  ).toFixed(2))
+
   // Rabattförhandsvisning. Backend beräknar alltid slutpriset på nytt.
   const productDiscount = appliedDiscount?.code === discountCode.trim().toUpperCase()
     ? Math.min(total, appliedDiscount.amount)
@@ -450,6 +528,13 @@ const PlaceOrder = () => {
   const discountedVat = Math.round((discountedProductTotal * 6 / 106) * 100) / 100
 
   const applyDiscount = async () => {
+    if (hasManilaSolo) {
+      setDiscountError(
+        'Rabattkoder kan inte kombineras med Manila Solo.'
+      )
+      setAppliedDiscount(null)
+      return
+    }
     const code = discountCode.trim().toUpperCase()
     if (!code) {
       setDiscountError("Ange en rabattkod.")
@@ -564,8 +649,8 @@ const PlaceOrder = () => {
       const quantity = Number(entry?.quantity)
       return sum + (Number.isInteger(quantity) && quantity > 0 ? quantity : 0)
     }, 0)
-    return normalCount + customCount
-  }, [cartItems, customizedCartItems])
+    return normalCount + customCount + (hasManilaSolo ? 3 : 0)
+  }, [cartItems, customizedCartItems,hasManilaSolo])
   // ======================================================
   // LARGE ORDER
   // ======================================================
@@ -589,12 +674,22 @@ const PlaceOrder = () => {
       if (!productId || !Number.isInteger(quantity) || quantity < 1) continue
       quantities.set(productId, (quantities.get(productId) || 0) + quantity)
     }
+    if (hasManilaSolo) {
+  if (!soloValid || hasOtherCartItems) return false
+
+  for (const productId of soloProductIds) {
+    quantities.set(
+      productId,
+      (quantities.get(productId) || 0) + 1
+    )
+  }
+}
     if (quantities.size === 0 || invalidCustomizedEntries) return false
 
     for (const [productId, quantity] of quantities.entries()) {
       const product = food_list.find(item => item._id === productId)
       if (!product || !Number.isInteger(Number(product.sameDayStock)) ||
-          Number(product.sameDayStock) < quantity) {
+        Number(product.sameDayStock) < quantity) {
         return false
       }
     }
@@ -694,8 +789,8 @@ const PlaceOrder = () => {
   // CLOSED DAY HELPERS
   // ======================================================
   const isClosedDay = () => {
-  return false
-}
+    return false
+  }
 
   const isTodayClosed = isClosedDay(getTodayDate())
   const isTomorrowClosed = isClosedDay(getTomorrowDate())
@@ -710,34 +805,34 @@ const PlaceOrder = () => {
     }
   }, [fulfillmentType, isLargeOrder, isTomorrowClosed, isTodayClosed, sameDayAvailable])
   // ======================================================
-// OPENING HOURS / AVAILABLE TIME SLOTS
-// MONDAY - SUNDAY: 10:00 - 23:00
-// ======================================================
+  // OPENING HOURS / AVAILABLE TIME SLOTS
+  // MONDAY - SUNDAY: 10:00 - 23:00
+  // ======================================================
 
-const getAvailableTimeSlots = () => {
-  const requestedDate = getRequestedDate()
+  const getAvailableTimeSlots = () => {
+    const requestedDate = getRequestedDate()
 
-  if (!requestedDate) {
-    return []
+    if (!requestedDate) {
+      return []
+    }
+
+    // Same opening hours every day
+    return [
+      "10:00-11:00",
+      "11:00-12:00",
+      "12:00-13:00",
+      "13:00-14:00",
+      "14:00-15:00",
+      "15:00-16:00",
+      "16:00-17:00",
+      "17:00-18:00",
+      "18:00-19:00",
+      "19:00-20:00",
+      "20:00-21:00",
+      "21:00-22:00",
+      "22:00-23:00"
+    ]
   }
-
-  // Same opening hours every day
-  return [
-    "10:00-11:00",
-    "11:00-12:00",
-    "12:00-13:00",
-    "13:00-14:00",
-    "14:00-15:00",
-    "15:00-16:00",
-    "16:00-17:00",
-    "17:00-18:00",
-    "18:00-19:00",
-    "19:00-20:00",
-    "20:00-21:00",
-    "21:00-22:00",
-    "22:00-23:00"
-  ]
-}
   useEffect(() => {
     setRequestedTime("")
   }, [
@@ -799,6 +894,31 @@ const getAvailableTimeSlots = () => {
   // ======================================================
   const placeOrder = async (event) => {
     event.preventDefault()
+
+    // Manila Solo får aldrig gå vidare till Stripe
+    // innan serverns paketstöd har verifierats.
+    if (hasManilaSolo && !SOLO_CHECKOUT_READY) {
+      alert(
+        'Manila Solo är ännu inte öppen för betalning.'
+      )
+      return
+    }
+
+    if (hasManilaSolo && (!soloValid || hasOtherCartItems)) {
+      alert(
+        'Din Manila Solo behöver uppdateras. ' +
+        'Paketet får inte blandas med andra produkter ännu.'
+      )
+      return
+    }
+
+    if (hasManilaSolo && discountCode.trim()) {
+      alert(
+        'Rabattkoder kan inte användas med Manila Solo.'
+      )
+      return
+    }
+
     if (isLoading) {
       return
     }
@@ -904,23 +1024,23 @@ const getAvailableTimeSlots = () => {
         )
         return
       }
-    if (
-      normalizeZipcode(data.zipcode).length !== 5
-    ) {
-      alert(
-        "Ange ett giltigt femsiffrigt postnummer."
-      )
-      return
+      if (
+        normalizeZipcode(data.zipcode).length !== 5
+      ) {
+        alert(
+          "Ange ett giltigt femsiffrigt postnummer."
+        )
+        return
+      }
+      if (
+        !deliveryZone
+      ) {
+        alert(
+          "Vi levererar tyvärr inte till den här adressen ännu. Vårt leveransområde sträcker sig upp till Gråbo."
+        )
+        return
+      }
     }
-    if (
-      !deliveryZone
-    ) {
-      alert(
-        "Vi levererar tyvärr inte till den här adressen ännu. Vårt leveransområde sträcker sig upp till Gråbo."
-      )
-      return
-    }
-  }
     // ==================================================
     // SAME-DAY CHECK
     // ==================================================
@@ -992,7 +1112,24 @@ const getAvailableTimeSlots = () => {
         }
       }))
 
-      const orderItems = [...normalOrderItems, ...customizedOrderItems]
+
+      const soloPayload = hasManilaSolo
+        ? getManilaSoloOrderPayload?.()
+        : null
+
+      const orderItems = hasManilaSolo
+        ? (soloPayload?.items || [])
+        : [...normalOrderItems, ...customizedOrderItems]
+
+      const orderBundles = hasManilaSolo
+        ? [{
+          type: 'manila-solo',
+          mealId: soloPayload?.bundle?.mealId,
+          dessertId: soloPayload?.bundle?.dessertId,
+          drinkId: soloPayload?.bundle?.drinkId
+        }]
+        : undefined
+
       // ==================================================
       // CHECK ORDER ITEMS
       // ==================================================
@@ -1055,28 +1192,28 @@ const getAvailableTimeSlots = () => {
         // ================================================
         // PRODUCTS
         // ================================================
-        items:
-          orderItems,
+       items: orderItems,
+...(orderBundles ? { bundles: orderBundles } : {}),
         // ================================================
         // PICKUP / DELIVERY
         // ================================================
         deliveryMethod,
-      // ================================================
-      // DELIVERY PRICE / ZONE
-      // ================================================
-      deliveryFee:
-        deliveryMethod === "delivery"
-          ? deliveryFee
-          : 0,
-      deliveryZone:
-        deliveryMethod === "delivery" && deliveryZone
-          ? deliveryZone.id
-          : "",
-      deliveryZoneLabel:
-        deliveryMethod === "delivery" && deliveryZone
-          ? deliveryZone.label
-          : "",
-      // ================================================
+        // ================================================
+        // DELIVERY PRICE / ZONE
+        // ================================================
+        deliveryFee:
+          deliveryMethod === "delivery"
+            ? deliveryFee
+            : 0,
+        deliveryZone:
+          deliveryMethod === "delivery" && deliveryZone
+            ? deliveryZone.id
+            : "",
+        deliveryZoneLabel:
+          deliveryMethod === "delivery" && deliveryZone
+            ? deliveryZone.label
+            : "",
+        // ================================================
         // FULFILLMENT
         // ================================================
         fulfillmentType,
@@ -1137,6 +1274,18 @@ const getAvailableTimeSlots = () => {
   // SIMPLIFIED CHECKOUT: method > date/time > details/payment
   // ======================================================
   const cartPreview = [
+
+    ...(hasManilaSolo ? [{
+      id: 'manila-solo',
+      quantity: 1,
+      name: 'Manila Solo 🇵🇭 — 249 kr',
+      isCustomized: false,
+      isSolo: true,
+      soloDescription: soloProducts
+        .map(product => product?.name || 'Saknad produkt')
+        .join(' + ')
+    }] : []),
+
     ...Object.entries(cartItems || {})
       .filter(([, quantity]) => Number(quantity) > 0)
       .map(([itemId, quantity]) => ({
@@ -1158,7 +1307,9 @@ const getAvailableTimeSlots = () => {
   ]
 
   const prettyTime = (time) => time ? time.replace("-", "–") : "Inte vald"
-  const canPay = subtotal > 0 && !customizedCheckoutBlocked &&
+  const canPay = subtotal > 0 &&
+  !customizedCheckoutBlocked &&
+  !soloCheckoutBlocked &&
     !isLoading && Boolean(requestedTime) &&
     Boolean(getRequestedDate()) && availableTimeSlots.includes(requestedTime) &&
     (deliveryMethod !== "delivery" || (deliveryAddressComplete && Boolean(deliveryZone)))
@@ -1300,37 +1451,90 @@ const getAvailableTimeSlots = () => {
                   )}
                 </div>
               )}
-              <div className="mc-field">
-                <label htmlFor="mc-discount">Rabattkod (valfritt)</label>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  <input
-                    id="mc-discount"
-                    type="text"
-                    value={discountCode}
-                    maxLength={50}
-                    placeholder="Ange rabattkod"
-                    autoComplete="off"
-                    onChange={(e) => {
-                      setDiscountCode(e.target.value.toUpperCase())
-                      setAppliedDiscount(null)
-                      setDiscountError("")
-                    }}
-                    style={{ flex: "1 1 170px" }}
-                  />
-                  <button type="button" className="mc-secondary" disabled={discountChecking || isLoading || !discountCode.trim()} onClick={applyDiscount}>
-                    {discountChecking ? "Kontrollerar…" : "Använd kod"}
-                  </button>
-                </div>
-                {discountError && <p className="mc-error" role="alert">{discountError}</p>}
-                {appliedDiscount && <p className="mc-hint" role="status">Rabattkod {appliedDiscount.code} tillagd. Slutpriset bekräftas vid betalningen.</p>}
-              </div>
-              <div className="mc-reassurance">🔒 Säker betalning via Stripe · Ingen inloggning krävs</div>
-              <div className="mc-actions">
-                <button type="button" className="mc-secondary" onClick={() => setCheckoutStep(2)}>← Tillbaka</button>
-                <button type="submit" className="mc-primary" disabled={!canPay || discountChecking}>
-                  {isLoading ? "Öppnar betalningen…" : `Betala ${checkoutTotal.toFixed(2)} kr`} <span aria-hidden="true">→</span>
-                </button>
-              </div>
+              
+{!hasManilaSolo && (
+  <div className="mc-field">
+    <label htmlFor="mc-discount">
+      Rabattkod (valfritt)
+    </label>
+
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        flexWrap: "wrap"
+      }}
+    >
+      <input
+        id="mc-discount"
+        type="text"
+        value={discountCode}
+        maxLength={50}
+        placeholder="Ange rabattkod"
+        autoComplete="off"
+        onChange={(e) => {
+          setDiscountCode(e.target.value.toUpperCase())
+          setAppliedDiscount(null)
+          setDiscountError("")
+        }}
+        style={{ flex: "1 1 170px" }}
+      />
+
+      <button
+        type="button"
+        className="mc-secondary"
+        disabled={
+          discountChecking ||
+          isLoading ||
+          !discountCode.trim()
+        }
+        onClick={applyDiscount}
+      >
+        {discountChecking ? "Kontrollerar…" : "Använd kod"}
+      </button>
+    </div>
+
+    {discountError && (
+      <p className="mc-error" role="alert">
+        {discountError}
+      </p>
+    )}
+
+    {appliedDiscount && (
+      <p className="mc-hint" role="status">
+        Rabattkod {appliedDiscount.code} tillagd.
+        Slutpriset bekräftas vid betalningen.
+      </p>
+    )}
+  </div>
+)}
+
+<div className="mc-reassurance">
+  🔒 Säker betalning via Stripe · Ingen inloggning krävs
+</div>
+
+<div className="mc-actions">
+  <button
+    type="button"
+    className="mc-secondary"
+    onClick={() => setCheckoutStep(2)}
+  >
+    ← Tillbaka
+  </button>
+
+  <button
+    type="submit"
+    className="mc-primary"
+    disabled={!canPay || discountChecking}
+  >
+    {isLoading
+      ? "Öppnar betalningen…"
+      : `Betala ${checkoutTotal.toFixed(2)} kr`}
+
+    <span aria-hidden="true">→</span>
+  </button>
+</div>
+
             </section>
           )}
         </main>
@@ -1344,6 +1548,11 @@ const getAvailableTimeSlots = () => {
             {cartPreview.map((item) => (
               <div key={item.id} className="mc-product-item mc-checkout-product-entry">
                 <span>{item.quantity} × {item.name}</span>
+                {item.isSolo && (
+                  <small className="mc-checkout-custom-details">
+                    {item.soloDescription}
+                  </small>
+                )}
                 {item.isCustomized && (
                   <div className="mc-checkout-custom-details">
                     {item.invalid ? (

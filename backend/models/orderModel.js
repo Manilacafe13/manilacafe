@@ -77,12 +77,123 @@ const extraSnapshotSchema = new mongoose.Schema(
   { _id: false }
 );
 
+
+/* ======================================================
+   MANILA CAFÉ — BUNDLE SNAPSHOTS
+   Sparar paketets innehåll och avtalade pris.
+   ====================================================== */
+
+const bundleProductSnapshotSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true
+    },
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100
+    },
+
+    group: {
+      type: String,
+      required: true,
+      enum: ["meal", "dessert", "drink"]
+    }
+  },
+  { _id: false }
+);
+
+const bundleSchema = new mongoose.Schema(
+  {
+    // Kopplar paketet till dess produktrader.
+    bundleKey: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100
+    },
+
+    type: {
+      type: String,
+      required: true,
+      enum: ["manila-solo"]
+    },
+
+    name: {
+      type: String,
+      required: true,
+      default: "Manila Solo"
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+      default: 1,
+      min: 1,
+      max: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "Ogiltigt antal paket."
+      }
+    },
+
+    products: {
+      type: [bundleProductSnapshotSchema],
+      required: true,
+
+      validate: {
+        validator: (products) => {
+          if (!Array.isArray(products)) return false;
+
+          const groups = products.map(p => p.group);
+
+          return (
+            products.length === 3 &&
+            new Set(groups).size === 3 &&
+            ["meal", "dessert", "drink"].every(
+              group => groups.includes(group)
+            ) &&
+            new Set(
+              products.map(p => String(p.productId))
+            ).size === 3
+          );
+        },
+        message:
+          "Manila Solo måste innehålla en maträtt, en dessert och en dryck."
+      }
+    },
+
+    // Paketets avtalade pris inklusive moms.
+    // Beräknas och sätts endast av backend.
+    priceIncludingVat: {
+      type: Number,
+      required: true,
+      min: 0
+    }
+  },
+  { _id: false }
+);
+
+
 // ======================================================
 // ORDER ITEM SCHEMA
 // ======================================================
 
 const orderItemSchema = new mongoose.Schema(
   {
+
+    // Anges endast för produkter som ingår i ett paket.
+    // Vanliga produkter påverkas inte.
+    bundleKey: {
+      type: String,
+      default: undefined,
+      trim: true,
+      maxlength: 100
+    },
+
 
     _id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -298,6 +409,31 @@ const orderSchema = new mongoose.Schema(
 
       }
     },
+
+
+    // ==================================================
+    // MANILA CAFÉ — MENU BUNDLES
+    // ==================================================
+
+    bundles: {
+      type: [bundleSchema],
+      default: [],
+
+      validate: {
+        validator: (bundles) => {
+          if (!Array.isArray(bundles)) return false;
+
+          const keys = bundles.map(
+            bundle => String(bundle.bundleKey)
+          );
+
+          return new Set(keys).size === keys.length;
+        },
+
+        message: "Samma paket-ID förekommer flera gånger."
+      }
+    },
+
 
 
     // ==================================================

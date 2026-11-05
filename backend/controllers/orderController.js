@@ -16,6 +16,11 @@ import validator from "validator";
 
 import { sendOrderConfirmation } from "../services/orderEmail.js";
 
+import {
+  validateManilaSolo,
+  MANILA_SOLO_PRICE_ORE
+} from "../utils/manilaSolo.js";
+
 
 
 const MAX_ITEM_QUANTITY = 99;
@@ -116,9 +121,8 @@ const normalizeOrderSelection = (raw) => {
 
 const getOrderSelectionKey = (productId, selection) => {
   if (!selection) return `${productId}:standard`;
-  return `${productId}:custom:${selection.removedIngredientIds.join(".")}:${
-    selection.extras.map(e => `${e.optionId}x${e.quantity}`).join(".")
-  }`;
+  return `${productId}:custom:${selection.removedIngredientIds.join(".")}:${selection.extras.map(e => `${e.optionId}x${e.quantity}`).join(".")
+    }`;
 };
 
 // Schema-spÃ¤rr: gamla orderModel.js skulle annars tyst kasta bort
@@ -168,8 +172,10 @@ const resolveProductSelection = (product, selection) => {
       throw new Error(`Ett tillval fÃ¶r ${product.name} har Ã¤ndrats.`);
     }
     extraCents += Math.round(price * 100) * quantity;
-    return { optionId: option._id, name: String(option.name || ""), quantity,
-      price: Math.round(price * 100) / 100 };
+    return {
+      optionId: option._id, name: String(option.name || ""), quantity,
+      price: Math.round(price * 100) / 100
+    };
   });
 
   return { removedIngredients, extras, extraCents };
@@ -653,17 +659,17 @@ const ALLOWED_ORDER_STATUSES = [
 
   "Beställning mottagen",
 
-"Förbereds",
+  "Förbereds",
 
-"Redo för upphämtning",
+  "Redo för upphämtning",
 
-"Upphämtad",
+  "Upphämtad",
 
-"På väg",
+  "På väg",
 
-"Levererad",
+  "Levererad",
 
-"Avbruten"
+  "Avbruten"
 ];
 
 
@@ -927,19 +933,19 @@ const getStripeValidationMessage = (error) => {
   switch (error.message) {
 
     case "STRIPE_SESSION_MISSING":
-  return "Stripe-sessionen saknas.";
+      return "Stripe-sessionen saknas.";
 
-case "STRIPE_ORDER_MISMATCH":
-  return "Stripe-betalningen matchar inte bestÃ¤llningen.";
+    case "STRIPE_ORDER_MISMATCH":
+      return "Stripe-betalningen matchar inte bestÃ¤llningen.";
 
-case "STRIPE_SESSION_MISMATCH":
-  return "Stripe-sessionen matchar inte bestÃ¤llningen.";
+    case "STRIPE_SESSION_MISMATCH":
+      return "Stripe-sessionen matchar inte bestÃ¤llningen.";
 
-case "STRIPE_NOT_PAID":
-  return "Betalningen Ã¤r inte genomfÃ¶rd.";
+    case "STRIPE_NOT_PAID":
+      return "Betalningen Ã¤r inte genomfÃ¶rd.";
 
-case "STRIPE_AMOUNT_MISMATCH":
-  return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
+    case "STRIPE_AMOUNT_MISMATCH":
+      return "Betalningsbeloppet matchar inte bestÃ¤llningen.";
 
 
 
@@ -1234,7 +1240,7 @@ const processPaidCheckoutSession = async (
             const product = await foodModel.findById(item._id).session(mongoSession);
             const sameDayStock = Number(product?.sameDayStock || 0);
             if (!product || !Number.isFinite(sameDayStock) ||
-                sameDayStock < item.quantity) {
+              sameDayStock < item.quantity) {
               throw new Error(`SAME_DAY_STOCK:${item.name}`);
             }
           }
@@ -1462,14 +1468,15 @@ const placeOrder = async (req, res) => {
 
 
     const {
-  items,
-  address,
-  deliveryMethod,
-  fulfillmentType,
-  requestedDate,
-  requestedTime,
-  discountCode
-} = req.body || {};
+      items,
+      bundles,
+      address,
+      deliveryMethod,
+      fulfillmentType,
+      requestedDate,
+      requestedTime,
+      discountCode
+    } = req.body || {};
 
 
 
@@ -1954,7 +1961,8 @@ const placeOrder = async (req, res) => {
 
     }
 
-
+    const normalizedDiscountCodeForSolo = (value) =>
+  typeof value === "string" && value.trim().length > 0;
 
     // ==================================================
     // ORDER ITEMS - VALIDERING OCH DEDUPLICERING
@@ -2027,6 +2035,158 @@ const placeOrder = async (req, res) => {
       products.map(product => [String(product._id).toLowerCase(), product])
     );
 
+
+    // ==================================================
+    // MANILA SOLO — SERVERVALIDERING
+    // ==================================================
+
+  
+let soloBundle = null;
+
+if (bundles !== undefined) {
+
+  // Manila Solo är stängt tills alla tester är godkända.
+  // Servern nekar även direkta API-anrop.
+  if (
+    process.env.MANILA_SOLO_CHECKOUT_ENABLED !== "true"
+  ) {
+    return res.status(503).json({
+      success: false,
+      message:
+        "Manila Solo öppnar snart för beställning."
+    });
+  }
+
+
+      if (
+        !Array.isArray(bundles) ||
+        bundles.length !== 1 ||
+        !isPlainObject(bundles[0]) ||
+        bundles[0].type !== "manila-solo"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Ogiltig Manila Solo-beställning."
+        });
+      }
+
+      // Första versionen: exakt tre standardprodukter.
+      if (
+        normalizedItems.length !== 3 ||
+        normalizedItems.some(
+          item => item.quantity !== 1 || item.selection
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Manila Solo måste innehålla tre produkter utan extra tillval."
+        });
+      }
+
+      if (normalizedDiscountCodeForSolo(discountCode)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rabattkoder kan ännu inte kombineras med Manila Solo."
+        });
+      }
+
+      // Godkända produkt-ID:n konfigureras på servern.
+      // Om listan saknas är paketet inte köpklart.
+      const eligibleProductIds = String(
+        process.env.MANILA_SOLO_ELIGIBLE_IDS || ""
+      )
+        .split(",")
+        .map(id => id.trim())
+        .filter(id => mongoose.isValidObjectId(id));
+
+      if (eligibleProductIds.length === 0) {
+        return res.status(503).json({
+          success: false,
+          message: "Manila Solo är inte aktiverad ännu."
+        });
+      }
+
+      
+      // Pickup-begränsningar måste vara uttryckligen
+      // konfigurerade innan Manila Solo kan beställas.
+      if (
+        process.env.MANILA_SOLO_PICKUP_ONLY_IDS === undefined
+      ) {
+        return res.status(503).json({
+          success: false,
+          message:
+            "Leveransregler för Manila Solo är inte konfigurerade."
+        });
+      }
+
+      const pickupOnlyIds = String(
+        process.env.MANILA_SOLO_PICKUP_ONLY_IDS
+      )
+        .split(",")
+        .map(id => id.trim())
+        .filter(id => mongoose.isValidObjectId(id));
+
+
+      try {
+
+        const request = bundles[0];
+
+        soloBundle = validateManilaSolo({
+          selection: {
+            mealId: request.mealId,
+            dessertId: request.dessertId,
+            drinkId: request.drinkId
+          },
+          products,
+          eligibleProductIds,
+          pickupOnlyIds,
+          deliveryMethod
+        });
+
+        const requestedIds = new Set(
+          normalizedItems.map(item => item.productId)
+        );
+
+        const bundleIds = new Set(
+          soloBundle.items.map(item => item.productId)
+        );
+
+        if (
+          requestedIds.size !== 3 ||
+          bundleIds.size !== 3 ||
+          [...bundleIds].some(id => !requestedIds.has(id))
+        ) {
+          throw new Error(
+            "Produkterna i varukorgen matchar inte Manila Solo."
+          );
+        }
+
+        // Säkerställ att den nya ordermodellen är aktiv.
+        const itemSchema =
+          orderModel.schema.path("items")?.schema;
+
+        if (
+          !orderModel.schema.path("bundles") ||
+          !itemSchema?.path("bundleKey")
+        ) {
+          return res.status(503).json({
+            success: false,
+            message:
+              "Paketstöd saknas i den aktiva ordermodellen."
+          });
+        }
+
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+    }
+
+
     const verifiedItems = [];
     let subtotalCents = 0;
     let totalQuantity = 0;
@@ -2049,8 +2209,43 @@ const placeOrder = async (req, res) => {
         const snapshot = item.selection
           ? resolveProductSelection(product, item.selection)
           : null;
+          
 
-        const unitCents = Math.round(basePrice * 100) + (snapshot?.extraCents || 0);
+        let unitCents =
+          Math.round(basePrice * 100) +
+          (snapshot?.extraCents || 0);
+
+        if (soloBundle) {
+
+          // Omvandlar 249 kr inklusive moms
+          // till produktbelopp exklusive 6 % moms.
+          const netBundleCents = Math.round(
+            MANILA_SOLO_PRICE_ORE / (1 + VAT_RATE)
+          );
+
+          const baseShare = Math.floor(
+            netBundleCents / 3
+          );
+
+          const remainder = netBundleCents - baseShare * 3;
+
+          const bundleIndex = soloBundle.items.findIndex(
+            entry => entry.productId === item.productId
+          );
+
+          if (bundleIndex < 0) {
+            throw new Error(
+              "Produkten tillhör inte Manila Solo."
+            );
+          }
+
+          // Fördelningen gör att summan blir exakt
+          // 234,91 kr före moms.
+          unitCents =
+            baseShare +
+            (bundleIndex < remainder ? 1 : 0);
+        }
+
         if (!Number.isSafeInteger(unitCents) || unitCents > 10000000) {
           throw new Error(`Priset fÃ¶r ${product.name} Ã¤r fÃ¶r hÃ¶gt.`);
         }
@@ -2060,6 +2255,7 @@ const placeOrder = async (req, res) => {
 
         verifiedItems.push({
           _id: product._id,
+          bundleKey: soloBundle ? "solo-1" : undefined,
           name: product.name,
           price: unitCents / 100,
           quantity: item.quantity,
@@ -2115,7 +2311,7 @@ const placeOrder = async (req, res) => {
 
     }
 
-     
+
     // ==================================================
     // VALIDATE DISCOUNT CODE
     // ==================================================
@@ -2162,7 +2358,7 @@ const placeOrder = async (req, res) => {
 
       if (
         discount.usageLimit !== null &&
-(discount.usedCount + (discount.reservedCount || 0)) >= discount.usageLimit
+        (discount.usedCount + (discount.reservedCount || 0)) >= discount.usageLimit
 
       ) {
         return res.status(400).json({
@@ -2192,12 +2388,12 @@ const placeOrder = async (req, res) => {
 
 
 
-    
+
     // ==================================================
     // PRICE CALCULATION WITH DISCOUNT
     // ==================================================
 
-   
+
     // ==================================================
     // CALCULATE ORDER TOTAL
     // ==================================================
@@ -2213,9 +2409,9 @@ const placeOrder = async (req, res) => {
     // Rabatt gÃƒÂ¤ller endast produkter, inte leverans
     const discountAmount = appliedDiscount
       ? calculateProductDiscount(
-          productTotalBeforeDiscount,
-          appliedDiscount
-        )
+        productTotalBeforeDiscount,
+        appliedDiscount
+      )
       : 0;
 
     // ProduktvÃƒÂ¤rde inklusive moms, efter rabatt
@@ -2238,8 +2434,8 @@ const placeOrder = async (req, res) => {
 
     const roundedDeliveryFee = roundMoney(
       deliveryMethod === "delivery" &&
-      deliveryZone &&
-      !qualifiesForFreeDelivery
+        deliveryZone &&
+        !qualifiesForFreeDelivery
         ? deliveryZone.fee
         : 0
     );
@@ -2252,10 +2448,27 @@ const placeOrder = async (req, res) => {
     // CREATE ORDER
     // ==================================================
 
+    
     const newOrder = new orderModel({
       userId,
 
       items: verifiedItems,
+
+      bundles: soloBundle
+        ? [{
+            bundleKey: "solo-1",
+            type: "manila-solo",
+            name: "Manila Solo",
+            quantity: 1,
+            products: soloBundle.items.map(item => ({
+              productId: item.productId,
+              name: item.name,
+              group: item.group
+            })),
+            priceIncludingVat:
+              MANILA_SOLO_PRICE_ORE / 100
+          }]
+        : [],
 
       fulfillmentType,
       deliveryMethod,
@@ -2296,7 +2509,7 @@ const placeOrder = async (req, res) => {
         zipcode
       },
 
-     status: "Inväntar betalning",
+      status: "Inväntar betalning",
       payment: false,
       paymentMethod: "Stripe"
     });
@@ -2387,7 +2600,7 @@ const placeOrder = async (req, res) => {
       throw new Error("ORDER_TOTAL_MUST_BE_POSITIVE");
     }
 
-  
+
     const frontendUrl = (
       process.env.FRONTEND_URL ||
       "http://localhost:5173"
@@ -2468,20 +2681,20 @@ const placeOrder = async (req, res) => {
               subtotalAfterDiscount.toString(),
 
             vatAmount:
-            roundedVat.toString(),
-          deliveryFee:
-            roundedDeliveryFee.toString(),
-          deliveryZone:
-            deliveryZone?.id || "pickup",
-          deliveryZoneLabel:
-            deliveryZone?.label || "AvhÃ¤mtning",
-          freeDelivery:
-            (
-              deliveryMethod === "delivery" &&
-              qualifiesForFreeDelivery
-            ).toString(),
-          total:
-            roundedTotal.toString()
+              roundedVat.toString(),
+            deliveryFee:
+              roundedDeliveryFee.toString(),
+            deliveryZone:
+              deliveryZone?.id || "pickup",
+            deliveryZoneLabel:
+              deliveryZone?.label || "AvhÃ¤mtning",
+            freeDelivery:
+              (
+                deliveryMethod === "delivery" &&
+                qualifiesForFreeDelivery
+              ).toString(),
+            total:
+              roundedTotal.toString()
 
           },
 
@@ -2600,9 +2813,9 @@ const placeOrder = async (req, res) => {
 
     });
 
-    } catch (error) {
-  console.error("Place order error:", error);
-  console.error("Place order stack:", error.stack);
+  } catch (error) {
+    console.error("Place order error:", error);
+    console.error("Place order stack:", error.stack);
 
 
     return res.status(500).json({
@@ -3103,8 +3316,10 @@ const stripeWebhook = async (req, res) => {
         // A webhook can arrive before the session ID was persisted.
         // Link the exact Stripe session (identified by signed metadata) first.
         await orderModel.updateOne(
-          { _id: orderId, payment: false,
-            $or: [{ stripeSessionId: { $exists: false } }, { stripeSessionId: null }] },
+          {
+            _id: orderId, payment: false,
+            $or: [{ stripeSessionId: { $exists: false } }, { stripeSessionId: null }]
+          },
           { $set: { stripeSessionId: stripeSession.id } }
         );
         await releaseOrderDiscount(orderId, stripeSession.id);
