@@ -1,4 +1,4 @@
-// Manila CafÃ© â€“ phase 2 customer customizations.
+// Manila Café – phase 2 customer customizations.
 // All prices here are DISPLAY estimates; the checkout backend must reprice
 // every product and selected option using current MongoDB values.
 
@@ -79,7 +79,7 @@ export const validateSelectionForProduct = (product, selection) => {
   let extrasTotal = 0;
   const selectedExtras = clean.extras.map(({ optionId, quantity }) => {
     const option = extraOptions.get(optionId);
-    if (!option) throw new Error('Ett tillval Ã¤r inte lÃ¤ngre tillgÃ¤ngligt.');
+    if (!option) throw new Error('Ett tillval är inte längre tillgängligt.');
     const maxQuantity = Number(option.maxQuantity ?? 1);
     const price = Number(option.price);
     if (!Number.isInteger(maxQuantity) || maxQuantity < 1 || quantity > maxQuantity ||

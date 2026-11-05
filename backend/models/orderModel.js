@@ -4,9 +4,9 @@ import mongoose from "mongoose";
 // ======================================================
 // FAS 2: SNAPSHOTS AV KUNDVAL
 // ======================================================
-// Ordern ska bevara de val kunden betalade fÃ¶r Ã¤ven om en
-// produkt eller ett tillval senare Ã¤ndras i adminpanelen.
-// Backend berÃ¤knar och kontrollerar alltid priser och val.
+// Ordern ska bevara de val kunden betalade för även om en
+// produkt eller ett tillval senare ändras i adminpanelen.
+// Backend beräknar och kontrollerar alltid priser och val.
 
 const MAX_ORDER_CUSTOMIZATION_OPTIONS = 30;
 
@@ -24,7 +24,7 @@ const uniqueOptionSnapshots = (options) => {
     new Set(optionIds).size === optionIds.length;
 };
 
-// En ingrediens som kunden valt att INTE fÃ¥.
+// En ingrediens som kunden valt att INTE få.
 const removedIngredientSnapshotSchema = new mongoose.Schema(
   {
     optionId: {
@@ -42,7 +42,7 @@ const removedIngredientSnapshotSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Ett extra tillval med namn, antal och styckpris vid kÃ¶pet.
+// Ett extra tillval med namn, antal och styckpris vid köpet.
 const extraSnapshotSchema = new mongoose.Schema(
   {
     optionId: {
@@ -63,10 +63,10 @@ const extraSnapshotSchema = new mongoose.Schema(
       max: 10,
       validate: {
         validator: Number.isInteger,
-        message: "Antalet extra tillval mÃ¥ste vara ett heltal."
+        message: "Antalet extra tillval måste vara ett heltal."
       }
     },
-    // Pris per tillval exklusive moms. SÃ¤tts av backend.
+    // Pris per tillval exklusive moms. Sätts av backend.
     price: {
       type: Number,
       required: true,
@@ -237,10 +237,10 @@ const orderItemSchema = new mongoose.Schema(
       default: ""
     },
 
-    // Valfritt fÃ¶r vanliga produkter. Finns endast nÃ¤r kunden
+    // Valfritt för vanliga produkter. Finns endast när kunden
     // har gjort anpassningar av just denna orderrad.
-    // AnvÃ¤nd explicita nestade paths sÃ¥ att orderController.js
-    // kan verifiera schema-stÃ¶det fÃ¶re Stripe-betalningen.
+    // Använd explicita nestade paths så att orderController.js
+    // kan verifiera schema-stödet före Stripe-betalningen.
     customizations: {
       removedIngredients: {
         type: [removedIngredientSnapshotSchema],
@@ -314,13 +314,13 @@ const addressSchema = new mongoose.Schema(
     // ==================================================
 
     /*
-      Dessa fÃ¤lt krÃ¤vs endast nÃ¤r kunden
-      vÃ¤ljer delivery.
+      Dessa fält krävs endast när kunden
+      väljer delivery.
 
-      Vid pickup behÃ¶ver kunden inte
+      Vid pickup behöver kunden inte
       ange leveransadress.
 
-      Den kontrollen gÃ¶rs i
+      Den kontrollen görs i
       orderController.js.
     */
 
@@ -365,12 +365,12 @@ const orderSchema = new mongoose.Schema(
     // ==================================================
 
     /*
-      userId Ã¤r valfritt.
+      userId är valfritt.
 
       Inloggad kund:
-      userId innehÃ¥ller kundens MongoDB-ID.
+      userId innehåller kundens MongoDB-ID.
 
-      GÃ¤stkund:
+      Gästkund:
       userId blir null.
 
       Kundens namn, e-post och telefonnummer
@@ -448,8 +448,8 @@ const orderSchema = new mongoose.Schema(
       = kunden vill ha ordern imorgon
 
       large-order
-      = stÃ¶rre bestÃ¤llning,
-        minst 48 timmar framÃ¥t
+      = större beställning,
+        minst 48 timmar framåt
     */
 
     fulfillmentType: {
@@ -472,10 +472,10 @@ const orderSchema = new mongoose.Schema(
 
     /*
       pickup
-      = kunden hÃ¤mtar bestÃ¤llningen
+      = kunden hämtar beställningen
 
       delivery
-      = bestÃ¤llningen levereras
+      = beställningen levereras
         till kundens adress
     */
 
@@ -510,14 +510,14 @@ const orderSchema = new mongoose.Schema(
 // ==================================================
 
 /*
-  Manila CafÃ© Ã¶ppettider:
+  Manila Café öppettider:
 
-  MÃ¥ndag - sÃ¶ndag:
+  Måndag - söndag:
   10:00 - 23:00
 
-  Samma tider gÃ¤ller alla dagar.
+  Samma tider gäller alla dagar.
 
-  TillÃ¥tna tider kontrolleras Ã¤ven i
+  Tillåtna tider kontrolleras även i
   orderController.js.
 */
 
@@ -592,7 +592,7 @@ discountType: {
   default: null
 },
 
-// Rabattens ursprungliga vÃ¤rde
+// Rabattens ursprungliga värde
 // Exempel: 15 (%) eller 30 (kr)
 discountValue: {
   type: Number,
@@ -776,22 +776,22 @@ discountValue: {
 // INDEXES
 // ======================================================
 
-// Kundens senaste orders fÃ¶rst.
-// GÃ¤storders har userId: null.
+// Kundens senaste orders först.
+// Gästorders har userId: null.
 orderSchema.index({
   userId: 1,
   createdAt: -1
 });
 
 
-// Sortering efter Ã¶nskat datum
+// Sortering efter önskat datum
 orderSchema.index({
   requestedDate: 1,
   fulfillmentType: 1
 });
 
 
-// Sortering efter avhÃ¤mtning / leverans
+// Sortering efter avhämtning / leverans
 orderSchema.index({
   requestedDate: 1,
   deliveryMethod: 1
@@ -799,7 +799,7 @@ orderSchema.index({
 
 
 // Stripe Checkout Session ska endast
-// kunna tillhÃ¶ra en order.
+// kunna tillhöra en order.
 orderSchema.index(
   {
     stripeSessionId: 1
@@ -812,7 +812,7 @@ orderSchema.index(
 
 
 // Stripe Payment Intent ska endast
-// kunna tillhÃ¶ra en order.
+// kunna tillhöra en order.
 orderSchema.index(
   {
     stripePaymentIntentId: 1

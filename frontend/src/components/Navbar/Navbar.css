@@ -45,7 +45,7 @@
 }
 
 
-/* LÃ„NKAR + KNAPPAR */
+/* LÄNKAR + KNAPPAR */
 
 .navbar-menu a,
 .navbar-menu button {
@@ -104,7 +104,7 @@
 
 
 /* ============================= */
-/* HÃ–GER SIDA */
+/* HÖGER SIDA */
 /* ============================= */
 
 .navbar-right {
@@ -116,7 +116,7 @@
 
 
 /* ============================= */
-/* SÃ–K */
+/* SÖK */
 /* ============================= */
 
 .navbar-search {
@@ -654,8 +654,8 @@
 }
 
 /* =================================================== */
-/* MANILA CAFÃ‰ â€” AUTOMATISKT RULLANDE BETALNINGSBANNER */
-/* Tillagd separat â€” all ovanstÃ¥ende Navbar-CSS Ã¤r kvar */
+/* MANILA CAFÃ‰ — AUTOMATISKT RULLANDE BETALNINGSBANNER */
+/* Tillagd separat — all ovanstående Navbar-CSS är kvar */
 /* =================================================== */
 
 .payment-banner {
@@ -757,7 +757,7 @@
     font-weight: 900;
 }
 
-/* Samma banner â€“ bara varumÃ¤rkeslogotyperna fÃ¥r egna ljusa mÃ¤rken */
+/* Samma banner – bara varumärkeslogotyperna får egna ljusa märken */
 .payment-banner-logo-wrap {
     display: inline-flex;
     align-items: center;

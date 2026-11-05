@@ -119,7 +119,7 @@ const upload = multer({
 
     return cb(
       new Error(
-        "Endast bildfiler Ã¤r tillÃ¥tna."
+        "Endast bildfiler är tillåtna."
       ),
       false
     );

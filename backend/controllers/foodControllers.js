@@ -167,49 +167,49 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
 
   if (typeof value === "string") {
     if (value.length > 30000) {
-      throw customizationError("Produktanpassningarna Ã¤r fÃ¶r stora.");
+      throw customizationError("Produktanpassningarna är för stora.");
     }
 
     try {
       value = JSON.parse(value);
     } catch {
-      throw customizationError("Ogiltigt JSON-format fÃ¶r produktanpassningar.");
+      throw customizationError("Ogiltigt JSON-format för produktanpassningar.");
     }
   }
 
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw customizationError("Produktanpassningarna mÃ¥ste vara ett objekt.");
+    throw customizationError("Produktanpassningarna måste vara ett objekt.");
   }
 
   const enabled = value.enabled ?? false;
 
   if (typeof enabled !== "boolean") {
-    throw customizationError("Aktivering av produktanpassningar mÃ¥ste vara true eller false.");
+    throw customizationError("Aktivering av produktanpassningar måste vara true eller false.");
   }
 
   const removableIngredients = value.removableIngredients ?? [];
   const extras = value.extras ?? [];
 
   if (!Array.isArray(removableIngredients) || !Array.isArray(extras)) {
-    throw customizationError("Ingredienser och tillval mÃ¥ste vara listor.");
+    throw customizationError("Ingredienser och tillval måste vara listor.");
   }
 
   if (
     removableIngredients.length > MAX_CUSTOMIZATION_OPTIONS ||
     extras.length > MAX_CUSTOMIZATION_OPTIONS
   ) {
-    throw customizationError(`HÃ¶gst ${MAX_CUSTOMIZATION_OPTIONS} alternativ per grupp tillÃ¥ts.`);
+    throw customizationError(`Högst ${MAX_CUSTOMIZATION_OPTIONS} alternativ per grupp tillåts.`);
   }
 
   const validateName = (name) => {
     if (typeof name !== "string") {
-      throw customizationError("Varje alternativ mÃ¥ste ha ett namn.");
+      throw customizationError("Varje alternativ måste ha ett namn.");
     }
 
     const trimmed = name.trim();
 
     if (!trimmed || trimmed.length > MAX_OPTION_NAME_LENGTH) {
-      throw customizationError(`Alternativnamn mÃ¥ste vara 1â€“${MAX_OPTION_NAME_LENGTH} tecken.`);
+      throw customizationError(`Alternativnamn måste vara 1–${MAX_OPTION_NAME_LENGTH} tecken.`);
     }
 
     return trimmed;
@@ -218,7 +218,7 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
   const validateAvailability = (available) => {
     if (available === undefined) return true;
     if (typeof available !== "boolean") {
-      throw customizationError("TillgÃ¤nglighet mÃ¥ste vara true eller false.");
+      throw customizationError("Tillgänglighet måste vara true eller false.");
     }
     return available;
   };
@@ -234,7 +234,7 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
       const matched = existing.some((item) => String(item._id) === id);
 
       if (!mongoose.isValidObjectId(id) || !matched) {
-        throw customizationError("Ogiltigt alternativ-ID fÃ¶r produkten.");
+        throw customizationError("Ogiltigt alternativ-ID för produkten.");
       }
       return id;
     }
@@ -253,7 +253,7 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
 
     return items.map((option) => {
       if (!option || typeof option !== "object" || Array.isArray(option)) {
-        throw customizationError("Varje alternativ mÃ¥ste vara ett objekt.");
+        throw customizationError("Varje alternativ måste vara ett objekt.");
       }
 
       const name = validateName(option.name);
@@ -272,7 +272,7 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
       const id = getPreservedId(option, name, currentItems);
       if (id) {
         if (seenIds.has(String(id))) {
-          throw customizationError("Samma alternativ-ID fÃ¥r inte fÃ¶rekomma tvÃ¥ gÃ¥nger.");
+          throw customizationError("Samma alternativ-ID får inte förekomma två gånger.");
         }
         seenIds.add(String(id));
         normalized._id = id;
@@ -284,12 +284,12 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
           option.price === null ||
           (typeof option.price === "string" && !option.price.trim())
         ) {
-          throw customizationError(`Pris saknas fÃ¶r tillvalet ${name}.`);
+          throw customizationError(`Pris saknas för tillvalet ${name}.`);
         }
 
         const price = Number(option.price);
         if (!Number.isFinite(price) || price < 0 || price > MAX_PRICE) {
-          throw customizationError(`Ogiltigt pris fÃ¶r tillvalet ${name}.`);
+          throw customizationError(`Ogiltigt pris för tillvalet ${name}.`);
         }
 
         const rawMaxQuantity = option.maxQuantity ?? 1;
@@ -299,7 +299,7 @@ const normalizeProductCustomizations = (rawValue, currentValue = null) => {
           maxQuantity < 1 ||
           maxQuantity > MAX_EXTRA_QUANTITY
         ) {
-          throw customizationError(`Maxantal fÃ¶r ${name} mÃ¥ste vara 1â€“${MAX_EXTRA_QUANTITY}.`);
+          throw customizationError(`Maxantal för ${name} måste vara 1–${MAX_EXTRA_QUANTITY}.`);
         }
 
         normalized.price = price;
@@ -380,7 +380,7 @@ const addFood = async (
         success: false,
 
         message:
-          "Ogiltig bildfil. Endast JPEG, PNG och WebP Ã¤r tillÃ¥tna."
+          "Ogiltig bildfil. Endast JPEG, PNG och WebP är tillåtna."
 
       });
 
@@ -431,7 +431,7 @@ const addFood = async (
       return res.status(400).json({
         success: false,
         message:
-          `Produktnamnet fÃ¥r vara hÃ¶gst ${MAX_NAME_LENGTH} tecken.`
+          `Produktnamnet får vara högst ${MAX_NAME_LENGTH} tecken.`
       });
 
     }
@@ -447,7 +447,7 @@ const addFood = async (
       return res.status(400).json({
         success: false,
         message:
-          `Produktbeskrivningen fÃ¥r vara hÃ¶gst ${MAX_DESCRIPTION_LENGTH} tecken.`
+          `Produktbeskrivningen får vara högst ${MAX_DESCRIPTION_LENGTH} tecken.`
       });
 
     }
@@ -463,7 +463,7 @@ const addFood = async (
       return res.status(400).json({
         success: false,
         message:
-          `Kategorin fÃ¥r vara hÃ¶gst ${MAX_CATEGORY_LENGTH} tecken.`
+          `Kategorin får vara högst ${MAX_CATEGORY_LENGTH} tecken.`
       });
 
     }
@@ -489,7 +489,7 @@ const addFood = async (
         success: false,
 
         message:
-          "Alla produktuppgifter mÃ¥ste fyllas i."
+          "Alla produktuppgifter måste fyllas i."
 
       });
 
@@ -516,7 +516,7 @@ const addFood = async (
         success: false,
 
         message:
-          `Priset mÃ¥ste vara mellan 0 och ${MAX_PRICE} kr.`
+          `Priset måste vara mellan 0 och ${MAX_PRICE} kr.`
 
       });
 
@@ -546,7 +546,7 @@ const addFood = async (
         success: false,
 
         message:
-          `Dagslagret mÃ¥ste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
+          `Dagslagret måste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
 
       });
 
@@ -705,7 +705,7 @@ const addFood = async (
       success: false,
 
       message:
-        "Produkten kunde inte lÃ¤ggas till."
+        "Produkten kunde inte läggas till."
 
     });
 
@@ -756,7 +756,7 @@ const listFood = async (
       success: false,
 
       message:
-        "Produkterna kunde inte hÃ¤mtas."
+        "Produkterna kunde inte hämtas."
 
     });
 
@@ -842,7 +842,7 @@ const updateStock = async (
         success: false,
 
         message:
-          "Dagslagret mÃ¥ste vara ett heltal frÃ¥n 0 och uppÃ¥t."
+          "Dagslagret måste vara ett heltal från 0 och uppåt."
 
       });
 

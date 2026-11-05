@@ -1,4 +1,4 @@
-/* Manila CafÃ© â€¢ minimal 3-step checkout. Import after PlaceOrder.css. */
+/* Manila Café • minimal 3-step checkout. Import after PlaceOrder.css. */
 .manila-checkout{--mc-ink:#262626;--mc-muted:#777777;--mc-accent:rgb(3, 149, 44);--mc-bg:#ffffff;--mc-border:#e5e5e5;color:var(--mc-ink);max-width:1140px;margin:36px auto 90px;padding:0 20px;font-family:inherit}
 .manila-checkout *{box-sizing:border-box}
 .manila-checkout button,.manila-checkout input,.manila-checkout select{font:inherit}

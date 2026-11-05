@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import foodModel from "../models/foodmodel.js";
 import kitchenRecipeModel from "../models/kitchenRecipeModel.js";
 
-// Endast fÃ¶r admin-API:t. Ã…tkomstkontroll måste gÃ¶ras i kitchenRecipeRoute.js.
+// Endast för admin-API:t. Åtkomstkontroll måste göras i kitchenRecipeRoute.js.
 // GET /api/kitchen-recipe/list
 const listKitchenRecipes = async (req, res) => {
   try {
@@ -16,17 +16,17 @@ const listKitchenRecipes = async (req, res) => {
       data: recipes
     });
   } catch (error) {
-    console.error("Kunde inte hÃ¤mta kÃ¶ksrecept:", error);
+    console.error("Kunde inte hämta köksrecept:", error);
     return res.status(500).json({
       success: false,
-      message: "Recepten kunde inte hÃ¤mtas."
+      message: "Recepten kunde inte hämtas."
     });
   }
 };
 
 // POST /api/kitchen-recipe/save
 // Body: { foodId, ingredients: [{ name, amount, unit }], steps: ["Steg 1", ...] }
-// Skapar eller uppdaterar receptet fÃ¶r en befintlig produkt.
+// Skapar eller uppdaterar receptet för en befintlig produkt.
 const saveKitchenRecipe = async (req, res) => {
   try {
     const { foodId, ingredients, steps } = req.body || {};
@@ -41,7 +41,7 @@ const saveKitchenRecipe = async (req, res) => {
     if (!Array.isArray(ingredients) || !Array.isArray(steps)) {
       return res.status(400).json({
         success: false,
-        message: "Ingredienser och tillagningssteg mÃ¥ste vara listor."
+        message: "Ingredienser och tillagningssteg måste vara listor."
       });
     }
 
@@ -57,7 +57,7 @@ const saveKitchenRecipe = async (req, res) => {
       if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
         return res.status(400).json({
           success: false,
-          message: "Varje ingrediens mÃ¥ste innehÃ¥lla namn och eventuella mÃ¤ngder."
+          message: "Varje ingrediens måste innehålla namn och eventuella mängder."
         });
       }
 
@@ -73,7 +73,7 @@ const saveKitchenRecipe = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Kontrollera ingrediensernas namn, mÃ¤ngder och enheter."
+          message: "Kontrollera ingrediensernas namn, mängder och enheter."
         });
       }
 
@@ -93,7 +93,7 @@ const saveKitchenRecipe = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Varje tillagningssteg mÃ¥ste vara text pÃ¥ hÃ¶gst 800 tecken."
+          message: "Varje tillagningssteg måste vara text på högst 800 tecken."
         });
       }
       cleanedSteps.push(step.trim());
@@ -103,7 +103,7 @@ const saveKitchenRecipe = async (req, res) => {
     if (!food) {
       return res.status(404).json({
         success: false,
-        message: "Produkten finns inte lÃ¤ngre."
+        message: "Produkten finns inte längre."
       });
     }
 
@@ -125,7 +125,7 @@ const saveKitchenRecipe = async (req, res) => {
       data: recipe
     });
   } catch (error) {
-    console.error("Kunde inte spara kÃ¶ksrecept:", error);
+    console.error("Kunde inte spara köksrecept:", error);
     return res.status(500).json({
       success: false,
       message: "Receptet kunde inte sparas."

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-// Interna recept lagras separat frÃ¥n produktmodellen.
-// De fÃ¥r bara hÃ¤mtas via administratÃ¶rsskyddade API-rutter.
+// Interna recept lagras separat från produktmodellen.
+// De får bara hämtas via administratörsskyddade API-rutter.
 
 const ingredientSchema = new mongoose.Schema(
   {
@@ -29,7 +29,7 @@ const ingredientSchema = new mongoose.Schema(
 
 const kitchenRecipeSchema = new mongoose.Schema(
   {
-    // Kopplar receptet till rÃ¤tt produkt i MongoDB.
+    // Kopplar receptet till rätt produkt i MongoDB.
     foodId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "food",
@@ -37,7 +37,7 @@ const kitchenRecipeSchema = new mongoose.Schema(
       unique: true
     },
 
-    // AnvÃ¤nds som lÃ¤sbar rubrik och reserv fÃ¶r Ã¤ldre bestÃ¤llningar.
+    // Används som läsbar rubrik och reserv för äldre beställningar.
     name: {
       type: String,
       required: true,
@@ -45,13 +45,13 @@ const kitchenRecipeSchema = new mongoose.Schema(
       maxlength: 100
     },
 
-    // Exempel: { name: "VetemjÃ¶l", amount: "420", unit: "g" }
+    // Exempel: { name: "Vetemjöl", amount: "420", unit: "g" }
     ingredients: {
       type: [ingredientSchema],
       default: [],
       validate: {
         validator: (items) => items.length <= 80,
-        message: "Ett recept fÃ¥r ha hÃ¶gst 80 ingredienser."
+        message: "Ett recept får ha högst 80 ingredienser."
       }
     },
 
@@ -61,7 +61,7 @@ const kitchenRecipeSchema = new mongoose.Schema(
       default: [],
       validate: {
         validator: (items) => items.length <= 50,
-        message: "Ett recept fÃ¥r ha hÃ¶gst 50 tillagningssteg."
+        message: "Ett recept får ha högst 50 tillagningssteg."
       }
     }
   },

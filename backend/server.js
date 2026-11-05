@@ -329,7 +329,7 @@ app.get(
     res
       .status(200)
       .send(
-        "Manila CafÃ© API Working"
+        "Manila Café API Working"
       );
 
   }
@@ -444,7 +444,7 @@ app.use(
         success: false,
 
         message:
-          "Bilden fÃ¥r vara hÃ¶gst 5 MB."
+          "Bilden får vara högst 5 MB."
 
       });
 
@@ -457,7 +457,7 @@ app.use(
 
     if (
       error.message ===
-      "Endast bildfiler Ã¤r tillÃ¥tna."
+      "Endast bildfiler är tillåtna."
     ) {
 
       return res.status(400).json({
