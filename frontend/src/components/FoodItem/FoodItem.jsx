@@ -440,6 +440,30 @@ const FoodItem = ({
 },
 
 
+"strawberry sago": {
+    ingredients:
+        "Mjölk, jordgubbar, sagopärlor (tapioka) och sötad kondenserad mjölk.",
+
+    allergens:
+        "Innehåller MJÖLK. Kontrollera samtliga ingredienser för eventuella allergener.",
+
+    extra:
+        "En fruktig twist på den filippinska favoriten Sago! Mjuka sagopärlor möter en len och krämig jordgubbsblandning med härlig smak av färska jordgubbar. En perfekt balans mellan sötma, friskhet och krämighet som gör varje klunk till en njutning. Serveras kall för en uppfriskande jordgubbsupplevelse."
+},
+
+"ube sago": {
+    ingredients:
+        "Mjölk, ube (lila jams), ube-extrakt, sagopärlor (tapioka) och sötad kondenserad mjölk.",
+
+    allergens:
+        "Innehåller MJÖLK. Kontrollera ube-extraktet och övriga ingredienser för eventuella allergener.",
+
+    extra:
+        "En lila dröm inspirerad av Filippinerna! Mjuka sagopärlor blandas med en fyllig och krämig ubeblandning med mild sötma och en unik, lätt nötig smak. En härlig kombination av traditionella filippinska smaker, krämighet och mjuk konsistens. Serveras kall för den ultimata ubeupplevelsen."
+},
+
+
+
 "pancit": {
     ingredients:
         "Nudlar, räkor, färska grönsaker, vitlök, lök och en smakrik filippinsk sås baserad på soja och kryddor.",
