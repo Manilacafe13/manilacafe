@@ -1350,7 +1350,7 @@ const PlaceOrder = () => {
         ))}
       </nav>
 
-      {hasManilaSolo && (
+      {hasManilaSolo && !SOLO_CHECKOUT_READY && (
         <div className="mc-checkout-custom-warning" role="alert">
           <strong>Manila Solo kan inte betalas ännu.</strong>
           <p>Menyn är färdig men vi behöver verifiera paketpriset i servern och Stripe innan köp kan aktiveras.</p>
