@@ -18,219 +18,200 @@ const createSlug = (name = "") =>
 
 
 // ======================================================
-// PORTIONSINFORMATION
-// Visar vad kunden får vid beställning, utan att anta
-// okända vikter, volymer eller antal tillbehör.
+// PRODUKTINFORMATION – ingredienser och portion tillsammans
+// Bekräfta allergener/antal mot faktiskt recept före publicering.
+// Uppgifter som saknas anges tydligt, de hittas inte på.
 // ======================================================
 
+const normalizeProductName = (value = '') =>
+    String(value).trim().toLowerCase().normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ')
 
-const portionInformation = {
-
-    // ==========================================
+const productDetails = {
     // MATRÄTTER
-    // ==========================================
-
-    "siningang med räkor": {
-        quantity: "5 stora räkor",
-        contents:
-            "Fem stora räkor i en syrlig filippinsk sinigang-buljong med grönsaker. Serveras med ris.",
-        serving:
-            "Rätten kan levereras kyld för att bevara kvaliteten. Värm tills maten är ordentligt genomvarm före servering."
+    'sinigang med räkor': {
+        ingredients: 'Räkor, sinigang-buljong, grönsaker och ris.',
+        allergens: 'Innehåller KRÄFTDJUR (räkor). Övriga allergener i sinigang-mix och buljong måste kontrolleras mot de produkter som används.',
+        extra: 'Syrlig filippinsk soppa som serveras med ris.',
+        portion: { quantity: '5 stora räkor', contents: 'En portion sinigang med fem stora räkor, grönsaker, buljong och ris.', serving: 'Om rätten levereras kyld: förvara kallt och värm tills allt är ordentligt genomvarmt.' }
+    },
+    'chicken adobo': {
+        ingredients: 'Kyckling, soja, vinäger, vitlök, lagerblad, svartpeppar och ris.',
+        allergens: 'Innehåller SOJA. Kan innehålla VETE (gluten), beroende på vilken soja som används; kontrollera förpackningen.',
+        extra: 'Filippinsk kycklingadobo i smakrik sås med ris.',
+        portion: { quantity: '4 kycklingklubbor', contents: 'Fyra kycklingklubbor med adobosås och ris.', serving: 'Om rätten behöver värmas: värm kyckling och ris tills de är ordentligt genomvarma.' }
+    },
+    pancit: {
+        ingredients: 'Nudlar, räkor, grönsaker, vitlök, lök och sojabaserad sås med kryddor.',
+        allergens: 'Innehåller KRÄFTDJUR (räkor) och SOJA. VETE (gluten) kan ingå i nudlar eller soja; kontrollera produkternas innehåll.',
+        extra: 'Filippinska wokade nudlar med räkor och grönsaker.',
+        portion: { quantity: '5 medelstora räkor', contents: 'En portion wokade nudlar med fem räkor, grönsaker och sås.', serving: 'Värm vid behov tills rätten är ordentligt genomvarm.' }
     },
 
-    "sinigang med räkor": {
-        quantity: "5 stora räkor",
-        contents:
-            "Fem stora räkor i en syrlig filippinsk sinigang-buljong med grönsaker. Serveras med ris.",
-        serving:
-            "Värm tills maten är ordentligt genomvarm före servering."
-    },
-
-    "chicken adobo": {
-        quantity: "4 kycklingklubbor",
-        contents:
-            "Fyra kycklingklubbor tillagade i vår klassiska adobosås med soja, vinäger och vitlök. Serveras med ris.",
-        serving:
-            "Värm kycklingen, såsen och riset ordentligt före servering tills allt är genomvarmt."
-    },
-
-    "pancit": {
-    quantity: "5 medelstora räkor",
-    contents:
-        "Filippinska wokade nudlar med fem medelstora räkor, färska grönsaker och en smakrik sojabaserad sås.",
-    serving:
-        "Värm tills maten är ordentligt genomvarm före servering."
-},
-
-    // ==========================================
     // DESSERTER
-    // ==========================================
-
-    "mango float": {
-        contents:
-            "En portion Mango Float med färsk mango, krämig fyllning och lager av grahamskex.",
-        serving:
-            "Serveras väl kyld. Förvara i kylskåp fram till servering."
+    'mango float': {
+        ingredients: 'Mango, grädde, sötad kondenserad mjölk, färskost (Philadelphia) och grahamskex.',
+        allergens: 'Innehåller MJÖLK och VETE (gluten). Kontrollera grahamskexens och färskostens förpackningar för övriga allergener.',
+        extra: 'Kall dessert med lager av mango, kräm och kex.',
+        portion: { contents: 'En portion Mango Float med mango, krämig fyllning och grahamskex.', serving: 'Serveras kyld. Förvara i kylskåp fram till servering.' }
+    },
+    'apple crisp float': {
+        ingredients: 'Äpple, sötad kondenserad mjölk, grädde, färskost, kex, kanel och karamelliserat äpple.',
+        allergens: 'Innehåller MJÖLK. Kexen kan innehålla VETE (gluten); kontrollera förpackningarna.',
+        extra: 'Kyld äppeldessert med krämiga lager och kanel.',
+        portion: { contents: 'En portion Apple Crisp Float med äpple, kanel, kex och krämiga lager.', serving: 'Serveras kyld och förvaras i kylskåp.' }
+    },
+    'ube cake': {
+        ingredients: 'Gräddfil, socker, kokosflingor, grahamskex, kokosgrädde, ube-sylt, färskost (Philadelphia), smör och salt.',
+        allergens: 'Innehåller MJÖLK och VETE (gluten). Kontrollera även grahamskex, ube-sylt och övriga förpackningar.',
+        extra: 'Kylskåpsdessert med ube och kokos.',
+        portion: { contents: 'En portion Ube Cake med krämiga lager av ube och kokos.', serving: 'Serveras kyld och förvaras i kylskåp.' }
+    },
+    'fruit cup': {
+        ingredients: 'Fruktcocktail, ost (Eden cheese), nata de coco, kokoskött, kokosgelé och sötad kondenserad mjölk.',
+        allergens: 'Innehåller MJÖLK. Kontrollera fruktcocktail, kokosgelé och övriga förpackade ingredienser.',
+        extra: 'Fruktbägare med filippinska tillbehör. Geléns innehåll bör kontrolleras mot aktuell förpackning.',
+        portion: { contents: 'En bägare fruktblandning med kokos, ost och kondenserad mjölk.', serving: 'Serveras väl kyld och förvaras i kylskåp.' }
+    },
+    'golden turon & ube ice cream': {
+        ingredients: 'Banan, vårrulleark, socker och ube-glass.',
+        allergens: 'Vårrulleark kan innehålla VETE (gluten) och ube-glass kan innehålla MJÖLK. Bekräfta exakta allergener mot aktuella förpackningar.',
+        extra: 'Krispig filippinsk turon med ube-glass.',
+        // Antalet rullar har varierat i tidigare uppgifter och ska verifieras innan publicering.
+        portion: { contents: 'En portion krispiga turonrullar med bananfyllning, serverade med ube-glass.', serving: 'Värm vid behov turon separat. Glassen bör hållas fryst fram till servering.' }
+    },
+    'biscoff cinnamon banana float': {
+        ingredients: 'Banan, sötad kondenserad mjölk, grädde, färskost, Biscoff-kex och kanel.',
+        allergens: 'Innehåller MJÖLK och VETE (gluten). Biscoff-kex innehåller även SOJA; kontrollera aktuell förpackning.',
+        extra: 'Krämig banandessert med Biscoff och kanel.',
+        portion: { contents: 'En portion Banana Float med banan, Biscoff-kex, kanel och kräm.', serving: 'Serveras kyld och förvaras i kylskåp.' }
     },
 
-    "apple crisp float": {
-        contents:
-            "En portion Apple Crisp Float med karamelliserade äpplen, kanel och krämiga lager.",
-        serving:
-            "Serveras kyld. För bästa smak och konsistens rekommenderar vi att desserten förvaras i kylskåp fram till servering."
-    },
-
-    "ube cake": {
-        contents:
-            "En portion Ube Cake med krämiga lager av ube och kokos.",
-        serving:
-            "Serveras kyld och bör förvaras i kylskåp fram till servering."
-    },
-
-    "fruit cup": {
-        contents:
-            "En bägare Fruit Cup med fruktblandning, kokos, ost och kondenserad mjölk.",
-        serving:
-            "Serveras väl kyld. Förvara i kylskåp fram till servering."
-    },
-
-    "golden turon & ube ice cream": {
-        quantity: "4 turonrullar med ube-glass",
-        contents:
-            "Fyra krispiga turonrullar fyllda med banan, serverade med skopor av ube-glass.",
-        serving:
-            "Värm gärna turon separat om den har svalnat under leveransen. Vi gör vårt bästa för att glassen ska behålla sin konsistens, men viss smältning kan förekomma under transporten."
-    },
-
-    "biscoff cinnamon banana float": {
-        contents:
-            "En portion Banana Float med banan, Biscoff-kex, kanel och krämig fyllning.",
-        serving:
-            "Serveras kyld. Förvara i kylskåp fram till servering."
-    },
-
-    // ==========================================
     // TAHO
-    // ==========================================
-
-    "taho": {
-        contents:
-            "En portion klassisk Taho med silkeslen tofu, sagopärlor och söt sirap."
+    taho: {
+        ingredients: 'Silkestofu, sagopärlor och söt sirap.',
+        allergens: 'Innehåller SOJA. Kontrollera även sirapens ingredienser.',
+        extra: 'Klassisk filippinsk taho.',
+        portion: { contents: 'En portion mjuk tofu med sagopärlor och sirap.', serving: 'Serveras enligt aktuell serveringsinformation. Kontakta oss om förvaring vid senare konsumtion.' }
+    },
+    'strawberry taho': {
+        ingredients: 'Silkestofu, sagopärlor och jordgubbssirap.',
+        allergens: 'Innehåller SOJA. Kontrollera jordgubbssirapens ingredienser.',
+        extra: 'Taho med jordgubbssmak.',
+        portion: { contents: 'En portion silkeslen tofu, sagopärlor och jordgubbssirap.', serving: 'Serveras enligt aktuell serveringsinformation.' }
+    },
+    'apple taho': {
+        ingredients: 'Silkestofu, sagopärlor och äppelsirap.',
+        allergens: 'Innehåller SOJA. Kontrollera äppelsirapens ingredienser.',
+        extra: 'Taho med äppelsmak.',
+        portion: { contents: 'En portion silkeslen tofu, sagopärlor och äppelsirap.', serving: 'Serveras enligt aktuell serveringsinformation.' }
     },
 
-    "strawberry taho": {
-        contents:
-            "En portion Strawberry Taho med silkeslen tofu, sagopärlor och söt jordgubbssirap."
+    // HALO-HALO OCH SAGO
+    'halo-halo': {
+        ingredients: 'Krossad is, sötad mjölk, gelé, sötade bönor, nata de coco, majs, jordgubbar och ube-glass.',
+        allergens: 'Innehåller MJÖLK om mjölk och ube-glass används enligt receptet. Kontrollera gelé, glass och samtliga övriga tillbehör för ytterligare allergener.',
+        extra: 'Filippinsk isdessert med flera tillbehör.',
+        portion: { contents: 'En portion krossad is med mjölk, frukt, gelé, bönor, majs och ube-glass.', serving: 'Serveras kall och bör avnjutas direkt efter tillredning.' }
+    },
+    'mango sago': {
+        ingredients: 'Mango, sagopärlor (tapioka), kokosmjölk och sötad kondenserad mjölk.',
+        allergens: 'Innehåller MJÖLK. Kontrollera övriga ingrediensförpackningar.',
+        extra: 'Krämig dessert med mango och sagopärlor.',
+        portion: { contents: 'En portion Mango Sago med mango, tapiokapärlor och krämig mjölk- och kokosblandning.', serving: 'Serveras väl kyld och förvaras i kylskåp.' }
+    },
+    'choco sago': {
+        ingredients: 'Mjölk, vispgrädde, kakao, mörk choklad, sagopärlor (tapioka), sötad kondenserad mjölk, browniebitar och chokladsås.',
+        allergens: 'Innehåller MJÖLK. Brownie och choklad kan innehålla VETE (gluten), ÄGG och SOJA; dessa måste kontrolleras mot använda produkter.',
+        extra: 'Krämig chokladdessert med sago och browniebitar.',
+        portion: { contents: 'En portion Choco Sago med sagopärlor, chokladkräm, browniebitar och chokladsås.', serving: 'Serveras väl kyld och förvaras i kylskåp.' }
+    },
+    'strawberry sago': {
+        ingredients: 'Mjölk, jordgubbar, sagopärlor (tapioka) och sötad kondenserad mjölk.',
+        allergens: 'Innehåller MJÖLK. Kontrollera övriga ingrediensförpackningar.',
+        extra: 'Krämig jordgubbsdessert med sagopärlor.',
+        portion: { contents: 'En portion Strawberry Sago med jordgubbar, sagopärlor och krämig mjölkblandning.', serving: 'Serveras väl kyld och förvaras i kylskåp.' }
+    },
+    'ube sago': {
+        ingredients: 'Mjölk, ube (lila jams), ube-extrakt, sagopärlor (tapioka) och sötad kondenserad mjölk.',
+        allergens: 'Innehåller MJÖLK. Kontrollera ube-extrakt och övriga ingrediensförpackningar.',
+        extra: 'Krämig dessert med ube och sagopärlor.',
+        portion: { contents: 'En portion Ube Sago med sagopärlor och krämig ubeblandning.', serving: 'Serveras väl kyld och förvaras i kylskåp.' }
     },
 
-    "apple taho": {
-        contents:
-            "En portion Apple Taho med silkeslen tofu, sagopärlor och söt äppelsirap."
-    },
-
-    // ==========================================
-    // HALO-HALO & MANGO SAGO
-    // ==========================================
-
-    "halo-halo": {
-        contents:
-            "En portion Halo-halo med krossad is, sötad mjölk, filippinska tillbehör och ube-glass.",
-        serving:
-            "Blanda ingredienserna ordentligt före servering. Vi gör vårt bästa för att bevara dessertens temperatur och konsistens under leveransen, men viss smältning av is och glass kan förekomma."
-    },
-
-    "mango sago": {
-        contents:
-            "En portion Mango Sago med färsk mango, sagopärlor och en krämig mjölk- och kokosblandning.",
-        serving:
-            "Serveras väl kyld. Förvara i kylskåp fram till servering."
-    },
-
-    // ==========================================
     // BRÖD
-    // ==========================================
-
-    "pandesal": {
-        quantity: "3 stycken",
-        contents:
-            "Tre klassiska filippinska pandesal med mjuk insida och lätt gyllene yta.",
-        serving:
-            "Bröden kan ha svalnat under leveransen. Värm gärna lätt före servering för en mjukare och nybakad känsla."
+    pandesal: {
+        // Fullständigt recept saknas i underlaget. Visa inte en påhittad ingredienslista.
+        ingredients: 'Fullständig ingredienslista behöver bekräftas mot aktuellt recept.',
+        allergens: 'Allergenuppgifter behöver bekräftas innan beställning. Kontakta oss för fullständig information.',
+        extra: 'Klassiskt filippinskt bröd.',
+        portion: { quantity: '3 stycken', contents: 'Tre klassiska pandesal.', serving: 'Värm gärna lätt före servering.' }
+    },
+    'ube pandesal': {
+        ingredients: 'Vetemjöl, mjölk, jäst, socker, olja, ägg, salt, ube-extrakt, ströbröd, ube-fyllning och ost.',
+        allergens: 'Innehåller VETE (gluten), MJÖLK och ÄGG. Kontrollera ost, ube-fyllning, ströbröd och ube-extrakt för ytterligare allergener.',
+        extra: 'Mjuka ube-bröd med fyllning.',
+        portion: { quantity: '3 stycken', contents: 'Tre mjuka Ube Pandesal med ube- och ostfyllning.', serving: 'Värm gärna kort före servering.', preparation: 'Tillagas färska; beställningen kan kräva extra förberedelsetid.' }
     },
 
-    "ube pandesal med ost": {
-        quantity: "3 stycken",
-        contents:
-            "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
-        serving:
-            "Bröden kan ha svalnat under leveransen. Värm gärna i mikrovågsugn i cirka 20 sekunder före servering.",
-        preparation:
-            "Eftersom bröden tillagas färska kan tillagningen ta några timmar beroende på efterfrågan."
-    },
-
-    "ube pandesal": {
-        quantity: "3 stycken",
-        contents:
-            "Fyra mjuka Ube Pandesal med krämig ostfyllning.",
-        serving:
-            "Bröden kan ha svalnat under leveransen. Värm gärna i mikrovågsugn i cirka 20 sekunder före servering.",
-        preparation:
-            "Eftersom bröden tillagas färska kan tillagningen ta några timmar beroende på efterfrågan."
-    },
-
-    // ==========================================
     // DRYCKER
-    // ==========================================
-
-    "ube caramel latte": {
-        contents:
-            "En kall Ube Caramel Latte med espresso, ube, mjölk, karamell och is.",
-        serving:
-            "Serveras kall. Vi gör vårt bästa för att drycken ska behålla sin temperatur under leveransen, men isen kan delvis smälta under transporten."
+    'ube caramel latte': {
+        ingredients: 'Espresso, laktosfri mjölk, ube, karamellsås och is.',
+        allergens: 'Innehåller MJÖLK (mjölkprotein), även om mjölken är laktosfri. Kontrollera ube- och karamellprodukternas innehåll.',
+        extra: 'Kall kaffedryck med ube och karamell.',
+        portion: { contents: 'En Ube Caramel Latte med espresso, mjölk, ube, karamell och is.', serving: 'Serveras kall. Is kan smälta under leverans.' }
     },
-
-    "passion paradise": {
-        contents:
-            "En fruktig och uppfriskande passionsfruktsdryck med tropisk karaktär, serverad över is.",
-        serving:
-            "Serveras väl kyld. Isen kan delvis smälta under transporten."
+    'passion paradise': {
+        ingredients: 'Passionsfrukt och is. Fullständigt recept behöver bekräftas.',
+        allergens: 'Fullständig allergeninformation behöver bekräftas mot aktuellt recept. Kontakta oss före beställning vid allergi.',
+        extra: 'Tropisk passionsfruktsdryck.',
+        portion: { contents: 'En portion Passion Paradise, serverad kall.', serving: 'Serveras kyld. Is kan smälta under leverans.' }
     },
-
-    "strawberry biscoff bliss": {
-        contents:
-            "En krämig jordgubbsshake med smak av Biscoff – en söt och fruktig favorit.",
-        serving:
-            "Serveras väl kyld. Skaka eller rör om försiktigt vid behov."
+    'strawberry biscoff bliss': {
+        ingredients: 'Jordgubbar och Biscoff-kex. Övriga ingredienser behöver bekräftas mot receptet.',
+        allergens: 'Biscoff-kex innehåller VETE (gluten) och SOJA. Eventuell MJÖLK och ytterligare allergener behöver kontrolleras mot hela receptet.',
+        extra: 'Krämig jordgubbsdryck med Biscoff.',
+        portion: { contents: 'En portion Strawberry Biscoff Bliss med jordgubbs- och Biscoffsmak.', serving: 'Serveras kall.' }
     },
-
-    "mango pineapple sunshine": {
-        contents:
-            "En tropisk och svalkande dryck med mango och ananas, serverad över is.",
-        serving:
-            "Serveras väl kyld. Isen kan delvis smälta under transporten."
+    'mango pineapple sunshine': {
+        ingredients: 'Mango, ananas och is. Fullständigt recept behöver bekräftas.',
+        allergens: 'Fullständig allergeninformation behöver bekräftas mot aktuellt recept. Kontakta oss före beställning vid allergi.',
+        extra: 'Tropisk dryck med mango och ananas.',
+        portion: { contents: 'En portion Mango Pineapple Sunshine med mango- och ananassmak.', serving: 'Serveras kyld. Is kan smälta under leverans.' }
     },
-
-    "ube caramel twirl": {
-        contents:
-            "En kall Ube Caramel ube, mjölk, karamell och is.",
-        serving:
-            "Serveras kall. Vi gör vårt bästa för att drycken ska behålla sin temperatur under leveransen, men isen kan delvis smälta under transporten."
-    },
-
-    // Äldre/alternativa produktnamn i admin stöds också.
-    "passion fruit": {
-        contents: "En fruktig och uppfriskande passionsfruktsdryck, serverad över is.",
-        serving: "Serveras väl kyld. Isen kan delvis smälta under transporten."
-    },
-    "strawberry biscoff shake": {
-        contents: "En krämig jordgubbsshake med smak av Biscoff.",
-        serving: "Serveras väl kyld."
-    },
-    "mango pinapple sun": {
-        contents: "En tropisk och svalkande dryck med mango och ananas, serverad över is.",
-        serving: "Serveras väl kyld. Isen kan delvis smälta under transporten."
+    'ube caramel twirl': {
+        ingredients: 'Mjölk, ube, karamellsås och is.',
+        allergens: 'Innehåller MJÖLK. Kontrollera ubeproduktens och karamellsåsens förpackningar för ytterligare allergener.',
+        extra: 'Kall, kaffefri dryck med ube och karamell.',
+        portion: { contents: 'En Ube Caramel Twirl med mjölk, ube, karamell och is.', serving: 'Serveras kall. Is kan smälta under leverans.' }
     }
+}
 
+// Alternativa namn i admin ska visa samma information.
+const productAliases = {
+    'siningang med räkor': 'sinigang med räkor',
+    'ube pandesal med ost': 'ube pandesal',
+    'passion fruit': 'passion paradise',
+    'strawberry biscoff shake': 'strawberry biscoff bliss',
+    'mango pinapple sun': 'mango pineapple sunshine'
+}
+
+// Fallback gör att även nytillagda produkter får båda sektionerna,
+// utan att okända ingredienser/allergener anges som fakta.
+const getProductDetails = (name) => {
+    const normalized = normalizeProductName(name)
+    const alias = Object.entries(productAliases).find(([name]) => normalizeProductName(name) === normalized)?.[1]
+    const key = normalizeProductName(alias || normalized)
+    const matched = Object.entries(productDetails).find(([name]) => normalizeProductName(name) === key)?.[1]
+    return matched || {
+        ingredients: 'Fullständig ingredienslista behöver bekräftas. Kontakta oss före beställning.',
+        allergens: 'Allergeninformation behöver bekräftas mot aktuellt recept. Kontakta oss före beställning vid allergi.',
+        extra: 'Vi hjälper dig gärna med mer information om produkten.',
+        portion: {
+            contents: `En portion ${String(name || 'av produkten')} enligt aktuell meny. Exakt mängd behöver bekräftas.`,
+            serving: 'Kontakta oss för serverings- och förvaringsråd.'
+        }
+    }
 }
 
 
@@ -275,293 +256,10 @@ const FoodItem = ({
         : "filippinsk dessert"
 
 
-    // ======================================================
-    // INGREDIENTS & ALLERGENS
-    // ======================================================
-
-    const productInformation = {
-
-    "siningang med räkor": {
-        ingredients:
-            "Räkor, syrlig sinigang-buljong, grönsaker och ris.",
-        allergens:
-            "Innehåller KRÄFTDJUR (räkor). Kontrollera även aktuell produktinformation för sinigang-mix och buljong.",
-        extra:
-            "Serveras med ris."
-    },
-
-    "sinigang med räkor": {
-        ingredients:
-            "Räkor, syrlig sinigang-buljong, grönsaker och ris.",
-        allergens:
-            "Innehåller KRÄFTDJUR (räkor). Kontrollera även aktuell produktinformation för sinigang-mix och buljong.",
-        extra:
-            "Serveras med ris."
-    },
-
-    "mango float": {
-        ingredients:
-            "Mango, kondenserad mjölk, grädde, Graham crackers och Philadelphia.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktos) och VETE (gluten). ",
-        extra:
-            "Innehåller mango."
-    },
-
-    "apple crisp float": {
-        ingredients:
-            "Äpple, kondenserad mjölk, grädde, Philadelphia, kex, kanel och karamelliserat äpple.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktosfri) och VETE (gluten).",
-        extra:
-            "Innehåller äpple och kanel."
-    },
-
-    "ube cake": {
-        ingredients:
-            "Gräddfil, strösocker, kokosflingor, Graham crackers, kokosgrädde, ube jam, Philadelphia, smör och salt.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktosfri) och VETE (gluten).",
-        extra:
-            "Innehåller kokos."
-    },
-
-    "fruit cup": {
-        ingredients:
-            "Eden cheese, Fiesta fruit cocktail, nata de coco, kokoskött, kokosgelé och kondenserad mjölk.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktos).",
-        extra:
-            "Innehåller blandad frukt och kokos. Kokosgelén innehåller inte gelatin från gris."
-    },
-
-    "golden turon & ube ice cream": {
-        ingredients:
-            "Banan, vårrulleark, socker och ube-glass.",
-        allergens:
-            "Innehåller VETE (gluten) och MJÖLK. Kontrollera aktuell produktinformation för ube-glass och vårrulleark.",
-        extra:
-            "Krispig filippinsk turon serverad med ube-glass."
-    },
-
-    "biscoff cinnamon banana float": {
-        ingredients:
-            "Banan, kondenserad mjölk, grädde, Philadelphia, Biscoff-kex och kanel.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein och laktosfri) och VETE (gluten).",
-        extra:
-            "Innehåller banan och kanel."
-    },
-
-
-    "taho": {
-        ingredients:
-            "Silkestofu, söt sirap och sagopärlor.",
-        allergens:
-            "Innehåller SOJA.",
-        extra:
-            "Klassisk filippinsk dessert med silkeslen tofu och sagopärlor."
-    },
-    "strawberry taho": {
-    ingredients:
-        "Silkestofu, jordgubbssirap och sagopärlor.",
-
-    allergens:
-        "Innehåller SOJA.",
-
-    extra:
-        "En fruktig twist på den filippinska klassikern med silkeslen tofu, söt jordgubbssirap och mjuka sagopärlor."
-},
-
-"apple taho": {
-    ingredients:
-        "Silkestofu, äppelsirap och sagopärlor.",
-
-    allergens:
-        "Innehåller SOJA.",
-
-    extra:
-        "En frisk och fruktig variant av klassisk Taho med silkeslen tofu, söt äppelsirap och mjuka sagopärlor."
-},
-   "halo-halo": {
-    ingredients:
-        "Krossad is, sötad mjölk, nötgelé, sötade bönor, nata de coco, majs, jordgubbar och ube-glass.",
-
-    allergens:
-        "Innehåller MJÖLK. Kontrollera övriga ingredienser för eventuella ytterligare allergener.",
-
-    extra:
-        "En färgstark filippinsk klassiker med tropiska smaker, krämig mjölk, söta jordgubbar och majs, toppad med ube-glass. Blandas ihop innan den avnjuts."
-},
-
-"chicken adobo": {
-    ingredients:
-        "Kyckling, soja, vinäger, vitlök, lagerblad, svartpeppar och ris.",
-
-    allergens:
-        "Innehåller SOJA och kan innehålla VETE (gluten), beroende på vilken soja som används.",
-
-    extra:
-        "En klassisk filippinsk rätt med mör kyckling som tillagas i en smakrik sås av soja, vinäger och vitlök. En perfekt balans mellan sälta och syra, serverad med ris."
-},
-
-"ube pandesal": {
-    ingredients:
-        "Vetemjöl, mjölk, jäst, socker, smör, ägg, salt och ströbröd.",
-
-    allergens:
-        "Innehåller VETE (gluten), MJÖLK (laktos) och ÄGG.",
-
-    extra:
-        "Ett klassiskt filippinskt bröd med en mjuk och luftig insida och en lätt gyllene yta täckt av fina brödsmulor. Perfekt till frukost, som mellanmål eller tillsammans med en kopp kaffe."
-},
-
-"mango sago": {
-    ingredients:
-        "Färsk mango, sagopärlor (tapioka), kokosmjölk och sötad kondenserad mjölk.",
-
-    allergens:
-        "Innehåller MJÖLK. Kontrollera även övriga ingredienser för eventuella allergener.",
-
-    extra:
-        "En tropisk filippinsk dessert med söt, saftig mango och mjuka sagopärlor i en len och krämig mangoblandning. En perfekt balans mellan fruktig sötma och krämighet, serverad kall för en härligt uppfriskande smakupplevelse."
-},
-
-
-"choco sago": {
-    ingredients:
-        "Mjölk, vispgrädde, kakao, mörk choklad, sagopärlor (tapioka), sötad kondenserad mjölk, browniebitar och chokladsås.",
-
-    allergens:
-        "Innehåller MJÖLK. Kan innehålla GLUTEN, ÄGG och SOJA beroende på vilka browniebitar och chokladprodukter som används. Kontrollera samtliga ingredienser för eventuella allergener.",
-
-    extra:
-        "En chokladig twist på den filippinska favoriten Sago! Mjuka sagopärlor möter en fyllig och krämig chokladblandning, toppad med saftiga browniebitar och len chokladsås. En oemotståndlig kombination av choklad, krämighet och härlig konsistens. Serveras kall för den ultimata chokladupplevelsen."
-},
-
-
-"strawberry sago": {
-    ingredients:
-        "Mjölk, jordgubbar, sagopärlor (tapioka) och sötad kondenserad mjölk.",
-
-    allergens:
-        "Innehåller MJÖLK. Kontrollera samtliga ingredienser för eventuella allergener.",
-
-    extra:
-        "En fruktig twist på den filippinska favoriten Sago! Mjuka sagopärlor möter en len och krämig jordgubbsblandning med härlig smak av färska jordgubbar. En perfekt balans mellan sötma, friskhet och krämighet som gör varje klunk till en njutning. Serveras kall för en uppfriskande jordgubbsupplevelse."
-},
-
-"ube sago": {
-    ingredients:
-        "Mjölk, ube (lila jams), ube-extrakt, sagopärlor (tapioka) och sötad kondenserad mjölk.",
-
-    allergens:
-        "Innehåller MJÖLK. Kontrollera ube-extraktet och övriga ingredienser för eventuella allergener.",
-
-    extra:
-        "En lila dröm inspirerad av Filippinerna! Mjuka sagopärlor blandas med en fyllig och krämig ubeblandning med mild sötma och en unik, lätt nötig smak. En härlig kombination av traditionella filippinska smaker, krämighet och mjuk konsistens. Serveras kall för den ultimata ubeupplevelsen."
-},
-
-
-
-"pancit": {
-    ingredients:
-        "Nudlar, räkor, färska grönsaker, vitlök, lök och en smakrik filippinsk sås baserad på soja och kryddor.",
-
-    allergens:
-        "Innehåller SKALDJUR, SOJA och VETE. Kontrollera även övriga ingredienser för eventuella allergener.",
-
-    extra:
-        "Pancit är en älskad filippinsk nudelrätt som ofta serveras vid familjesammankomster och festliga tillfällen. Våra nudlar wokas tillsammans med saftiga räkor, krispiga grönsaker och en fyllig, smakrik sås. En härlig kombination av traditionella filippinska smaker som ger en autentisk smakupplevelse i varje tugga."
-},
-
-    
-    // ==================================================
-    // COFFEE
-    // ==================================================
-
-    "ube caramel latte": {
-        ingredients:
-            "Espresso, laktosfri mjölk, ube, karamellsås och is.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein). Kontrollera även ubeproduktens och karamellsåsens allergener.",
-        extra:
-            "En kall kaffedryck med ube och karamell."
-    },
-
-    // OBS: Kontrollera ingredienserna mot era faktiska recept innan publicering.
-    "passion paradise": {
-        ingredients:
-            "Passionsfrukt och is. Kontrollera eventuella övriga ingredienser mot receptet.",
-        allergens:
-            "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
-        extra:
-            "En syrlig, tropisk och törstsläckande favorit."
-    },
-
-    "strawberry biscoff bliss": {
-        ingredients:
-            "Jordgubbar och Biscoff-kex. Kontrollera övriga shakeingredienser mot receptet.",
-        allergens:
-            "Biscoff-kex innehåller VETE (gluten) och SOJA. Kontrollera eventuell MJÖLK och andra allergener i hela receptet.",
-        extra:
-            "Krämig jordgubbssmak möter Biscoff-kexens karamelltoner."
-    },
-
-    "mango pineapple sunshine": {
-        ingredients:
-            "Mango, ananas och is. Kontrollera eventuella övriga ingredienser mot receptet.",
-        allergens:
-            "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
-        extra:
-            "En solig mix av mango och ananas med tropisk känsla."
-    },
-    "ube caramel twirl": {
-        ingredients:
-            "mjölk, ube, karamellsås och is.",
-        allergens:
-            "Innehåller MJÖLK (mjölkprotein). Kontrollera även ubeproduktens och karamellsåsens allergener.",
-        extra:
-            "En kall dryck med ube och karamell."
-    },
-
-    // Alias gör att informationen fungerar även med tidigare namn i admin.
-    "passion fruit": {
-        ingredients: "Passionsfrukt och is. Kontrollera eventuella övriga ingredienser mot receptet.",
-        allergens: "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
-        extra: "En syrlig, tropisk och törstsläckande favorit."
-    },
-    "strawberry biscoff shake": {
-        ingredients: "Jordgubbar och Biscoff-kex. Kontrollera övriga shakeingredienser mot receptet.",
-        allergens: "Biscoff-kex innehåller VETE (gluten) och SOJA. Kontrollera eventuell MJÖLK och andra allergener i hela receptet.",
-        extra: "Krämig jordgubbssmak möter Biscoff-kexens karamelltoner."
-    },
-    "mango pinapple sun": {
-        ingredients: "Mango, ananas och is. Kontrollera eventuella övriga ingredienser mot receptet.",
-        allergens: "Allergener behöver bekräftas mot det fullständiga receptet och produktförpackningarna.",
-        extra: "En solig mix av mango och ananas med tropisk känsla."
-    },
-
-
-
-
-}
-
-
-    // ======================================================
-    // NORMALIZE PRODUCT NAME
-    // ======================================================
-
-    const normalizedName =
-        String(name || "")
-            .trim()
-            .toLowerCase()
-
-    const productInfo =
-        productInformation[normalizedName]
-
-    const portionInfo =
-        portionInformation[normalizedName]
+    // Samma källa styr både ingredienser och portionsinformation.
+    const details = getProductDetails(name)
+    const productInfo = details
+    const portionInfo = details.portion
 
 
     // ======================================================
