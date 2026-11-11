@@ -518,7 +518,7 @@ const FoodItem = ({
     },
     "ube caramel twirl": {
         ingredients:
-            ", mjölk, ube, karamellsås och is.",
+            "mjölk, ube, karamellsås och is.",
         allergens:
             "Innehåller MJÖLK (mjölkprotein). Kontrollera även ubeproduktens och karamellsåsens allergener.",
         extra:
