@@ -32,7 +32,7 @@ export const validateManilaSolo = ({
   const fixedIds = {
     mealId: normalizeId(process.env.MANILA_SOLO_PANCIT_ID),
     dessertId: normalizeId(process.env.MANILA_SOLO_GOLDEN_TURON_ID),
-    drinkId: normalizeId(process.env.MANILA_SOLO_UBE_CARAMEL_TWIST_ID)
+    drinkId: normalizeId(process.env.MANILA_SOLO_UBE_CARAMEL_TWIRL_ID)
   };
   const ids = requiredKeys.map(key => fixedIds[key]);
   if (!ids.every(validId) || new Set(ids).size !== 3) {

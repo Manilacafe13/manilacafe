@@ -2098,7 +2098,7 @@ if (bundles !== undefined) {
       const fixedSoloIds = {
         mealId: String(process.env.MANILA_SOLO_PANCIT_ID || "").trim().toLowerCase(),
         dessertId: String(process.env.MANILA_SOLO_GOLDEN_TURON_ID || "").trim().toLowerCase(),
-        drinkId: String(process.env.MANILA_SOLO_UBE_CARAMEL_TWIST_ID || "").trim().toLowerCase()
+        drinkId: String(process.env.MANILA_SOLO_UBE_CARAMEL_TWIRL_ID || "").trim().toLowerCase()
       };
 
       const eligibleProductIds = Object.values(fixedSoloIds);
