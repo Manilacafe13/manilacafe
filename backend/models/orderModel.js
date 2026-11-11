@@ -412,6 +412,28 @@ const orderSchema = new mongoose.Schema(
 
 
     // ==================================================
+    // KITCHEN PROGRESS — SPARAS I MONGODB
+    // ==================================================
+    // Enhetsnycklar: "radindex:enhetsindex" (t.ex. "0:2").
+    // Nycklar måste verifieras mot order.items av serverns controller.
+    // Fältet får INTE uppdateras av kundens checkout-endpoints.
+    kitchenProgress: {
+      checkedUnits: {
+        type: [String],
+        default: [],
+        validate: {
+          validator: (keys) => Array.isArray(keys) &&
+            keys.length <= 1000 &&
+            keys.every(key => /^\d{1,3}:\d{1,3}$/.test(key)) &&
+            new Set(keys).size === keys.length,
+          message: "Ogiltiga eller dubblerade köksavprickningar."
+        }
+      },
+      packed: { type: Boolean, default: false },
+      updatedAt: { type: Date, default: null }
+    },
+
+    // ==================================================
     // MANILA CAFÉ — MENU BUNDLES
     // ==================================================
 

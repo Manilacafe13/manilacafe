@@ -238,7 +238,7 @@ const DELIVERY_ZONES = {
 
   east: {
     id: "east",
-    label: "västra Götteborg",
+    label: "Östra Göteborg",
     fee: 69
   },
 
@@ -1089,7 +1089,7 @@ const markPaidWithStockWarning = async (
 
       const warning =
 
-        `${productName} Har inte längre tillräcklig dagslager.`;
+        `${productName} Har inte längre tillräckligt dagslager.`;
 
 
 
@@ -1859,7 +1859,7 @@ const placeOrder = async (req, res) => {
 
           allowedTimeSlots.length === 0
 
-            ? "ManilaCafe  har stängt på vald datumet."
+            ? "ManilaCafe  har stängt det valda datumet."
 
             : "Ogiltig vald tid."
 
@@ -2340,7 +2340,7 @@ if (bundles !== undefined) {
 
         message:
 
-          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en störrre beställning.`
+          `Beställningar med ${LARGE_ORDER_LIMIT} produkter eller fler måste göras som en större beställning.`
 
       });
 
@@ -2568,7 +2568,7 @@ if (bundles !== undefined) {
 
     const lineItems = [];
 
-    // Produktvärrdet efter rabatt, exklusive moms
+    // Produktvärdet efter rabatt, exklusive moms
     const productNetCents = Math.round(
       subtotalAfterDiscount * 100
     );
@@ -2869,7 +2869,7 @@ if (bundles !== undefined) {
 
       message:
 
-        "Ett fel uppstod nä beställningen skulle skapas."
+        "Ett fel uppstod när beställningen skulle skapas."
 
     });
 
@@ -3537,152 +3537,112 @@ const listOrders = async (req, res) => {
 
 
 
-const updateStatus = async (req, res) => {
-
-  try {
-
-    const {
-
-      orderId,
-
-      status
-
-    } = req.body || {};
-
-
-
-    if (!orderId || !status) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message: "Order-ID och status krävs."
-
-      });
-
-    }
-
-
-
-    if (!mongoose.isValidObjectId(orderId)) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message: "Ogiltigt order-ID."
-
-      });
-
-    }
-
-
-
-    const normalizedStatus =
-
-      String(status).trim();
-
-
-
-    if (
-
-      !ALLOWED_ORDER_STATUSES.includes(
-
-        normalizedStatus
-
-      )
-
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message: "Ogiltig orderstatus."
-
-      });
-
-    }
-
-
-
-    const order =
-
-      await orderModel.findByIdAndUpdate(
-
-        orderId,
-
-        {
-
-          status: normalizedStatus
-
-        },
-
-        {
-
-          new: true,
-
-          runValidators: true
-
-        }
-
-      );
-
-
-
-    if (!order) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        message:
-
-          "Beställningen kunde inte hittas."
-
-      });
-
-    }
-
-
-
-    return res.status(200).json({
-
-      success: true,
-
-      message: "Orderstatus uppdaterad.",
-
-      data: order
-
-    });
-
-  } catch (error) {
-
-    console.error(
-
-      "Update status error:",
-
-      error.message
-
-    );
-
-
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-
-        "Orderstatus kunde inte uppdateras."
-
-    });
-
+// All kitchen writes are per order and concurrency-controlled using kitchenProgress.version.
+// A stale device must reload rather than overwrite someone else's work.
+const kitchenUnits = (order) => (Array.isArray(order.items) ? order.items : [])
+  .flatMap((item, row) => Array.from({ length: Number(item.quantity || 0) }, (_, unit) => `${row}:${unit}`));
+
+const updateKitchenProgress = async (req, res) => {
+  const orderId = req.params.orderId;
+  const { action, unitKey, expectedVersion } = req.body || {};
+  if (!mongoose.isValidObjectId(orderId) || !Number.isSafeInteger(expectedVersion) || expectedVersion < 0 ||
+      !["check", "uncheck", "pack", "unpack"].includes(action)) {
+    return res.status(400).json({ success: false, message: "Ogiltig köksuppdatering." });
   }
-
+  try {
+    const order = await orderModel.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: "Ordern finns inte." });
+    if (!order.payment || ["Avbruten", "Levererad", "Upphämtad"].includes(order.status) ||
+        order.status === "Betalning mottagen - lagerkontroll krävs") {
+      return res.status(409).json({ success: false, message: "Ordern kan inte ändras i köket just nu.", data: order });
+    }
+    const validKeys = kitchenUnits(order);
+    if (!validKeys.length || validKeys.length > 1000) {
+      return res.status(409).json({ success: false, message: "Orderns produktantal behöver kontrolleras." });
+    }
+    const checked = new Set(order.kitchenProgress?.checkedUnits || []);
+    const currentVersion = Number(order.kitchenProgress?.version || 0);
+    if (currentVersion !== expectedVersion) {
+      return res.status(409).json({ success: false, message: "Ordern har ändrats på en annan enhet. Kontrollera senaste status.", data: order });
+    }
+    if (action === "check" || action === "uncheck") {
+      if (typeof unitKey !== "string" || !validKeys.includes(unitKey)) {
+        return res.status(400).json({ success: false, message: "Ogiltig produkt i checklistan." });
+      }
+      if (action === "check") checked.add(unitKey);
+      else checked.delete(unitKey);
+    }
+    const allChecked = validKeys.every(key => checked.has(key)) && checked.size === validKeys.length;
+    if (action === "pack" && !allChecked) {
+      return res.status(409).json({ success: false, message: "Alla produkter måste vara klara före packning.", data: order });
+    }
+    const packed = action === "pack" ? true : action === "unpack" ? false : false;
+    const filter = { _id: orderId, payment: true, status: order.status,
+      $or: [{ "kitchenProgress.version": expectedVersion },
+        ...(expectedVersion === 0 ? [{ "kitchenProgress.version": { $exists: false } }] : [])] };
+    const updated = await orderModel.findOneAndUpdate(filter, {
+      $set: { "kitchenProgress.checkedUnits": validKeys.filter(key => checked.has(key)),
+        "kitchenProgress.packed": packed, "kitchenProgress.updatedAt": new Date() },
+      $inc: { "kitchenProgress.version": 1 }
+    }, { new: true, runValidators: true });
+    if (!updated) {
+      const latest = await orderModel.findById(orderId);
+      return res.status(409).json({ success: false, message: "En annan ändring hann sparas. Kontrollera ordern igen.", data: latest });
+    }
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Kitchen progress error:", error);
+    return res.status(500).json({ success: false, message: "Köksuppdateringen kunde inte sparas." });
+  }
 };
 
+const updateStatus = async (req, res) => {
+  const { orderId, status } = req.body || {};
+  if (!mongoose.isValidObjectId(orderId) || typeof status !== "string" ||
+      !ALLOWED_ORDER_STATUSES.includes(status.trim())) {
+    return res.status(400).json({ success: false, message: "Ogiltigt order-ID eller orderstatus." });
+  }
+  const normalizedStatus = status.trim();
+  try {
+    const order = await orderModel.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: "Ordern finns inte." });
+    if (["Upphämtad", "Levererad", "Avbruten"].includes(order.status)) {
+      return res.status(409).json({ success: false, message: "Avslutade beställningar kan inte ändras här." });
+    }
+    if (normalizedStatus !== "Avbruten" && !order.payment) {
+      return res.status(409).json({ success: false, message: "Beställningen är inte betald." });
+    }
+    if (normalizedStatus !== "Avbruten" && order.status === "Betalning mottagen - lagerkontroll krävs") {
+      return res.status(409).json({ success: false, message: "Lagerkontrollen måste lösas innan status ändras." });
+    }
+    const readyStatuses = ["Redo för upphämtning", "På väg", "Upphämtad", "Levererad"];
+    const needsKitchen = readyStatuses.includes(normalizedStatus);
+    if ((normalizedStatus === "Redo för upphämtning" || normalizedStatus === "Upphämtad") && order.deliveryMethod !== "pickup" ||
+        (normalizedStatus === "På väg" || normalizedStatus === "Levererad") && order.deliveryMethod !== "delivery") {
+      return res.status(409).json({ success: false, message: "Statusen matchar inte leveranssättet." });
+    }
+    const allKeys = kitchenUnits(order);
+    const checked = order.kitchenProgress?.checkedUnits || [];
+    const allReady = allKeys.length > 0 && checked.length === allKeys.length &&
+      allKeys.every(key => checked.includes(key)) && order.kitchenProgress?.packed === true;
+    if (needsKitchen && !allReady) {
+      return res.status(409).json({ success: false, message: "Bocka av alla produkter och kontrollera packningen först." });
+    }
+    // Atomic filter re-checks packed and checklist version; no bypass via direct API calls.
+    const filter = { _id: orderId, status: order.status, payment: order.payment };
+    if (needsKitchen) {
+      filter["kitchenProgress.packed"] = true;
+      filter["kitchenProgress.version"] = Number(order.kitchenProgress?.version || 0);
+    }
+    const updated = await orderModel.findOneAndUpdate(filter, { $set: { status: normalizedStatus } },
+      { new: true, runValidators: true });
+    if (!updated) return res.status(409).json({ success: false, message: "Ordern ändrades precis. Uppdatera och försök igen." });
+    return res.json({ success: true, message: "Orderstatus uppdaterad.", data: updated });
+  } catch (error) {
+    console.error("Update status error:", error);
+    return res.status(500).json({ success: false, message: "Orderstatus kunde inte uppdateras." });
+  }
+};
 
 
 export {
@@ -3697,6 +3657,7 @@ export {
 
   listOrders,
 
-  updateStatus
+  updateStatus,
+  updateKitchenProgress
 
 };

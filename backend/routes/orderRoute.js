@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -5,7 +6,8 @@ import {
   verifyOrder,
   userOrders,
   listOrders,
-  updateStatus
+  updateStatus,
+  updateKitchenProgress
 } from "../controllers/orderController.js";
 
 import authMiddleware, {
@@ -14,14 +16,12 @@ import authMiddleware, {
 
 import adminAuth from "../middleware/adminAuth.js";
 
-
 const orderRouter = express.Router();
 
 
 // ======================================================
 // CUSTOMER ROUTES
 // ======================================================
-
 
 // ------------------------------------------------------
 // CREATE NEW ORDER
@@ -77,7 +77,6 @@ orderRouter.post(
 // ADMIN ROUTES
 // ======================================================
 
-
 // ------------------------------------------------------
 // GET ALL ORDERS
 // ------------------------------------------------------
@@ -108,6 +107,35 @@ orderRouter.post(
   authMiddleware,
   adminAuth,
   updateStatus
+);
+
+
+// ======================================================
+// KITCHEN CONTROL — ADMIN
+// ======================================================
+
+// ------------------------------------------------------
+// UPDATE KITCHEN CHECKLIST
+// ------------------------------------------------------
+
+/*
+  Sparar kökets framsteg i MongoDB.
+
+  Funktioner:
+  - Bocka av enskilda produktenheter
+  - Ångra avprickningar
+  - Bekräfta packning
+  - Synkronisera mellan enheter
+  - Förhindra samtidiga ändringskonflikter
+
+  Endast administratörer har åtkomst.
+*/
+
+orderRouter.patch(
+  "/kitchen/:orderId",
+  authMiddleware,
+  adminAuth,
+  updateKitchenProgress
 );
 
 

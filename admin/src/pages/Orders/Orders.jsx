@@ -3,6 +3,7 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import './Orders.css'
 import './OrdersCustomizations.css'
+import './OrdersKitchen.css'
 
 // Terminal status är vårt arkiv: ordern ligger kvar i MongoDB och i kundhistoriken.
 const COMPLETED = new Set(['Levererad', 'Upphämtad'])
@@ -44,13 +45,40 @@ const formatDay = (value) => {
     timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short', year: 'numeric'
   })
 }
-const orderPriority = (order) => {
-  const day = order.requestedDate
-  const time = String(order.requestedTime || '23:59').slice(0, 5)
-  if (!day) return Number.MAX_SAFE_INTEGER
-  const value = new Date(`${String(day).slice(0, 10)}T${/^\d{2}:\d{2}$/.test(time) ? time : '23:59'}:00`).getTime()
-  return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER
+const stockholmDay = (date = new Date()) => new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Stockholm', year: 'numeric', month: '2-digit', day: '2-digit'
+}).format(date)
+const requestedDay = order => {
+  const d = new Date(order.requestedDate)
+  return Number.isNaN(d.getTime()) ? '' : stockholmDay(d)
 }
+const dateKind = order => {
+  const d = requestedDay(order)
+  if (!d) return 'DATUM SAKNAS'
+  const today = stockholmDay()
+  const tomorrow = new Date(`${today}T12:00:00Z`)
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+  if (d < today) return 'FÖRSENAD'
+  if (d === today) return 'IDAG'
+  if (d === tomorrow.toISOString().slice(0,10)) return 'IMORGON'
+  return 'KOMMANDE'
+}
+const orderPriority = order => {
+  const d = requestedDay(order)
+  const time = /^\d{2}:\d{2}/.exec(String(order.requestedTime || ''))?.[0] || '23:59'
+  return d ? `${d}T${time}` : '9999-12-31T23:59'
+}
+const kitchenUnits = order => (Array.isArray(order.items) ? order.items : [])
+  .flatMap((item, row) => Array.from({length: Number(item.quantity || 0)}, (_, unit) => ({
+    key: `${row}:${unit}`, item, unit: unit + 1, quantity: Number(item.quantity || 0)
+  })))
+const kitchenReady = order => {
+  const units = kitchenUnits(order)
+  const checked = new Set(order.kitchenProgress?.checkedUnits || [])
+  return units.length > 0 && units.every(unit => checked.has(unit.key)) &&
+    checked.size === units.length && order.kitchenProgress?.packed === true
+}
+
 const totalQuantity = (items) =>
   (Array.isArray(items) ? items : []).reduce((total, item) => total + Number(item.quantity || 0), 0)
 
@@ -201,6 +229,7 @@ const Orders = ({ url }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updatingOrder, setUpdatingOrder] = useState(null)
+  const [updatingKitchen, setUpdatingKitchen] = useState(null)
   const [tab, setTab] = useState('active')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('requested')
@@ -379,9 +408,34 @@ const Orders = ({ url }) => {
     }
   }, [fetchAllOrders])
 
+  const updateKitchen = async (order, action, unitKey) => {
+    if (updatingKitchen) return
+    const token = localStorage.getItem('token')
+    if (!token || !backendUrl) return toast.error('Logga in igen för att spara checklistan.')
+    setUpdatingKitchen(order._id)
+    try {
+      const response = await axios.patch(`${backendUrl}/api/order/kitchen/${order._id}`,
+        { action, unitKey, expectedVersion: Number(order.kitchenProgress?.version || 0) },
+        { headers: { token, Authorization: `Bearer ${token}` } })
+      if (!response.data?.success) throw new Error(response.data?.message || 'Kunde inte spara.')
+      setOrders(previous => previous.map(o => o._id === order._id ? response.data.data : o))
+    } catch (error) {
+      const latest = error.response?.data?.data
+      if (latest?._id) setOrders(previous => previous.map(o => o._id === latest._id ? latest : o))
+      toast.error(error.response?.data?.message || error.message || 'Checklistan kunde inte sparas.')
+      void fetchAllOrders()
+    } finally {
+      setUpdatingKitchen(null)
+    }
+  }
+
   const updateStatus = async (orderId, status) => {
     const token = localStorage.getItem('token')
     if (!token || !backendUrl || updatingOrder) return
+    if (['Redo för upphämtning', 'På väg', 'Upphämtad', 'Levererad'].includes(status)) {
+      const order = orders.find(o => o._id === orderId)
+      if (!order || !kitchenReady(order)) return toast.error('Bocka av och packa alla produkter först.')
+    }
     if (status === 'Avbruten' && !window.confirm('Avbryta beställningen? Den blir kvar under Avbrutna.')) return
     if (COMPLETED.has(status) && !window.confirm('Bekräfta att beställningen är färdig och överlämnad? Den flyttas till Arkiv.')) return
     setUpdatingOrder(orderId)
@@ -432,7 +486,7 @@ const Orders = ({ url }) => {
         .some(value => String(value || '').toLocaleLowerCase('sv-SE').includes(term))
     })
     .sort((a, b) => sort === 'requested'
-      ? orderPriority(a) - orderPriority(b) || new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
+      ? orderPriority(a).localeCompare(orderPriority(b)) || new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
       : new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
 
   return (
@@ -504,6 +558,13 @@ const Orders = ({ url }) => {
             const expanded = expandedId === order._id
             const kitchenOpen = kitchenOrderId === order._id
             const group = getGroup(order)
+            const units = kitchenUnits(order)
+            const checked = new Set(order.kitchenProgress?.checkedUnits || [])
+            const checkedCount = units.filter(unit => checked.has(unit.key)).length
+            const ready = kitchenReady(order)
+            const kitchenBusy = updatingKitchen === order._id
+            const canPrepare = group === 'active' && order.status !== 'Betalning mottagen - lagerkontroll krävs'
+            const dayLabel = dateKind(order)
             const statusOptions = [
               'Beställning mottagen', 'Förbereds',
               ...(pickup ? ['Redo för upphämtning', 'Upphämtad'] : ['På väg', 'Levererad']),
@@ -513,14 +574,21 @@ const Orders = ({ url }) => {
             const hasCustomerChoices = (Array.isArray(order.items) ? order.items : [])
               .some(item => getCustomerChoices(item).hasChoices)
             return (
-              <article className={`mc-order-card mc-order-card--${group}`} key={order._id}>
+              <article className={`mc-order-card mc-order-card--${group} mc-kitchen-card ${dayLabel === 'FÖRSENAD' ? 'mc-kitchen-overdue' : ''}`} key={order._id}>
+                <div className="mc-kitchen-banner">
+                  <strong className={`mc-kitchen-date mc-kitchen-date--${dayLabel === 'IDAG' || dayLabel === 'FÖRSENAD' ? 'urgent' : 'normal'}`}>
+                    {dayLabel}
+                  </strong>
+                  <span><strong>{formatDay(order.requestedDate)}</strong> · <strong>{order.requestedTime || 'TID SAKNAS'}</strong></span>
+                  <span>{pickup ? '📍 HÄMTAS' : '🚗 LEVERERAS'}</span>
+                </div>
                 <div className="mc-order-top">
                   <div><span className="mc-order-kicker">ORDER</span><h2>{orderNumber(order._id)}</h2></div>
                   <span className={`mc-order-state mc-order-state--${group}`}>{currentStatus}</span>
                 </div>
                 <div className="mc-order-primary">
                   <strong>{orderName(order)}</strong>
-                  <span>{pickup ? '📍 Avhämtning' : '🚗 Leverans'} · {formatDay(order.requestedDate)} · {order.requestedTime || 'Tid saknas'}</span>
+                  <span>{units.length} enheter · {order.items?.length || 0} produktrader · {dayLabel === 'IMORGON' ? 'Lägre prioritet' : dayLabel === 'IDAG' ? 'Prioritera efter tidsintervall' : 'Kontrollera datum'}</span>
                 </div>
                 {bundles.map(bundle => (
                   <div key={bundle.bundleKey} style={{ padding: '12px 14px', margin: '12px 0', border: '1px solid #e6d9f5', borderRadius: 12, background: '#f9f5ff' }}>
@@ -536,19 +604,40 @@ const Orders = ({ url }) => {
                     ⚠ Anpassad beställning – kontrollera kundvalen innan du lagar maten.
                   </p>
                 )}
-                <div className="mc-order-summary-items">
-                  {(Array.isArray(order.items) ? order.items : []).slice(0, 2).map((item, index) => (
-                    <span key={`${order._id}-${index}`}>
-                      {Number(item.quantity || 0)} × {item.name || 'Produkt'}{item.flavor ? ` (${item.flavor})` : ''}
-                      {getCustomerChoices(item).hasChoices && (
-                        <small className="mc-order-choices-preview">
-                          {getCustomerChoicePreview(item)}
-                        </small>
-                      )}
-                    </span>
+                <section className="mc-kitchen-checklist" aria-label={`Checklista för ${orderNumber(order._id)}`}>
+                  <div className="mc-kitchen-progress-title">
+                    <strong>Produkter klara</strong><strong>{checkedCount} / {units.length}</strong>
+                  </div>
+                  <div className="mc-kitchen-progress" role="progressbar" aria-valuenow={checkedCount}
+                    aria-valuemin="0" aria-valuemax={units.length}>
+                    <div style={{ width: `${units.length ? checkedCount / units.length * 100 : 0}%` }} />
+                  </div>
+                  {units.map(({key, item, unit, quantity}) => (
+                    <label key={key} className={`mc-kitchen-unit ${checked.has(key) ? 'is-done' : ''}`}>
+                      <div className="mc-kitchen-unit-copy">
+                        <strong>{item.name || 'Produkt'}{item.flavor ? ` – ${item.flavor}` : ''}</strong>
+                        <small>Enhet {unit} av {quantity}</small>
+                        {item.bundleKey && <small className="mc-kitchen-bundle">Ingår i Manila Solo</small>}
+                        {getCustomerChoices(item).hasChoices && <span className="mc-kitchen-important">⚠ {getCustomerChoicePreview(item)}</span>}
+                      </div>
+                      <span className="mc-kitchen-unit-check">
+                        <input type="checkbox" checked={checked.has(key)} disabled={!canPrepare || kitchenBusy}
+                          onChange={event => void updateKitchen(order, event.target.checked ? 'check' : 'uncheck', key)} />
+                        <span>{checked.has(key) ? 'KLAR' : 'KLAR?'}</span>
+                      </span>
+                    </label>
                   ))}
-                  {(order.items?.length || 0) > 2 && <small>+ {order.items.length - 2} fler produktrader</small>}
-                </div>
+                  {canPrepare && <div className="mc-kitchen-pack">
+                    <label>
+                      <input type="checkbox" checked={Boolean(order.kitchenProgress?.packed)}
+                        disabled={kitchenBusy || checkedCount !== units.length || !units.length}
+                        onChange={event => void updateKitchen(order, event.target.checked ? 'pack' : 'unpack')} />
+                      <strong>PACKNING KONTROLLERAD</strong>
+                    </label>
+                    <small>{ready ? '✓ Alla produkter är klara och packade' : 'Avpricka alla enheter och kontrollera sedan packningen.'}</small>
+                  </div>}
+                  {!canPrepare && group === 'active' && <p className="mc-order-warning">⚠ Lagerkontroll krävs innan checklistan kan användas.</p>}
+                </section>
                 <div className="mc-order-price-row">
                   <span className={order.payment ? 'mc-order-paid' : 'mc-order-unpaid'}>
                     {order.payment ? '✓ Betald' : 'Väntar på betalning'}
@@ -568,9 +657,9 @@ const Orders = ({ url }) => {
                     {expanded ? 'Dölj detaljer ↑' : 'Visa detaljer ↓'}
                   </button>
                   {group === 'active' && (
-                    <button type="button" className="mc-order-finish-button" disabled={updatingOrder === order._id}
+                    <button type="button" className="mc-order-finish-button" disabled={updatingOrder === order._id || !ready}
                       onClick={() => void updateStatus(order._id, pickup ? 'Upphämtad' : 'Levererad')}>
-                      {updatingOrder === order._id ? 'Sparar…' : 'Avsluta & arkivera'}
+                      {updatingOrder === order._id ? 'Sparar…' : ready ? 'Avsluta & arkivera' : 'Packning krävs före avslut'}
                     </button>
                   )}
                 </div>
