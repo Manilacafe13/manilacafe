@@ -268,7 +268,13 @@ const Cart = () => {
   // SÄKERHET: håll paketkassan stängd även i DEV tills PlaceOrder,
   // backendvalidering och Stripe verkligen hanterar 249 kr för fasta menyn.
   // Ta inte bort spärren genom att bara aktivera en frontend-miljövariabel.
-  const manilaSoloCheckoutBlocked = hasManilaSolo
+  const manilaSoloCheckoutBlocked =
+    hasManilaSolo && (
+      hasMixedCart ||
+      soloHasMissingProducts ||
+      !soloPriceIsValid ||
+      !soloValid
+    )
   const canCheckout =
     subtotal > 0 &&
     !customizedCheckoutBlocked &&
