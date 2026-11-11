@@ -42,11 +42,12 @@ const CART_STORAGE_KEY =
 const MANILA_SOLO_STORAGE_KEY = "manilaCafeSolo";
 const MANILA_SOLO_PRICE = 249;
 
-const SOLO_DRINK_CATEGORIES = new Set([
-    "coffee",
-    "shakes",
-    "kalla dryck"
-]);
+// Fasta produkter i Manila Solo. Ändra INTE till dynamiska kundval.
+const FIXED_SOLO_NAMES = {
+    mealId: "pancit",
+    dessertId: "golden turon & ube ice cream",
+    drinkId: "ube caramel twirl"
+};
 
 const normalizeSoloText = (value = "") =>
     String(value)
@@ -55,16 +56,16 @@ const normalizeSoloText = (value = "") =>
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
 
-const getSoloProductGroup = (product) => {
-    const category = normalizeSoloText(product?.category);
-
-    if (category === "matratter") return "meal";
-
-    if (SOLO_DRINK_CATEGORIES.has(category)) {
-        return "drink";
-    }
-
-    return "dessert";
+const isFixedSolo = (bundle, products) => {
+    if (!bundle || !Array.isArray(products) || !products.length) return false;
+    return Object.entries(FIXED_SOLO_NAMES).every(([key, name]) => {
+        const product = products.find(item =>
+            String(item?._id || "").toLowerCase() ===
+            String(bundle[key] || "").toLowerCase()
+        );
+        return product && normalizeSoloText(product.name) === name &&
+            product.available !== false && product.isAvailable !== false;
+    });
 };
 
 const getStoredManilaSolo = () => {
@@ -381,141 +382,47 @@ const StoreContextProvider = (props) => {
 
 
     // ======================================================
-    // MANILA SOLO — ADD / REMOVE
+    // MANILA SOLO — FAST MENY, INGA KUNDVAL
     // ======================================================
+
+    // Rensa gamla valfria Solo-kombinationer när produktlistan laddats.
+    useEffect(() => {
+        if (!manilaSolo || !food_list.length) return;
+        if (!isFixedSolo(manilaSolo, food_list)) {
+            localStorage.removeItem(MANILA_SOLO_STORAGE_KEY);
+            setManilaSolo(null);
+        }
+    }, [food_list, manilaSolo]);
 
     const addManilaSolo = (selection) => {
         try {
-            if (
-                !selection ||
-                typeof selection !== "object" ||
-                Array.isArray(selection)
-            ) {
-                throw new Error("Ogiltiga menyval.");
+            if (!selection || typeof selection !== "object" || Array.isArray(selection)) {
+                throw new Error("Ogiltig meny.");
             }
-
-            const required = [
-                "mealId",
-                "dessertId",
-                "drinkId"
-            ];
-
-            if (
-                Object.keys(selection).length !== 3 ||
-                required.some(
-                    key =>
-                        typeof selection[key] !== "string" ||
-                        !/^[a-f0-9]{24}$/i.test(selection[key])
-                )
-            ) {
-                throw new Error(
-                    "Välj en maträtt, en dessert och en dryck."
-                );
+            const required = Object.keys(FIXED_SOLO_NAMES);
+            if (Object.keys(selection).length !== required.length ||
+                required.some(key => typeof selection[key] !== "string" ||
+                    !/^[a-f0-9]{24}$/i.test(selection[key]))) {
+                throw new Error("Ogiltig Manila Solo.");
             }
-
-            const ids = required.map(
-                key => selection[key].toLowerCase()
-            );
-
-            if (new Set(ids).size !== 3) {
-                throw new Error("Ogiltig produktkombination.");
-            }
-
-            const expectedGroups = [
-                "meal",
-                "dessert",
-                "drink"
-            ];
-
-            const products = ids.map((id, index) => {
-                const product = food_list.find(
-                    item =>
-                        String(item._id).toLowerCase() === id
-                );
-
-                if (!product) {
-                    throw new Error(
-                        "En vald produkt är inte tillgänglig."
-                    );
-                }
-
-                if (
-                    product.available === false ||
-                    product.isAvailable === false ||
-                    getSoloProductGroup(product) !==
-                    expectedGroups[index]
-                ) {
-                    throw new Error(
-                        `${product.name} kan inte väljas här.`
-                    );
-                }
-
-                return product;
-            });
-
-            // Extra skydd för den stora Ube Cake.
-            // Backend måste också kontrollera produkt-ID.
-            const excludedNames = new Set([
-                "large ube cake",
-                "ube cake large",
-                "stor ube cake",
-                "ube cake stor",
-                "ube cake large size"
-            ]);
-
-            if (
-                products.some(product =>
-                    excludedNames.has(
-                        normalizeSoloText(product.name)
-                    )
-                )
-            ) {
-                throw new Error(
-                    "Stor Ube Cake ingår inte i Manila Solo."
-                );
-            }
-
-            // Första versionen stöder inte blandade
-            // varukorgar. Skydda befintliga kundval.
-            const hasRegularItems = Object.values(
-                cartItems
-            ).some(quantity => Number(quantity) > 0);
-
-            const hasCustomizedItems = Object.values(
-                customizedCartItems
-            ).some(item => Number(item?.quantity) > 0);
-
-            if (hasRegularItems || hasCustomizedItems) {
-                throw new Error(
-                    "Töm den vanliga varukorgen innan du lägger till Manila Solo."
-                );
-            }
-
             const bundle = {
                 type: "manila-solo",
-                mealId: ids[0],
-                dessertId: ids[1],
-                drinkId: ids[2]
+                mealId: selection.mealId.toLowerCase(),
+                dessertId: selection.dessertId.toLowerCase(),
+                drinkId: selection.drinkId.toLowerCase()
             };
-
-            localStorage.setItem(
-                MANILA_SOLO_STORAGE_KEY,
-                JSON.stringify(bundle)
-            );
-
+            if (!isFixedSolo(bundle, food_list)) {
+                throw new Error("Manila Solo innehåller endast Pancit, Golden Turon & Ube Ice Cream och Ube Caramel Twirl.");
+            }
+            if (Object.values(cartItems).some(q => Number(q) > 0) ||
+                Object.values(customizedCartItems).some(item => Number(item?.quantity) > 0)) {
+                throw new Error("Töm den vanliga varukorgen innan du lägger till Manila Solo.");
+            }
+            localStorage.setItem(MANILA_SOLO_STORAGE_KEY, JSON.stringify(bundle));
             setManilaSolo(bundle);
-
-            return {
-                success: true,
-                message: "Manila Solo har sparats."
-            };
+            return { success: true, message: "Manila Solo har lagts till i varukorgen." };
         } catch (error) {
-            return {
-                success: false,
-                message:
-                    error.message ||
-                    "Kunde inte spara Manila Solo."
-            };
+            return { success: false, message: error.message || "Kunde inte lägga till Manila Solo." };
         }
     };
 
@@ -537,7 +444,7 @@ const StoreContextProvider = (props) => {
 
     
 const getManilaSoloOrderPayload = () => {
-    if (!manilaSolo) return null;
+    if (!isFixedSolo(manilaSolo, food_list)) return null;
 
     return {
         bundle: {

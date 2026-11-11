@@ -33,11 +33,16 @@ const getImageUrl = (image, url) => {
 
 const MANILA_SOLO_PRICE = 249
 
+// Den fasta menyn måste matcha de tre faktiska produkterna.
 const SOLO_GROUPS = [
-  { key: 'mealId', label: 'Maträtt', icon: '🍛' },
-  { key: 'dessertId', label: 'Dessert', icon: '🍰' },
-  { key: 'drinkId', label: 'Dryck', icon: '🥤' }
+  { key: 'mealId', label: 'Maträtt', name: 'pancit', icon: '🍜' },
+  { key: 'dessertId', label: 'Dessert', name: 'golden turon & ube ice cream', icon: '🍌' },
+  { key: 'drinkId', label: 'Dryck', name: 'ube caramel twirl', icon: '🥤' }
 ]
+
+const normalizeSoloName = (value = '') =>
+  String(value).trim().toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 
 // ======================================================
 // CART
@@ -148,9 +153,15 @@ const Cart = () => {
       })
     : []
 
+  // Saknad, utgången eller fel produkt får aldrig bli en giltig fast meny.
   const soloHasMissingProducts =
     hasManilaSolo &&
-    soloProducts.some(item => !item.product)
+    soloProducts.some(item =>
+      !item.product ||
+      normalizeSoloName(item.product.name) !== item.name ||
+      item.product.available === false ||
+      item.product.isAvailable === false
+    )
 
   const soloGrossPrice = hasManilaSolo
     ? Number(manilaSoloPrice)
@@ -163,7 +174,8 @@ const Cart = () => {
   const soloValid =
     hasManilaSolo &&
     !soloHasMissingProducts &&
-    soloPriceIsValid
+    soloPriceIsValid &&
+    new Set(soloProducts.map(item => item.productId)).size === SOLO_GROUPS.length
 
   // ====================================================
   // NORMAL AND CUSTOMIZED TOTALS
@@ -253,13 +265,10 @@ const Cart = () => {
       invalidCustomizedEntries
     )
 
-  // Manila Solo får ännu inte skickas till den
-  // befintliga kassan. PlaceOrder måste först
-  // stödja bundles och bekräfta priset från backend.
-const manilaSoloCheckoutBlocked =
-  hasManilaSolo &&
-  !(import.meta.env.DEV ||
-    import.meta.env.VITE_MANILA_SOLO_CHECKOUT_READY === 'true')
+  // SÄKERHET: håll paketkassan stängd även i DEV tills PlaceOrder,
+  // backendvalidering och Stripe verkligen hanterar 249 kr för fasta menyn.
+  // Ta inte bort spärren genom att bara aktivera en frontend-miljövariabel.
+  const manilaSoloCheckoutBlocked = hasManilaSolo
   const canCheckout =
     subtotal > 0 &&
     !customizedCheckoutBlocked &&

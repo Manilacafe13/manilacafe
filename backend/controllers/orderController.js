@@ -294,11 +294,11 @@ const normalizeZipcode = (value = "") =>
 
 
 // ======================================================
-// GRÃƒâ€¦BO POSTCODES
+// GRÅBO POSTCODES
 //
 // Viktigt:
-// 443 anvÃƒÂ¤nds ÃƒÂ¤ven av Lerum och Stenkullen.
-// DÃƒÂ¤rfÃƒÂ¶r kontrollerar vi GrÃƒÂ¥bo EXAKT innan 443-zonen.
+// 443 används även av Lerum och Stenkullen.
+// Därför kontrollerar vi Gråbo EXAKT innan 443-zonen.
 // ======================================================
 
 const GRABO_ZIPCODES = [
@@ -335,14 +335,14 @@ const getDeliveryZone = ({
     normalizeZipcode(zipcode);
 
 
-  // Vi behÃƒÂ¶ver ett riktigt postnummer fÃƒÂ¶r sÃƒÂ¤ker zonberÃƒÂ¤kning
+  // Vi behöver ett riktigt postnummer för säker zonberäkning
   if (normalizedZip.length !== 5) {
     return null;
   }
 
 
   // ====================================================
-  // 1. FRÃƒ–LUNDA
+  // 1. FRÖLUNDA
   // GRATIS
   // ====================================================
 
@@ -354,8 +354,8 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 2. GRÃƒâ€¦BO
-  // Kontrollera fÃƒÂ¶re Lerum eftersom bÃƒÂ¥da anvÃƒÂ¤nder 443
+  // 2. GRÅBO
+  // Kontrollera före Lerum eftersom båda använder 443
   // ====================================================
 
   if (
@@ -369,7 +369,7 @@ const getDeliveryZone = ({
   // 3. KUNGSBACKA / HEDE
   //
   // Kungsbacka = 434-serien.
-  // HedeomrÃƒÂ¥det i Kungsbacka fÃƒÂ¥ngas dÃƒÂ¤rfÃƒÂ¶r hÃƒÂ¤r ocksÃƒÂ¥.
+  // Hedeområdet i Kungsbacka fångas därför här också.
   // ====================================================
 
   if (
@@ -401,7 +401,7 @@ const getDeliveryZone = ({
   }
 
 
-  // 443 som INTE redan matchats som GrÃƒÂ¥bo
+  // 443 som INTE redan matchats som Gråbo
   if (
     normalizedZip.startsWith("443")
   ) {
@@ -410,15 +410,15 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 6. HISINGEN / NORRA GÃƒ–TEBORG
+  // 6. HISINGEN / NORRA GÖTEBORG
   //
   // Lundby
   // Backa
-  // BiskopsgÃƒÂ¥rden
+  // Biskopsgården
   // Tuve
-  // KÃƒÂ¤rra
+  // Kärra
   // Torslanda
-  // SÃƒÂ¤ve m.fl.
+  // Säve m.fl.
   // ====================================================
 
   const hisingenPrefixes = [
@@ -440,7 +440,7 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 7. NORDÃƒ–STRA GÃƒ–TEBORG
+  // 7. NORDÖSTRA GÖTEBORG
   //
   // Angered
   // Gunnilse
@@ -455,13 +455,13 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 8. SÃƒ–DRA GÃƒ–TEBORG / MÃƒ–LNDAL
+  // 8. SÖDRA GÖTEBORG / MÖLNDAL
   //
   // Askim
-  // HovÃƒÂ¥s
+  // Hovås
   // Billdal
-  // MÃƒÂ¶lndal
-  // KÃƒÂ¥llered
+  // Mölndal
+  // Kållered
   //
   // Lindome ligger separat ovan.
   // ====================================================
@@ -484,12 +484,12 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 9. Ãƒ–STRA GÃƒ–TEBORG
+  // 9. ÖSTRA GÖTEBORG
   //
   // Kortedala
-  // BergsjÃƒÂ¶n
+  // Bergsjön
   // Gamlestaden
-  // delar av Ãƒ–rgryte / HÃƒÂ¤rlanda
+  // delar av Örgryte / Härlanda
   // ====================================================
 
   const eastPrefixes = [
@@ -510,10 +510,10 @@ const getDeliveryZone = ({
 
 
   // ====================================================
-  // 10. CENTRALA GÃƒ–TEBORG
+  // 10. CENTRALA GÖTEBORG
   //
   // Centrum
-  // LinnÃƒÂ©
+  // Linné
   // Vasastaden
   // Johanneberg
   // Guldheden m.fl.
@@ -544,7 +544,7 @@ const getDeliveryZone = ({
   // Angered
   // Fiskebäckk m.fl.
   //
-  // 421 Frölunda har redan fÃƒÂ¥ngats ovan.
+  // 421 Frölunda har redan fångats ovan.
   // ====================================================
 
   const westPrefixes = [
@@ -565,9 +565,9 @@ const getDeliveryZone = ({
   // ====================================================
   // CITY FALLBACK
   //
-  // AnvÃƒÂ¤nds endast nÃƒÂ¤r postnumret inte fÃƒÂ¥ngats ovan.
-  // Vi anvÃƒÂ¤nder INTE bara "GÃƒÂ¶teborg", eftersom det
-  // inte sÃƒÂ¤ger vilken del av GÃƒÂ¶teborg kunden bor i.
+  // Används endast när postnumret inte fångats ovan.
+  // Vi använder INTE bara "Göteborg", eftersom det
+  // inte säger vilken del av Göteborg kunden bor i.
   // ====================================================
 
   if (
@@ -2092,19 +2092,42 @@ if (bundles !== undefined) {
         });
       }
 
-      // Godkända produkt-ID:n konfigureras på servern.
-      // Om listan saknas är paketet inte köpklart.
-      const eligibleProductIds = String(
-        process.env.MANILA_SOLO_ELIGIBLE_IDS || ""
-      )
-        .split(",")
-        .map(id => id.trim())
-        .filter(id => mongoose.isValidObjectId(id));
+      // FAST MANILA SOLO — servern bestämmer exakt vilka produkter som ingår.
+      // Konfigurera dessa tre ID:n från den riktiga produktdatabasen på Render.
+      // Ingen produkt eller något pris får bestämmas av klienten.
+      const fixedSoloIds = {
+        mealId: String(process.env.MANILA_SOLO_PANCIT_ID || "").trim().toLowerCase(),
+        dessertId: String(process.env.MANILA_SOLO_GOLDEN_TURON_ID || "").trim().toLowerCase(),
+        drinkId: String(process.env.MANILA_SOLO_UBE_CARAMEL_TWIST_ID || "").trim().toLowerCase()
+      };
 
-      if (eligibleProductIds.length === 0) {
+      const eligibleProductIds = Object.values(fixedSoloIds);
+      if (
+        eligibleProductIds.some(id => !mongoose.isValidObjectId(id)) ||
+        new Set(eligibleProductIds).size !== 3
+      ) {
         return res.status(503).json({
           success: false,
-          message: "Manila Solo är inte aktiverad ännu."
+          message: "Manila Solo saknar giltig produktkonfiguration."
+        });
+      }
+
+      // Säkerställ även att serverns fasta ID:n pekar på rätt produkter.
+      // Detta fångar förväxlade miljövariabler innan ett paket kan säljas.
+      const fixedNames = [
+        [fixedSoloIds.mealId, "pancit"],
+        [fixedSoloIds.dessertId, "golden turon & ube ice cream"],
+        [fixedSoloIds.drinkId, "ube caramel twirl"]
+      ];
+      const normalizeName = name => String(name || "")
+        .trim().toLowerCase().normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+      if (fixedNames.some(([id, name]) =>
+        normalizeName(productMap.get(id)?.name) !== name
+      )) {
+        return res.status(503).json({
+          success: false,
+          message: "Manila Solo-produkterna kunde inte verifieras."
         });
       }
 
@@ -2132,6 +2155,18 @@ if (bundles !== undefined) {
       try {
 
         const request = bundles[0];
+
+        // Vägra andra kombinationer, även om någon anropar API:t direkt.
+        if (
+          String(request.mealId || "").toLowerCase() !== fixedSoloIds.mealId ||
+          String(request.dessertId || "").toLowerCase() !== fixedSoloIds.dessertId ||
+          String(request.drinkId || "").toLowerCase() !== fixedSoloIds.drinkId
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Manila Solo har ett fast innehåll: Pancit, Golden Turon & Ube Ice Cream och Ube Caramel Twirl."
+          });
+        }
 
         soloBundle = validateManilaSolo({
           selection: {
@@ -2367,7 +2402,7 @@ if (bundles !== undefined) {
         });
       }
 
-      // ProduktvÃƒÂ¤rde inklusive moms, fÃƒÂ¶re rabatt
+      // Produktvärde inklusive moms, före rabatt
       const productTotalBeforeDiscount = roundMoney(
         subtotal + roundMoney(subtotal * VAT_RATE)
       );
@@ -2400,13 +2435,23 @@ if (bundles !== undefined) {
 
     const roundedSubtotal = roundMoney(subtotal);
 
-    // Produkter inklusive moms, fÃƒÂ¶re rabatt
+    // Paketsumman ska alltid bli exakt 249,00 kr inklusive 6 % moms.
+    // Stoppa hela beställningen vid oväntad avrundning eller felkonfiguration.
+    if (soloBundle &&
+        Math.round((roundedSubtotal + roundMoney(roundedSubtotal * VAT_RATE)) * 100) !== MANILA_SOLO_PRICE_ORE) {
+      return res.status(503).json({
+        success: false,
+        message: "Manila Solo-priset kunde inte verifieras."
+      });
+    }
+
+    // Produkter inklusive moms, före rabatt
     const productTotalBeforeDiscount = roundMoney(
       roundedSubtotal +
       roundMoney(roundedSubtotal * VAT_RATE)
     );
 
-    // Rabatt gÃƒÂ¤ller endast produkter, inte leverans
+    // Rabatt gäller endast produkter, inte leverans
     const discountAmount = appliedDiscount
       ? calculateProductDiscount(
         productTotalBeforeDiscount,
@@ -2414,12 +2459,12 @@ if (bundles !== undefined) {
       )
       : 0;
 
-    // ProduktvÃƒÂ¤rde inklusive moms, efter rabatt
+    // Produktvärde inklusive moms, efter rabatt
     const productTotal = roundMoney(
       productTotalBeforeDiscount - discountAmount
     );
 
-    // RÃƒÂ¤kna om moms efter rabatt
+    // Räkna om moms efter rabatt
     const roundedVat = roundMoney(
       productTotal * VAT_RATE / (1 + VAT_RATE)
     );
@@ -2428,7 +2473,7 @@ if (bundles !== undefined) {
       productTotal - roundedVat
     );
 
-    // Fri leverans baseras pÃƒÂ¥ produktvÃƒÂ¤rdet efter rabatt
+    // Fri leverans baseras på produktvärdet efter rabatt
     const qualifiesForFreeDelivery =
       productTotal >= FREE_DELIVERY_THRESHOLD;
 
@@ -2557,7 +2602,7 @@ if (bundles !== undefined) {
       });
     }
 
-    // Leveransavgift pÃƒÂ¥verkas inte av rabatten
+    // Leveransavgift påverkas inte av rabatten
     if (roundedDeliveryFee > 0) {
       lineItems.push({
         price_data: {
@@ -2575,8 +2620,8 @@ if (bundles !== undefined) {
       });
     }
 
-    // Kontrollera att Stripe fÃƒÂ¥r exakt samma belopp
-    // som sparats pÃƒÂ¥ ordern.
+    // Kontrollera att Stripe får exakt samma belopp
+    // som sparats på ordern.
     const stripeTotalCents = lineItems.reduce(
       (sum, item) =>
         sum +
@@ -2594,8 +2639,8 @@ if (bundles !== undefined) {
       );
     }
 
-    // Stripe Checkout krÃƒÂ¤ver ett positivt belopp
-    // i detta betalningsflÃƒÂ¶de.
+    // Stripe Checkout kräver ett positivt belopp
+    // i detta betalningsflöde.
     if (expectedTotalCents <= 0) {
       throw new Error("ORDER_TOTAL_MUST_BE_POSITIVE");
     }

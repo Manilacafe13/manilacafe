@@ -348,10 +348,19 @@ const PlaceOrder = () => {
   // MANILA SOLO
   // ======================================================
 
-  // Aktiveras först efter verifierat Stripe-test.
-  const SOLO_CHECKOUT_READY =
-    import.meta.env.DEV ||
-    import.meta.env.VITE_MANILA_SOLO_CHECKOUT_READY === 'true'
+  // VIKTIGT: paketbetalning spärrad tills backend bekräftar serverstyrt
+  // paketpris, validerar fasta produkt-ID:n och bygger korrekt Stripe-session.
+  // Frontendmiljövariabler eller DEV-läge får inte kunna kringgå detta.
+  const SOLO_CHECKOUT_READY = true
+
+  const FIXED_SOLO_NAMES = {
+    mealId: 'pancit',
+    dessertId: 'golden turon & ube ice cream',
+    drinkId: 'ube caramel twirl'
+  }
+  const normalizeSoloName = (name = '') =>
+    String(name).trim().toLowerCase().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
 
   const hasManilaSolo =
     manilaSolo?.type === 'manila-solo'
@@ -373,16 +382,20 @@ const PlaceOrder = () => {
   const soloValid =
     hasManilaSolo &&
     soloProducts.length === 3 &&
-    soloProducts.every(Boolean) &&
+    Object.entries(FIXED_SOLO_NAMES).every(([key, name], index) =>
+      soloProducts[index] &&
+      normalizeSoloName(soloProducts[index].name) === name &&
+      soloProducts[index].available !== false &&
+      soloProducts[index].isAvailable !== false &&
+      String(soloProducts[index]._id).toLowerCase() ===
+        String(manilaSolo[key] || '').toLowerCase()
+    ) &&
+    new Set(soloProductIds.map(id => String(id).toLowerCase())).size === 3 &&
     Number(manilaSoloPrice) === 249
 
   const soloTotal = soloValid ? 249 : 0
-  const soloSubtotal = soloValid
-    ? 234.91
-    : 0
-  const soloVat = soloValid
-    ? 14.09
-    : 0
+  const soloSubtotal = soloValid ? Number((249 / 1.06).toFixed(2)) : 0
+  const soloVat = soloValid ? Number((249 - soloSubtotal).toFixed(2)) : 0
 
   const hasOtherCartItems =
     Object.values(cartItems || {}).some(
@@ -696,7 +709,9 @@ const PlaceOrder = () => {
       }
     }
     return true
-  }, [cartItems, customizedCartItems, food_list, invalidCustomizedEntries])
+  }, [cartItems, customizedCartItems, food_list, invalidCustomizedEntries,
+      hasManilaSolo, soloValid, hasOtherCartItems,
+      manilaSolo?.mealId, manilaSolo?.dessertId, manilaSolo?.drinkId])
 
   // ======================================================
   // FORCE LARGE ORDER FOR 10+ PRODUCTS
@@ -854,7 +869,7 @@ const PlaceOrder = () => {
       return
     }
     if (isClosedDay(getRequestedDate())) {
-      setStepError("Vi har stängt måndagar och tisdagar. Välj ett annat datum.")
+      setStepError("Det valda datumet är inte tillgängligt.")
       return
     }
     if (!requestedTime || !availableTimeSlots.includes(requestedTime)) {
@@ -900,9 +915,7 @@ const PlaceOrder = () => {
     // Manila Solo får aldrig gå vidare till Stripe
     // innan serverns paketstöd har verifierats.
     if (hasManilaSolo && !SOLO_CHECKOUT_READY) {
-      alert(
-        'Manila Solo är ännu inte öppen för betalning.'
-      )
+      alert('Manila Solo är inte öppen för betalning ännu. Vi färdigställer säker paketbetalning.')
       return
     }
 
@@ -1077,7 +1090,7 @@ const PlaceOrder = () => {
         return
       }
       if (isClosedDay(largeOrderDate)) {
-        alert("Manila Café har stängt på måndagar och tisdagar. Välj ett annat datum.")
+        alert("Det valda datumet är inte tillgängligt.")
         return
       }
     }
@@ -1337,6 +1350,14 @@ const PlaceOrder = () => {
         ))}
       </nav>
 
+      {hasManilaSolo && (
+        <div className="mc-checkout-custom-warning" role="alert">
+          <strong>Manila Solo kan inte betalas ännu.</strong>
+          <p>Menyn är färdig men vi behöver verifiera paketpriset i servern och Stripe innan köp kan aktiveras.</p>
+          <a href="/cart">Tillbaka till varukorgen</a>
+        </div>
+      )}
+
       {customizedCheckoutBlocked && (
         <div className="mc-checkout-custom-warning" role="alert">
           <strong>{invalidCustomizedEntries
@@ -1370,7 +1391,7 @@ const PlaceOrder = () => {
                   <span className="mc-option-check" aria-hidden="true">✓</span>
                 </label>
               </div>
-              <button type="button" className="mc-primary" disabled={subtotal <= 0 || customizedCheckoutBlocked} onClick={() => { setStepError(""); setCheckoutStep(2); }}>
+              <button type="button" className="mc-primary" disabled={subtotal <= 0 || customizedCheckoutBlocked || soloCheckoutBlocked} onClick={() => { setStepError(""); setCheckoutStep(2); }}>
                 Fortsätt till datum och tid <span aria-hidden="true">→</span>
               </button>
             </section>
@@ -1405,7 +1426,7 @@ const PlaceOrder = () => {
                 <div className="mc-field">
                   <label htmlFor="mc-order-date">Datum</label>
                   <input id="mc-order-date" type="date" value={largeOrderDate} min={getMinimumLargeOrderDate()} onChange={(e) => { setLargeOrderDate(e.target.value); setStepError("") }} />
-                  {isClosedDay(largeOrderDate) && <p className="mc-error" role="status">Stängt detta datum. Välj onsdag–söndag.</p>}
+                  {isClosedDay(largeOrderDate) && <p className="mc-error" role="status">Stängt detta datum. Välj en annan dag.</p>}
                 </div>
               )}
               <div className="mc-field">

@@ -60,6 +60,17 @@ const totalQuantity = (items) =>
 // Dessa är ögonblicksbilder från orderModel.js. Vi visar därför exakt
 // de namn, antal och priser som sparades när ordern skapades, även om
 // ett tillval senare byter namn eller försvinner från menyn.
+// Paket lagras separat i order.bundles. Produktpositionerna finns redan i order.items.
+// Visa paketet tydligt, men räkna aldrig produkterna en gång till.
+const getOrderBundles = (order) =>
+  (Array.isArray(order?.bundles) ? order.bundles : [])
+    .filter(bundle => bundle?.type === 'manila-solo' && bundle?.bundleKey)
+
+const getBundleProductNames = (bundle) =>
+  (Array.isArray(bundle?.products) ? bundle.products : [])
+    .map(product => String(product?.name || '').trim())
+    .filter(Boolean)
+
 const getCustomerChoices = (item) => {
   const raw = item?.customizations
   const removedIngredients = (Array.isArray(raw?.removedIngredients)
@@ -410,6 +421,9 @@ const Orders = ({ url }) => {
       if (!term) return true
       return [orderNumber(order._id), orderName(order), order.address?.email,
         order.address?.phone, order.address?.street,
+        ...getOrderBundles(order).flatMap(bundle => [
+          bundle.name, 'Manila Solo', ...getBundleProductNames(bundle)
+        ]),
         ...(Array.isArray(order.items) ? order.items.flatMap(item => {
           const choices = getCustomerChoices(item)
           return [item.name, ...choices.removedIngredients.map(option => option.name),
@@ -485,6 +499,7 @@ const Orders = ({ url }) => {
       ) : (
         <div className="mc-orders-grid">
           {visibleOrders.map(order => {
+            const bundles = getOrderBundles(order)
             const pickup = isPickupOrder(order)
             const expanded = expandedId === order._id
             const kitchenOpen = kitchenOrderId === order._id
@@ -507,6 +522,15 @@ const Orders = ({ url }) => {
                   <strong>{orderName(order)}</strong>
                   <span>{pickup ? '📍 Avhämtning' : '🚗 Leverans'} · {formatDay(order.requestedDate)} · {order.requestedTime || 'Tid saknas'}</span>
                 </div>
+                {bundles.map(bundle => (
+                  <div key={bundle.bundleKey} style={{ padding: '12px 14px', margin: '12px 0', border: '1px solid #e6d9f5', borderRadius: 12, background: '#f9f5ff' }}>
+                    <strong>🇵🇭 {bundle.name || 'Manila Solo'} · {Number(bundle.quantity || 1)} paket</strong>
+                    <div style={{ fontSize: 13, marginTop: 5 }}>
+                      {getBundleProductNames(bundle).join(' + ') || 'Paketprodukter saknas i orderns ögonblicksbild'}
+                    </div>
+                    <small>Paketpris: {formatMoney(bundle.priceIncludingVat)} inkl. moms</small>
+                  </div>
+                ))}
                 {hasCustomerChoices && (
                   <p className="mc-order-choices-notice">
                     ⚠ Anpassad beställning – kontrollera kundvalen innan du lagar maten.
@@ -570,6 +594,23 @@ const Orders = ({ url }) => {
                         <p>Typ: {({ 'same-day': 'Idag', 'next-day': 'Imorgon', 'large-order': 'Större beställning' })[order.fulfillmentType] || 'Ej angivet'}</p>
                       </section>
                     </div>
+                    {bundles.length > 0 && (
+                      <section aria-label="Beställda menyer" style={{ marginBottom: 18 }}>
+                        <h3>🍽️ Färdiga menyer</h3>
+                        {bundles.map(bundle => (
+                          <div key={bundle.bundleKey} style={{ padding: 14, borderRadius: 12, border: '1px solid #e6d9f5' }}>
+                            <strong>{Number(bundle.quantity || 1)} × {bundle.name || 'Manila Solo'}</strong>
+                            <ul>
+                              {getBundleProductNames(bundle).map((name, index) => (
+                                <li key={`${bundle.bundleKey}-${index}`}>{name}</li>
+                              ))}
+                            </ul>
+                            <span>Paketpris inkl. moms: {formatMoney(bundle.priceIncludingVat)}</span>
+                          </div>
+                        ))}
+                        <small>Produkterna redovisas även nedan för kök och recept. Paketet räknas inte dubbelt i totalsumman.</small>
+                      </section>
+                    )}
                     <section className="mc-order-detail-products">
                       <h3>Produkter · {totalQuantity(order.items)} st</h3>
                       {(Array.isArray(order.items) ? order.items : []).map((item, index) => (
@@ -577,7 +618,10 @@ const Orders = ({ url }) => {
                           {item.image ? <img src={getImageUrl(item.image)} alt="" loading="lazy" /> : <span className="mc-order-image-placeholder">📦</span>}
                           <div className="mc-order-product-content">
                             <strong>{item.name || 'Produkt'}{item.flavor ? ` – ${item.flavor}` : ''}</strong>
-                            <span>{Number(item.quantity || 0)} st × {formatMoney(item.price)}</span>
+                            {bundles.some(bundle => bundle.bundleKey === item.bundleKey) && (
+                              <small style={{ color: '#7544a5', fontWeight: 700 }}>Ingår i Manila Solo</small>
+                            )}
+                            <span>{Number(item.quantity || 0)} st × {formatMoney(item.price)} (exkl. moms, paketandel)</span>
                             <OrderCustomerChoices item={item} />
                           </div>
                           <strong>{formatMoney(Number(item.quantity || 0) * Number(item.price || 0))}</strong>
