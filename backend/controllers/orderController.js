@@ -3632,7 +3632,13 @@ const updateStatus = async (req, res) => {
     const filter = { _id: orderId, status: order.status, payment: order.payment };
     if (needsKitchen) {
       filter["kitchenProgress.packed"] = true;
-      filter["kitchenProgress.version"] = Number(order.kitchenProgress?.version || 0);
+      const currentVersion = Number(order.kitchenProgress?.version || 0);
+      filter.$or = [
+        { "kitchenProgress.version": currentVersion },
+        ...(currentVersion === 0
+          ? [{ "kitchenProgress.version": { $exists: false } }]
+          : [])
+      ];
     }
     const updated = await orderModel.findOneAndUpdate(filter, { $set: { status: normalizedStatus } },
       { new: true, runValidators: true });
