@@ -17,6 +17,7 @@ import {
 
 import Add from './pages/Add/Add'
 import List from './pages/List/List'
+import ImageMigration from './pages/ImageMigration/ImageMigration'
 import Orders from './pages/Orders/Orders'
 import Login from './pages/Login/Login'
 import FutureProducts from './pages/FutureProducts/FutureProducts'
@@ -155,7 +156,8 @@ const App = () => {
             element={<Discounts url={url} />}
           />
           <Route path="*" element={<Navigate to="/orders" replace />} />
-        </Routes>
+                  <Route path="/bildflytt" element={<ImageMigration url={url} />} />
+</Routes>
       </div>
     </div>
   )

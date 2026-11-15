@@ -13,6 +13,7 @@ import fs from "fs";
 
 import authMiddleware from "../middleware/auth.js";
 import adminAuth from "../middleware/adminAuth.js";
+import updateFoodImage from "../controllers/updateFoodImage.js";
 
 
 const foodRouter = express.Router();
@@ -203,6 +204,18 @@ foodRouter.post(
 // ======================================================
 // REMOVE PRODUCT - ADMIN
 // ======================================================
+
+
+// ======================================================
+// UPDATE PRODUCT IMAGE - ADMIN ONLY
+// ======================================================
+
+foodRouter.post(
+  "/update-image",
+  authMiddleware,
+  adminAuth,
+  updateFoodImage
+);
 
 foodRouter.post(
 
