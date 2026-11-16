@@ -1,3 +1,4 @@
+import { uploadProductImageToR2 } from "../utils/r2Images.js";
 import foodModel from "../models/foodmodel.js";
 import mongoose from "mongoose";
 import fs from "fs";
@@ -575,25 +576,7 @@ const addFood = async (
     // UPLOAD IMAGE TO CLOUDINARY
     // ==================================================
 
-    const uploadResult =
-      await cloudinary
-        .uploader
-        .upload(
-          req.file.path,
-          {
-
-            folder:
-              "manilacafe/products",
-
-            resource_type:
-              "image"
-
-          }
-        );
-
-
-    cloudinaryPublicId =
-      uploadResult.public_id;
+    const uploadResult = await uploadProductImageToR2(req.file.path);
 
 
     // ==================================================
