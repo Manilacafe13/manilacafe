@@ -7,7 +7,7 @@ import './MenuBuilder.css'
 // OBS: paketpriset måste också vara 249 kr i StoreContext och backend.
 const SOLO_PRICE = 249
 const FIXED_ITEMS = [
-  { key: 'meal', label: 'Maträtt', name: 'Pancit', icon: '🍜', aliases: ['pancit'] },
+  { key: 'meal', label: 'Maträtt', name: 'Chicken Adobo', icon: '🍜', aliases: ['chicken adobo'] },
   { key: 'dessert', label: 'Dessert', name: 'Golden Turon & Ube Ice Cream', icon: '🍌', aliases: ['golden turon & ube ice cream'] },
   { key: 'drink', label: 'Dryck', name: 'Ube Caramel Twirl', icon: '🥤', aliases: ['ube caramel twirl'] }
 ]
@@ -25,6 +25,8 @@ const imageUrl = (image, baseUrl) => {
 }
 
 const MenuBuilder = () => {
+  return null;
+
   const { food_list = [], url = '', manilaSolo = null, addManilaSolo, removeManilaSolo } = useContext(StoreContext) || {}
   const [message, setMessage] = useState(null)
 
@@ -85,7 +87,7 @@ const MenuBuilder = () => {
           <div>
             <span className="mc-menu-builder__eyebrow">FÄRDIG MENY</span>
             <h3>Manila Solo 🇵🇭</h3>
-            <p>Smakrik Pancit, krispig Golden Turon & Ube Ice Cream och len Ube Caramel Twirl – en komplett måltid utan krångliga val.</p>
+            <p>Smakrik Chicken Adobo, krispig Golden Turon & Ube Ice Cream och len Ube Caramel Twirl – en komplett måltid utan krångliga val.</p>
           </div>
           <span className="mc-menu-builder__selection-count">{formatPrice.format(SOLO_PRICE)}</span>
         </div>
