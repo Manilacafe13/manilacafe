@@ -5,7 +5,6 @@ import './Home.css'
 
 // Components
 import Header from '../../components/Header/Header'
-import MenuBuilder from '../../components/MenuBuilder/MenuBuilder'
 import ExploreMenu from '../../components/ExploreMenu/ExploreMenu'
 import FoodDisplay from '../../components/FoodDisplay/FoodDisplay'
 import AboutUs from '../../components/AboutUs/AboutUs'
@@ -36,7 +35,7 @@ const Home = () => {
       {/* BUILD YOUR MANILA BOX */}
       {/* ============================================== */}
 
-      <MenuBuilder />
+      {/* Manila Solo är tillfälligt avstängt. */}
 
 
       {/* ============================================== */}

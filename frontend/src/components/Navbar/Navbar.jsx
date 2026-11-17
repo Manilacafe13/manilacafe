@@ -127,7 +127,7 @@ const Navbar = ({ setShowLogin }) => {
           className="navbar-logo-link"
           aria-label="Manila Café – gå till startsidan"
         >
-          <img src={assets.logo} alt="Manila Café" className="logo" />
+          <img src={assets.logo} alt="Manila Café" className="logo" decoding="async" />
         </Link>
 
         {/* NAVIGATION */}

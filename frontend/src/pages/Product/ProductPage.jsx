@@ -944,6 +944,8 @@ const ProductPage = () => {
             src={imageUrl}
             alt={`${product.name} – ${productType} från Manila Café i Göteborg`}
             className="product-page-image"
+            decoding="async"
+            fetchPriority="high"
           />
 
         </div>

@@ -35,7 +35,7 @@ const MANILA_SOLO_PRICE = 249
 
 // Den fasta menyn måste matcha de tre faktiska produkterna.
 const SOLO_GROUPS = [
-  { key: 'mealId', label: 'Maträtt', name: 'pancit', icon: '🍜' },
+  { key: 'mealId', label: 'Maträtt', name: 'chicken adobo', icon: '🍗' },
   { key: 'dessertId', label: 'Dessert', name: 'golden turon & ube ice cream', icon: '🍌' },
   { key: 'drinkId', label: 'Dryck', name: 'ube caramel twirl', icon: '🥤' }
 ]

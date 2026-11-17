@@ -207,3 +207,13 @@ body::after{
   }
 
 }
+
+/* Shared narrow-screen protection, no global horizontal clipping. */
+.app, .home, main, section { min-width: 0; }
+.app img { max-width: 100%; }
+.page-loading { min-height: 45vh; display: grid; place-items: center; padding: 24px; }
+@media (max-width: 750px) {
+  .app { overflow-wrap: break-word; }
+  .place-order, .place-order-left, .product-page-content { min-width: 0; }
+  .place-order input, .place-order select, .place-order textarea { max-width: 100%; min-width: 0; }
+}

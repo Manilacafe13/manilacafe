@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { lazy, Suspense, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
 import Navbar from './components/Navbar/Navbar'
@@ -6,11 +6,11 @@ import Footer from './components/Footer/Footer'
 import LoginPopup from './components/LoginPopup/LoginPopup'
 
 import Home from './pages/Home/Home'
-import Cart from './pages/Cart/Cart'
-import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
-import Verify from './pages/Verify/Verify'
-import MyOrders from './pages/MyOrders/MyOrders'
-import ProductPage from './pages/Product/ProductPage'
+const Cart = lazy(() => import('./pages/Cart/Cart'))
+const PlaceOrder = lazy(() => import('./pages/PlaceOrder/PlaceOrder'))
+const Verify = lazy(() => import('./pages/Verify/Verify'))
+const MyOrders = lazy(() => import('./pages/MyOrders/MyOrders'))
+const ProductPage = lazy(() => import('./pages/Product/ProductPage'))
 import CookieBanner from './components/CookieBanner/CookieBanner'
 
 import {
@@ -44,6 +44,7 @@ const App = () => {
         />
 
 
+        <Suspense fallback={<main className="page-loading" role="status" aria-live="polite">Laddar sidan…</main>}>
         <Routes>
 
           {/* HOME */}
@@ -153,6 +154,7 @@ const App = () => {
           />
 
         </Routes>
+        </Suspense>
 
       </div>
 
