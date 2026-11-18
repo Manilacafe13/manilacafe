@@ -515,3 +515,218 @@
 .list-item-actions {
   flex-wrap: wrap;
 }
+
+/* MANILA CAFE - RESPONSIVE PRODUCT LAYOUT FIX */
+
+/* Produktkort som anpassar sig efter tillgänglig bredd */
+.list {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.list-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 370px), 1fr));
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.list-table-format.title {
+  display: none;
+}
+
+/* Produktkort */
+.list-table-format:not(.title) {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  grid-template-areas:
+    "image name"
+    "image category"
+    "price price"
+    "stock stock"
+    "actions actions";
+  align-items: center;
+  gap: 10px 14px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e3eae5;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .045);
+}
+
+.list-table-format:not(.title) > :nth-child(1) {
+  grid-area: image;
+}
+
+.list-table-format:not(.title) > :nth-child(2) {
+  grid-area: name;
+  align-self: end;
+}
+
+.list-table-format:not(.title) > :nth-child(3) {
+  grid-area: category;
+  align-self: start;
+}
+
+.list-table-format:not(.title) > :nth-child(4) {
+  grid-area: price;
+  text-align: left;
+  font-weight: 750;
+  white-space: normal;
+}
+
+.list-table-format:not(.title) > :nth-child(5) {
+  grid-area: stock;
+}
+
+.list-table-format:not(.title) > :nth-child(6) {
+  grid-area: actions;
+}
+
+.list-table-format > img,
+.list-image-placeholder {
+  width: 86px;
+  height: 86px;
+  max-width: 100%;
+  object-fit: cover;
+  border-radius: 13px;
+}
+
+.list-table-format .list-product-name {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.list-table-format:not(.title) > :nth-child(4) {
+  font-size: 19px;
+  color: #238047;
+  padding-top: 12px;
+  border-top: 1px solid #edf1ed;
+}
+
+/* Dagslager */
+.list-table-format .stock-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 0;
+  padding: 12px 0;
+  border-top: 1px solid #edf1ed;
+}
+
+.stock-control::before {
+  content: "Dagslager";
+  color: #69766e;
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: auto;
+}
+
+.stock-control input {
+  width: 75px;
+  min-width: 0;
+  height: 42px;
+}
+
+.save-stock-button {
+  min-height: 42px;
+  padding: 9px 15px;
+}
+
+/* Knappar – två per rad */
+.list-table-format .list-item-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid #edf1ed;
+}
+
+.list-item-actions > button {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.list-item-actions .delete-food-button {
+  flex: initial;
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  font-size: 22px;
+}
+
+/* Mobil */
+@media (max-width: 620px) {
+  .list {
+    padding: 12px;
+  }
+
+  .list-table {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .list-table-format:not(.title) {
+    grid-template-columns: 70px minmax(0, 1fr);
+    padding: 15px;
+    gap: 9px 12px;
+  }
+
+  .list-table-format > img,
+  .list-image-placeholder {
+    width: 70px;
+    height: 70px;
+  }
+
+  .list-table-format .list-product-name {
+    font-size: 16px;
+  }
+
+  .list-item-actions > button {
+    font-size: 12px;
+    min-height: 42px;
+  }
+
+  .stock-control::before {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 350px) {
+  .list-table-format:not(.title) {
+    padding: 10px;
+  }
+
+  .list-table-format .list-item-actions {
+    gap: 6px;
+  }
+
+  .list-item-actions > button {
+    padding: 8px 5px;
+    font-size: 11px;
+  }
+}
