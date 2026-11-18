@@ -189,6 +189,7 @@ const FoodDisplay = ({
               description={item.description}
               price={item.price}
               image={item.image}
+              images={item.images}
               category={item.category}
             />
 
