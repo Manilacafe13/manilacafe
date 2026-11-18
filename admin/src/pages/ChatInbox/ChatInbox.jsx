@@ -9,10 +9,12 @@ import React, {
 import './ChatInbox.css'
 
 // ======================================================
-// MANILA CAFÉ LIVECHAT - ADMIN INBOX
+// MANILA CAFÉ LIVECHAT V1.3
+// Admin inbox + customer notification sound
 // ======================================================
 
-const API_REFRESH_INTERVAL = 8000
+const POLL_MS = 8000
+const CHAT_SOUND = '/sounds/chat-pling.wav'
 
 const reasonLabels = {
   delivery_cost: 'Leveranskostnad',
@@ -30,31 +32,87 @@ const statusLabels = {
   closed: 'Avslutad'
 }
 
+const formatDate = (value) => {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleString('sv-SE', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  })
+}
+
+// ======================================================
+// CHAT INBOX
+// ======================================================
+
 export default function ChatInbox({
   apiBase = '',
   authenticatedFetch
 }) {
 
-  const [conversations, setConversations] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [insights, setInsights] = useState(null)
-  const [input, setInput] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
-  const [updating, setUpdating] = useState(false)
+  const [conversations, setConversations] =
+    useState([])
+
+  const [selected, setSelected] =
+    useState(null)
+
+  const [insights, setInsights] =
+    useState(null)
+
+  const [input, setInput] =
+    useState('')
+
+  const [error, setError] =
+    useState('')
+
+  const [success, setSuccess] =
+    useState('')
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [sending, setSending] =
+    useState(false)
+
+  const [updating, setUpdating] =
+    useState(false)
+
+  const [soundEnabled, setSoundEnabled] =
+    useState(false)
+
+  const [soundError, setSoundError] =
+    useState('')
 
   const threadRef = useRef(null)
+  const audioRef = useRef(null)
+
+  const soundEnabledRef = useRef(false)
+
+  // Previously observed customer messages.
+  const knownMessagesRef = useRef(new Set())
+
+  // Prevent sound on first load.
+  const initializedRef = useRef(false)
+
+  // Prevent overlapping polling requests.
+  const fetchingRef = useRef(false)
+
+  const mountedRef = useRef(false)
 
   // ====================================================
-  // API
+  // API REQUESTS
   // ====================================================
 
   const api = useCallback(
     async (path, options = {}) => {
 
-      if (typeof authenticatedFetch !== 'function') {
+      if (
+        typeof authenticatedFetch !== 'function'
+      ) {
         throw new Error(
           'Admininloggning måste kopplas in.'
         )
@@ -85,53 +143,241 @@ export default function ChatInbox({
   )
 
   // ====================================================
-  // LOAD CONVERSATIONS AND INSIGHTS
+  // PLAY CHAT NOTIFICATION
+  // ====================================================
+
+  const playChatSound = useCallback(async () => {
+
+    if (!soundEnabledRef.current) return
+
+    try {
+
+      if (!audioRef.current) {
+        audioRef.current =
+          new Audio(CHAT_SOUND)
+
+        audioRef.current.volume = 0.65
+      }
+
+      const audio = audioRef.current
+
+      audio.pause()
+      audio.currentTime = 0
+
+      await audio.play()
+
+    } catch (err) {
+
+      console.warn(
+        'Chat notification sound failed:',
+        err
+      )
+
+      if (mountedRef.current) {
+        setSoundError(
+          'Ljudet kunde inte spelas. Kontrollera ljudbehörigheten.'
+        )
+      }
+
+    }
+
+  }, [])
+
+  // ====================================================
+  // ACTIVATE / DEACTIVATE SOUND
+  // ====================================================
+
+  const toggleChatSound = async () => {
+
+    setSoundError('')
+
+    if (soundEnabledRef.current) {
+
+      soundEnabledRef.current = false
+      setSoundEnabled(false)
+
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
+
+      return
+    }
+
+    try {
+
+      if (!audioRef.current) {
+        audioRef.current =
+          new Audio(CHAT_SOUND)
+      }
+
+      const audio = audioRef.current
+
+      audio.volume = 0.65
+      audio.currentTime = 0
+
+      // User click unlocks browser audio.
+      await audio.play()
+
+      soundEnabledRef.current = true
+      setSoundEnabled(true)
+
+    } catch (err) {
+
+      console.error(
+        'Could not activate chat sound:',
+        err
+      )
+
+      soundEnabledRef.current = false
+      setSoundEnabled(false)
+
+      setSoundError(
+        'Kunde inte aktivera chattljudet. Kontrollera att /sounds/chat-pling.wav finns.'
+      )
+
+    }
+
+  }
+
+  // ====================================================
+  // DETECT NEW CUSTOMER MESSAGES
+  // ====================================================
+
+  const checkNewMessages = useCallback(
+    (items) => {
+
+      const currentMessages = new Set()
+      let newCustomerMessages = 0
+
+      for (const conversation of items) {
+
+        const messages =
+          conversation.messages || []
+
+        messages.forEach((message, index) => {
+
+          if (message.role !== 'customer') {
+            return
+          }
+
+          const key =
+            `${conversation._id}:` +
+            String(message._id || index)
+
+          currentMessages.add(key)
+
+          if (
+            initializedRef.current &&
+            !knownMessagesRef.current.has(key)
+          ) {
+            newCustomerMessages += 1
+          }
+
+        })
+
+      }
+
+      // Save current state after checking.
+      knownMessagesRef.current =
+        currentMessages
+
+      if (!initializedRef.current) {
+
+        initializedRef.current = true
+        return
+
+      }
+
+      if (newCustomerMessages > 0) {
+
+        // Only one pling per polling cycle,
+        // even if several messages arrive.
+        void playChatSound()
+
+      }
+
+    },
+    [playChatSound]
+  )
+
+  // ====================================================
+  // REFRESH INBOX
   // ====================================================
 
   const refresh = useCallback(async () => {
 
+    if (fetchingRef.current) return
+
+    fetchingRef.current = true
+
     try {
 
-      const [items, stats] = await Promise.all([
-        api('/conversations'),
-        api('/insights')
-      ])
+      const [items, stats] =
+        await Promise.all([
+          api('/conversations'),
+          api('/insights')
+        ])
 
-      setConversations(items)
+      if (!mountedRef.current) return
+
+      const validItems =
+        Array.isArray(items) ? items : []
+
+      checkNewMessages(validItems)
+
+      setConversations(validItems)
       setInsights(stats)
       setError('')
 
     } catch (err) {
 
-      setError(err.message)
+      if (mountedRef.current) {
+        setError(err.message)
+      }
 
     } finally {
 
-      setLoading(false)
+      fetchingRef.current = false
+
+      if (mountedRef.current) {
+        setLoading(false)
+      }
 
     }
 
-  }, [api])
+  }, [api, checkNewMessages])
 
   // ====================================================
-  // AUTO REFRESH
+  // AUTOMATIC POLLING
   // ====================================================
 
   useEffect(() => {
 
-    refresh()
+    mountedRef.current = true
 
-    const interval = setInterval(
-      refresh,
-      API_REFRESH_INTERVAL
+    void refresh()
+
+    const interval = window.setInterval(
+      () => void refresh(),
+      POLL_MS
     )
 
-    return () => clearInterval(interval)
+    return () => {
+
+      mountedRef.current = false
+
+      window.clearInterval(interval)
+
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
+
+    }
 
   }, [refresh])
 
   // ====================================================
-  // SELECTED CONVERSATION
+  // CURRENT CONVERSATION
   // ====================================================
 
   const current =
@@ -143,24 +389,28 @@ export default function ChatInbox({
         : null
     )
 
-  // ====================================================
-  // AUTO SCROLL MESSAGES
-  // ====================================================
-
   const currentId = current?._id
-  const messageCount = current?.messages?.length || 0
+
+  const messageCount =
+    current?.messages?.length || 0
+
+  // ====================================================
+  // AUTO SCROLL
+  // ====================================================
 
   useEffect(() => {
 
     if (threadRef.current) {
+
       threadRef.current.scrollTop =
         threadRef.current.scrollHeight
+
     }
 
   }, [currentId, messageCount])
 
   // ====================================================
-  // SEND STAFF MESSAGE
+  // STAFF REPLY
   // ====================================================
 
   const reply = async (event) => {
@@ -187,7 +437,8 @@ export default function ChatInbox({
           method: 'POST',
 
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type':
+              'application/json'
           },
 
           body: JSON.stringify({
@@ -214,7 +465,7 @@ export default function ChatInbox({
   }
 
   // ====================================================
-  // UPDATE CONVERSATION STATUS
+  // UPDATE STATUS
   // ====================================================
 
   const updateStatus = async (status) => {
@@ -233,7 +484,8 @@ export default function ChatInbox({
           method: 'PATCH',
 
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type':
+              'application/json'
           },
 
           body: JSON.stringify({
@@ -261,7 +513,7 @@ export default function ChatInbox({
   }
 
   // ====================================================
-  // CALCULATE METRICS
+  // STATISTICS
   // ====================================================
 
   const feedbackCount = Object.values(
@@ -272,24 +524,6 @@ export default function ChatInbox({
   )
 
   // ====================================================
-  // FORMAT DATE
-  // ====================================================
-
-  const formatDate = (date) => {
-
-    if (!date) return ''
-
-    return new Date(date).toLocaleString(
-      'sv-SE',
-      {
-        dateStyle: 'short',
-        timeStyle: 'short'
-      }
-    )
-
-  }
-
-  // ====================================================
   // RENDER
   // ====================================================
 
@@ -297,27 +531,80 @@ export default function ChatInbox({
 
     <main className="manila-inbox">
 
+      {/* HEADER */}
+
       <div className="manila-inbox-header">
 
         <div>
           <h2>💜 Livechatt & Kundinsikter</h2>
+
           <p>
-            Hantera kundmeddelanden och förstå
-            varför kunder tvekar inför köp.
+            Hantera kundmeddelanden och
+            förstå varför kunder tvekar inför köp.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={refresh}
-          className="manila-refresh-btn"
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 10
+          }}
         >
-          ↻ Uppdatera
-        </button>
+
+          {/* SOUND BUTTON */}
+
+          <button
+            type="button"
+            className="manila-refresh-btn"
+            onClick={toggleChatSound}
+            aria-pressed={soundEnabled}
+          >
+            {soundEnabled
+              ? '🔊 Chattljud på'
+              : '🔔 Aktivera chattljud'}
+          </button>
+
+          {/* REFRESH */}
+
+          <button
+            type="button"
+            className="manila-refresh-btn"
+            onClick={() => void refresh()}
+          >
+            ↻ Uppdatera
+          </button>
+
+        </div>
 
       </div>
 
-      {/* NOTIFICATIONS */}
+      {/* SOUND INFO */}
+
+      {soundEnabled && (
+
+        <p
+          style={{
+            fontSize: 12,
+            color: '#76549e',
+            marginBottom: 15
+          }}
+        >
+          🔊 Chattljud är aktiverat.
+          Ett pling spelas när nya
+          kundmeddelanden upptäcks.
+        </p>
+
+      )}
+
+      {soundError && (
+        <div
+          className="manila-inbox-error"
+          role="alert"
+        >
+          {soundError}
+        </div>
+      )}
 
       {error && (
         <div
@@ -356,19 +643,15 @@ export default function ChatInbox({
         </div>
 
         <div>
-          <strong>
-            {feedbackCount}
-          </strong>
+          <strong>{feedbackCount}</strong>
           <span>Feedbacksvar</span>
         </div>
 
       </div>
 
-      {/* MAIN GRID */}
+      {/* MAIN INBOX */}
 
       <div className="manila-inbox-grid">
-
-        {/* CONVERSATION LIST */}
 
         <aside>
 
@@ -394,9 +677,11 @@ export default function ChatInbox({
                   : ''
               }
               onClick={() => {
+
                 setSelected(chat._id)
                 setInput('')
                 setSuccess('')
+
               }}
             >
 
@@ -427,7 +712,7 @@ export default function ChatInbox({
 
         </aside>
 
-        {/* SELECTED CONVERSATION */}
+        {/* CONVERSATION */}
 
         <section>
 
@@ -454,11 +739,12 @@ export default function ChatInbox({
 
               </div>
 
-              {/* STATUS ACTIONS */}
+              {/* ACTIONS */}
 
               <div className="manila-chat-actions">
 
                 {current.status !== 'staff' && (
+
                   <button
                     type="button"
                     disabled={updating}
@@ -468,9 +754,11 @@ export default function ChatInbox({
                   >
                     👩‍💻 Ta över chatten
                   </button>
+
                 )}
 
                 {current.status !== 'bot' && (
+
                   <button
                     type="button"
                     disabled={updating}
@@ -480,9 +768,11 @@ export default function ChatInbox({
                   >
                     🤖 Automatiska svar
                   </button>
+
                 )}
 
                 {current.status !== 'closed' && (
+
                   <button
                     type="button"
                     disabled={updating}
@@ -492,11 +782,12 @@ export default function ChatInbox({
                   >
                     ✓ Avsluta
                   </button>
+
                 )}
 
               </div>
 
-              {/* MESSAGE THREAD */}
+              {/* MESSAGES */}
 
               <div
                 className="manila-inbox-thread"
@@ -533,7 +824,7 @@ export default function ChatInbox({
 
               </div>
 
-              {/* STAFF REPLY */}
+              {/* REPLY */}
 
               <form onSubmit={reply}>
 
@@ -589,9 +880,7 @@ export default function ChatInbox({
               {reasonLabels[reason] || reason}
             </span>
 
-            <strong>
-              {count}
-            </strong>
+            <strong>{count}</strong>
 
           </div>
 
