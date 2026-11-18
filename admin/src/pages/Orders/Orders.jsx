@@ -248,32 +248,20 @@ const Orders = ({ url }) => {
   const fetchingRef = useRef(false)
   const mountedRef = useRef(false)
   const soundEnabledRef = useRef(false)
-  const audioContextRef = useRef(null)
+  const orderAudioRef = useRef(null)
   const fetchingRecipesRef = useRef(false)
 
+  // Spela upp det egna kassaklinget, utan externa tjänster.
+  // Ljud aktiveras först efter en medveten knapptryckning.
   const playChime = useCallback(async () => {
-    const context = audioContextRef.current
-    if (!context || !soundEnabledRef.current) return
+    const audio = orderAudioRef.current
+    if (!audio || !soundEnabledRef.current) return
     try {
-      if (context.state === 'suspended') await context.resume()
-      const start = context.currentTime + 0.03
-      ;[740, 980, 1175].forEach((frequency, index) => {
-        const oscillator = context.createOscillator()
-        const gain = context.createGain()
-        const begin = start + index * 0.22
-        oscillator.type = 'sine'
-        oscillator.frequency.value = frequency
-        gain.gain.setValueAtTime(0.001, begin)
-        gain.gain.exponentialRampToValueAtTime(0.13, begin + 0.025)
-        gain.gain.exponentialRampToValueAtTime(0.001, begin + 0.19)
-        oscillator.connect(gain)
-        gain.connect(context.destination)
-        oscillator.start(begin)
-        oscillator.stop(begin + 0.2)
-      })
+      audio.pause()
+      audio.currentTime = 0
+      await audio.play()
     } catch {
-      // Webbläsarens ljudpolicy kan blockera ljud i bakgrunden.
-      console.warn('Orderljudet kunde inte spelas. Aktivera ljud igen i adminpanelen.')
+      console.warn('Orderljudet kunde inte spelas. Aktivera ljud i adminpanelen.')
     }
   }, [])
 
@@ -281,22 +269,29 @@ const Orders = ({ url }) => {
     if (soundEnabledRef.current) {
       soundEnabledRef.current = false
       setSoundEnabled(false)
+      orderAudioRef.current?.pause()
       return
     }
+
     try {
-      const Context = window.AudioContext || window.webkitAudioContext
-      if (!Context) throw new Error('Ljud stöds inte av webbläsaren')
-      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
-        audioContextRef.current = new Context()
+      if (!orderAudioRef.current) {
+        const audio = new Audio('/sounds/order-money.wav')
+        audio.preload = 'auto'
+        audio.volume = 0.8
+        orderAudioRef.current = audio
       }
-      // Måste ske direkt efter ett klick för att uppfylla webbläsarens ljudregler.
-      await audioContextRef.current.resume()
+
+      // Körs från knapptryckningen så att webbläsaren kan tillåta ljud.
+      const audio = orderAudioRef.current
+      audio.currentTime = 0
+      await audio.play()
       soundEnabledRef.current = true
       setSoundEnabled(true)
-      await playChime() // Bekräftar ljudnivån direkt.
-      toast.success('Ordersignal aktiverad')
+      toast.success('Ordersignal aktiverad – kassakling!')
     } catch {
-      toast.error('Ljud kunde inte aktiveras i den här webbläsaren.')
+      soundEnabledRef.current = false
+      setSoundEnabled(false)
+      toast.error('Kunde inte spela ljudet. Kontrollera /sounds/order-money.wav och webbläsarens ljudbehörighet.')
     }
   }
 
@@ -400,11 +395,11 @@ const Orders = ({ url }) => {
       mountedRef.current = false
       window.clearInterval(interval)
       soundEnabledRef.current = false
-      // Inget ljud ska fortsätta när ordersidan lämnas.
-      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        void audioContextRef.current.close().catch(() => {})
+      // Inget ljud fortsätter när ordersidan lämnas.
+      if (orderAudioRef.current) {
+        orderAudioRef.current.pause()
+        orderAudioRef.current = null
       }
-      audioContextRef.current = null
     }
   }, [fetchAllOrders])
 
