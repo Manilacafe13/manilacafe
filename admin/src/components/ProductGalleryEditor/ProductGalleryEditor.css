@@ -1,0 +1,125 @@
+.mc-gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mc-gallery-dialog {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  width: min(700px,100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #252525;
+}
+
+.mc-gallery-header,
+.mc-gallery-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mc-gallery-header h2 {
+  font-size: 21px;
+  margin: 0;
+}
+
+.mc-gallery-header p {
+  color: #777;
+  margin: 6px 0 0;
+}
+
+.mc-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.mc-gallery-photo {
+  position: relative;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f6f6f6;
+}
+
+.mc-gallery-photo img {
+  width: 100%;
+  aspect-ratio: 1;
+  display: block;
+  object-fit: cover;
+}
+
+.mc-gallery-main,
+.mc-gallery-new {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  background: #6f4c86;
+  color: white;
+  border-radius: 6px;
+  padding: 4px 7px;
+  font-size: 11px;
+}
+
+.mc-gallery-controls {
+  display: flex;
+  gap: 4px;
+  padding: 7px;
+  justify-content: center;
+}
+
+.mc-gallery-controls button,
+.mc-gallery-footer button,
+.mc-gallery-header button {
+  cursor: pointer;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.mc-gallery-controls button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.mc-gallery-upload {
+  display: block;
+  border: 2px dashed #b6a1c6;
+  background: #f8f3fb;
+  color: #6f4c86;
+  text-align: center;
+  padding: 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.mc-gallery-help {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.mc-gallery-footer {
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.mc-gallery-footer button:last-child {
+  background: #6f4c86;
+  color: white;
+  border-color: #6f4c86;
+  font-weight: 700;
+  padding: 11px 18px;
+}

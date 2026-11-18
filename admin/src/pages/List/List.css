@@ -494,3 +494,24 @@
 @media (prefers-reduced-motion: reduce) {
   .list *, .list *::before, .list *::after { transition: none !important; }
 }
+
+/* Manila Café – bildgalleri */
+.list-gallery-button {
+  border: 1px solid #d5c4e4;
+  background: #f5effa;
+  color: #6f4c86;
+  border-radius: 9px;
+  padding: 9px 12px;
+  min-height: 42px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.list-gallery-button:hover {
+  background: #eae0f3;
+}
+
+.list-item-actions {
+  flex-wrap: wrap;
+}

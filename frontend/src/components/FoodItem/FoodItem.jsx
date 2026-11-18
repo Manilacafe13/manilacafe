@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react'
 import './FoodItem.css'
+import FoodImageCarousel from '../FoodImageCarousel/FoodImageCarousel'
 import './FoodItemCustomizations.css'
 
 import { assets } from '../../assets/assets'
@@ -221,6 +222,7 @@ const FoodItem = ({
     price,
     description,
     image,
+    images,
     category,
     customizations: cardCustomizations
 }) => {
@@ -310,6 +312,30 @@ const FoodItem = ({
             String(name || '').trim().toLocaleLowerCase('sv-SE') &&
         String(item.category || '') === String(category || '')
     )
+
+    // Flera produktbilder, med stöd för äldre produkter.
+    const rawImages = product?.images?.length
+        ? product.images
+        : Array.isArray(images) && images.length
+            ? images
+            : [imageUrl]
+
+    const carouselImages = rawImages
+        .map(item => {
+            const value = String(
+                typeof item === 'string'
+                    ? item
+                    : item?.url || item?.image || ''
+            ).trim()
+
+            if (!value) return null
+            if (/^https?:\/\//i.test(value)) return value
+            if (value.startsWith('//')) return `https:${value}`
+
+            return `${url}/images/${value}`
+        })
+        .filter(Boolean)
+
     const customizationSettings = product?.customizations ?? cardCustomizations ?? {}
 
     const removableIngredients = Array.isArray(customizationSettings.removableIngredients)
@@ -433,12 +459,9 @@ const FoodItem = ({
 
             <div className="food-item-img-container">
 
-                <img
-                    className="food-item-image"
-                    src={imageUrl}
-                    alt={`${name} – ${productType} från Manila Café`}
-                    loading="lazy"
-                    decoding="async"
+                <FoodImageCarousel
+                    images={carouselImages}
+                    name={name}
                 />
 
 

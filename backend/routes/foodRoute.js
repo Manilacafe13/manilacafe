@@ -14,6 +14,7 @@ import fs from "fs";
 import authMiddleware from "../middleware/auth.js";
 import adminAuth from "../middleware/adminAuth.js";
 import updateFoodImage from "../controllers/updateFoodImage.js";
+import updateFoodGallery from "../controllers/updateFoodGallery.js";
 
 
 const foodRouter = express.Router();
@@ -209,6 +210,16 @@ foodRouter.post(
 // ======================================================
 // UPDATE PRODUCT IMAGE - ADMIN ONLY
 // ======================================================
+
+
+// Uppdatera bildgalleri – endast administratörer.
+foodRouter.post(
+  "/gallery",
+  authMiddleware,
+  adminAuth,
+  upload.array("images", 5),
+  updateFoodGallery
+);
 
 foodRouter.post(
   "/update-image",

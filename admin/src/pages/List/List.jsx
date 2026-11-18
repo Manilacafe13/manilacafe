@@ -8,6 +8,7 @@ import React, {
 
 import './List.css'
 import './ListCustomizations.css'
+import ProductGalleryEditor from '../../components/ProductGalleryEditor/ProductGalleryEditor'
 import axios from "axios"
 import { toast } from "react-toastify"
 
@@ -29,8 +30,30 @@ const List = () => {
   )
 ).replace(/\/+$/, "")
 
+
   const [list, setList] =
     useState([])
+
+  // BILDGALLERI
+  const [galleryProductId, setGalleryProductId] = useState(null)
+
+  const galleryProduct =
+    list.find(item => item._id === galleryProductId) || null
+
+  const openGallery = product => {
+    if (customizationSaving || recipeSaving) return
+    if (customizationProductId) closeCustomizations()
+    if (recipeProductId) closeRecipe()
+    setGalleryProductId(product._id)
+  }
+
+  const closeGallery = () => setGalleryProductId(null)
+
+  const gallerySaved = updatedProduct => {
+    setList(previous => previous.map(item =>
+      item._id === updatedProduct._id ? updatedProduct : item
+    ))
+  }
 
   const [loading, setLoading] =
     useState(true)
@@ -1144,6 +1167,16 @@ const List = () => {
                   ⚙️ Kundval
                 </button>
 
+
+                <button
+                  type="button"
+                  className="list-gallery-button"
+                  onClick={() => openGallery(item)}
+                  aria-label={`Redigera bilder för ${item.name}`}
+                >
+                  📸 Bilder
+                </button>
+
                 <button
                   type="button"
                   className="list-recipe-button"
@@ -1173,6 +1206,17 @@ const List = () => {
 
 
       </div>
+
+
+      {galleryProduct && (
+        <ProductGalleryEditor
+          product={galleryProduct}
+          backendUrl={url}
+          getImageUrl={getImageUrl}
+          onClose={closeGallery}
+          onSaved={gallerySaved}
+        />
+      )}
 
       {/* Separat redigerare för kundsynliga produktanpassningar. */}
       {customizationProduct && (
