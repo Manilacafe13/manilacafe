@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -13,6 +14,26 @@ import adminAuth from "../middleware/adminAuth.js";
 
 
 const adminRouter = express.Router();
+
+
+// ======================================================
+// SHARED ADMIN AUTHENTICATION
+// Used by admin panel and Manila Café Livechat
+// ======================================================
+
+export const requireAdmin = (req, res, next) => {
+
+  authMiddleware(req, res, (error) => {
+
+    if (error) {
+      return next(error);
+    }
+
+    return adminAuth(req, res, next);
+
+  });
+
+};
 
 
 // ======================================================
@@ -32,14 +53,17 @@ adminRouter.post(
 
 adminRouter.get(
   "/verify",
-  authMiddleware,
-  adminAuth,
+  requireAdmin,
   (req, res) => {
 
     return res.status(200).json({
+
       success: true,
+
       message: "Admin session is valid.",
+
       user: req.user
+
     });
 
   }

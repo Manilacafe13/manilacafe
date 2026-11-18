@@ -1,23 +1,51 @@
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import mongoose from "mongoose";
+
+// ======================================================
+// DATABASE
+// ======================================================
 
 import { connectedDB } from "./config/db.js";
+
+// ======================================================
+// API ROUTERS
+// ======================================================
 
 import foodRouter from "./routes/foodRoute.js";
 import userRouter from "./routes/userRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import futureProductRouter from "./routes/futureProductRoute.js";
-import adminRouter from "./routes/adminRoute.js";
 import discountRouter from "./routes/discountRoute.js";
 import kitchenRecipeRouter from "./routes/kitchenRecipeRoute.js";
+
+// ======================================================
+// ADMIN AUTHENTICATION
+// ======================================================
+
+import adminRouter, {
+  requireAdmin
+} from "./routes/adminRoute.js";
+
+// ======================================================
+// MANILA CAFÉ LIVECHAT
+// ======================================================
+
+import {
+  makeChatRouter
+} from "./routes/chatRoutes.js";
+
+// ======================================================
+// STRIPE WEBHOOK
+// ======================================================
 
 import {
   stripeWebhook
 } from "./controllers/orderController.js";
-
 
 // ======================================================
 // APP CONFIG
@@ -25,13 +53,13 @@ import {
 
 const app = express();
 
+const port = process.env.PORT || 4000;
+
 // ======================================================
 // SECURITY HEADERS
 // ======================================================
 
-app.disable(
-  "x-powered-by"
-);
+app.disable("x-powered-by");
 
 app.use(
   helmet({
@@ -41,10 +69,6 @@ app.use(
   })
 );
 
-const port =
-  process.env.PORT || 4000;
-
-
 // ======================================================
 // FRONTEND URLS
 // ======================================================
@@ -53,18 +77,15 @@ const frontendUrl =
   process.env.FRONTEND_URL ||
   "https://www.manilacafe.se";
 
-
 const adminUrl =
   process.env.ADMIN_URL ||
   "https://admin.manilacafe.se";
-
 
 // ======================================================
 // NORMALIZE URL
 // ======================================================
 
 const normalizeOrigin = (origin) => {
-
   if (!origin) {
     return "";
   }
@@ -72,17 +93,13 @@ const normalizeOrigin = (origin) => {
   return origin
     .trim()
     .replace(/\/+$/, "");
-
 };
-
 
 // ======================================================
 // ALLOWED FRONTENDS
 // ======================================================
 
 const allowedOrigins = [
-
-  // Environment variables
   normalizeOrigin(frontendUrl),
   normalizeOrigin(adminUrl),
 
@@ -101,83 +118,62 @@ const allowedOrigins = [
 
   // Local admin frontend
   "http://localhost:5174"
+].filter(Boolean);
 
-]
-  .filter(Boolean);
-
-
-// Remove duplicates
 const uniqueAllowedOrigins = [
   ...new Set(allowedOrigins)
 ];
-// Allow Manila Cafe Vercel preview deployments
+
+// ======================================================
+// VERCEL PREVIEW ORIGINS
+// ======================================================
+
 const isManilaCafeVercelOrigin = (origin) => {
   return /^https:\/\/manilacafe-[a-z0-9-]+-manilacafe\.vercel\.app$/.test(
     origin
   );
 };
 
-
 // ======================================================
 // CORS OPTIONS
 // ======================================================
 
 const corsOptions = {
-
   origin: (origin, callback) => {
 
-    // Allow server-to-server requests,
-    // Stripe webhooks, Postman, curl etc.
+    // Server-to-server requests and curl
     if (!origin) {
-
-      return callback(
-        null,
-        true
-      );
-
+      return callback(null, true);
     }
-
 
     const normalizedOrigin =
       normalizeOrigin(origin);
 
-if (
-  uniqueAllowedOrigins.includes(normalizedOrigin) ||
-  isManilaCafeVercelOrigin(normalizedOrigin)
-) {
-      
-
-      return callback(
-        null,
-        true
-      );
-
+    if (
+      uniqueAllowedOrigins.includes(normalizedOrigin) ||
+      isManilaCafeVercelOrigin(normalizedOrigin)
+    ) {
+      return callback(null, true);
     }
-
 
     console.log(
       "Blocked by CORS:",
       normalizedOrigin
     );
 
-
     console.log(
       "Allowed origins:",
       uniqueAllowedOrigins
     );
-
 
     return callback(
       new Error(
         `CORS blocked origin: ${normalizedOrigin}`
       )
     );
-
   },
 
-
   credentials: true,
-
 
   methods: [
     "GET",
@@ -188,31 +184,26 @@ if (
     "OPTIONS"
   ],
 
-
   allowedHeaders: [
     "Content-Type",
     "Authorization",
     "token",
+    "X-Chat-Token",
     "Stripe-Signature"
   ],
 
-
   optionsSuccessStatus: 204
-
 };
-
 
 // ======================================================
 // CORS
 // ======================================================
 
-app.use(
-  cors(corsOptions)
-);
-
+app.use(cors(corsOptions));
 
 // ======================================================
 // STRIPE WEBHOOK
+//
 // IMPORTANT:
 // MUST BE BEFORE express.json()
 // ======================================================
@@ -227,7 +218,6 @@ app.post(
   stripeWebhook
 );
 
-
 // ======================================================
 // NORMAL JSON MIDDLEWARE
 // ======================================================
@@ -238,20 +228,17 @@ app.use(
   })
 );
 
-
 app.use(
   express.urlencoded({
     extended: true
   })
 );
 
-
 // ======================================================
-// DATABASE
+// DATABASE CONNECTION
 // ======================================================
 
 connectedDB();
-
 
 // ======================================================
 // STATIC FILES
@@ -262,9 +249,8 @@ app.use(
   express.static("uploads")
 );
 
-
 // ======================================================
-// API ROUTES
+// CUSTOMER API ROUTES
 // ======================================================
 
 app.use(
@@ -272,35 +258,60 @@ app.use(
   foodRouter
 );
 
-
 app.use(
   "/api/user",
   userRouter
 );
-
 
 app.use(
   "/api/cart",
   cartRouter
 );
 
-
 app.use(
   "/api/order",
   orderRouter
 );
+
+// ======================================================
+// ADMIN ROUTES
+//
+// IMPORTANT:
+// Required for admin login and verification
+// ======================================================
 
 app.use(
   "/api/admin",
   adminRouter
 );
 
+// ======================================================
+// MANILA CAFÉ LIVECHAT
+//
+// Customer conversations
+// Automatic responses
+// Protected staff inbox
+// ======================================================
+
 app.use(
-  "/api/discount", 
-  discountRouter);
+  "/api/chat",
+  makeChatRouter({
+    mongoose,
+    staffAuth: requireAdmin
+  })
+);
 
 // ======================================================
-// INTERNAL KITCHEN RECIPES (ADMIN ONLY)
+// DISCOUNT ROUTES
+// ======================================================
+
+app.use(
+  "/api/discount",
+  discountRouter
+);
+
+// ======================================================
+// INTERNAL KITCHEN RECIPES
 // ======================================================
 
 app.use(
@@ -317,7 +328,6 @@ app.use(
   futureProductRouter
 );
 
-
 // ======================================================
 // TEST ROUTE
 // ======================================================
@@ -326,15 +336,12 @@ app.get(
   "/",
   (req, res) => {
 
-    res
+    return res
       .status(200)
-      .send(
-        "Manila Café API Working"
-      );
+      .send("Manila Café API Working");
 
   }
 );
-
 
 // ======================================================
 // HEALTH CHECK
@@ -344,31 +351,26 @@ app.get(
   "/api/health",
   (req, res) => {
 
-    res.status(200).json({
+    return res.status(200).json({
 
       success: true,
 
-      message:
-        "Server is running",
+      message: "Server is running",
 
-      allowedOrigins:
-        uniqueAllowedOrigins,
+      allowedOrigins: uniqueAllowedOrigins,
 
-      stripeConfigured:
-        Boolean(
-          process.env.STRIPE_SECRET_KEY
-        ),
+      stripeConfigured: Boolean(
+        process.env.STRIPE_SECRET_KEY
+      ),
 
-      stripeWebhookConfigured:
-        Boolean(
-          process.env.STRIPE_WEBHOOK_SECRET
-        )
+      stripeWebhookConfigured: Boolean(
+        process.env.STRIPE_WEBHOOK_SECRET
+      )
 
     });
 
   }
 );
-
 
 // ======================================================
 // 404 HANDLER
@@ -377,40 +379,30 @@ app.get(
 app.use(
   (req, res) => {
 
-    res.status(404).json({
+    return res.status(404).json({
 
       success: false,
 
-      message:
-        "Route not found"
+      message: "Route not found"
 
     });
 
   }
 );
 
-
 // ======================================================
 // GLOBAL ERROR HANDLER
 // ======================================================
 
 app.use(
-  (
-    error,
-    req,
-    res,
-    next
-  ) => {
+  (error, req, res, next) => {
 
-    console.log(
+    console.error(
       "Server error:",
       error.message
     );
 
-
-    // ==================================================
-    // CORS ERROR
-    // ==================================================
+    // CORS ERRORS
 
     if (
       error.message?.includes(
@@ -429,14 +421,10 @@ app.use(
 
     }
 
-
-    // ==================================================
-    // MULTER FILE SIZE ERROR
-    // ==================================================
+    // MULTER FILE SIZE
 
     if (
-      error.code ===
-      "LIMIT_FILE_SIZE"
+      error.code === "LIMIT_FILE_SIZE"
     ) {
 
       return res.status(400).json({
@@ -450,10 +438,7 @@ app.use(
 
     }
 
-
-    // ==================================================
-    // MULTER / IMAGE ERROR
-    // ==================================================
+    // IMAGE VALIDATION
 
     if (
       error.message ===
@@ -464,30 +449,24 @@ app.use(
 
         success: false,
 
-        message:
-          error.message
+        message: error.message
 
       });
 
     }
 
-
-    // ==================================================
     // GENERAL ERROR
-    // ==================================================
 
     return res.status(500).json({
 
       success: false,
 
-      message:
-        "Internal server error"
+      message: "Internal server error"
 
     });
 
   }
 );
-
 
 // ======================================================
 // START SERVER
@@ -501,46 +480,50 @@ app.listen(
       `Server Started on port ${port}`
     );
 
-
     console.log(
       "Customer frontend:",
       normalizeOrigin(frontendUrl)
     );
-
 
     console.log(
       "Admin frontend:",
       normalizeOrigin(adminUrl)
     );
 
-
     console.log(
       "Allowed origins:",
       uniqueAllowedOrigins
     );
 
-
     console.log(
       "Stripe configured:",
-      Boolean(
-        process.env.STRIPE_SECRET_KEY
-      )
+      Boolean(process.env.STRIPE_SECRET_KEY)
     );
-
 
     console.log(
       "Stripe webhook configured:",
-      Boolean(
-        process.env.STRIPE_WEBHOOK_SECRET
-      )
+      Boolean(process.env.STRIPE_WEBHOOK_SECRET)
     );
-
 
     console.log(
       "Stripe webhook:",
       "/api/order/webhook"
     );
 
+    console.log(
+      "Admin API:",
+      "/api/admin/login"
+    );
+
+    console.log(
+      "Admin verification:",
+      "/api/admin/verify"
+    );
+
+    console.log(
+      "Livechat API:",
+      "/api/chat"
+    );
 
     console.log(
       "Future products API:",

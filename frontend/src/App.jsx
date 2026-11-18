@@ -1,17 +1,35 @@
+
 import React, { lazy, Suspense, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
 import LoginPopup from './components/LoginPopup/LoginPopup'
+import CookieBanner from './components/CookieBanner/CookieBanner'
 
 import Home from './pages/Home/Home'
+
+// ======================================================
+// LAZY LOADED PAGES
+// ======================================================
+
 const Cart = lazy(() => import('./pages/Cart/Cart'))
 const PlaceOrder = lazy(() => import('./pages/PlaceOrder/PlaceOrder'))
 const Verify = lazy(() => import('./pages/Verify/Verify'))
 const MyOrders = lazy(() => import('./pages/MyOrders/MyOrders'))
 const ProductPage = lazy(() => import('./pages/Product/ProductPage'))
-import CookieBanner from './components/CookieBanner/CookieBanner'
+
+// ======================================================
+// MANILA CAFÉ LIVECHAT
+// ======================================================
+
+const ManilaChat = lazy(() =>
+  import('./components/ManilaChat/ManilaChat')
+)
+
+// ======================================================
+// INFORMATION PAGES
+// ======================================================
 
 import {
   TermsPage,
@@ -26,9 +44,10 @@ const App = () => {
 
   const [showLogin, setShowLogin] = useState(false)
 
-
   return (
     <>
+
+      {/* LOGIN POPUP */}
 
       {showLogin && (
         <LoginPopup
@@ -44,124 +63,148 @@ const App = () => {
         />
 
 
-        <Suspense fallback={<main className="page-loading" role="status" aria-live="polite">Laddar sidan…</main>}>
-        <Routes>
+        <Suspense
+          fallback={
+            <main
+              className="page-loading"
+              role="status"
+              aria-live="polite"
+            >
+              Laddar sidan…
+            </main>
+          }
+        >
 
-          {/* HOME */}
+          <Routes>
 
-          <Route
-            path="/"
-            element={<Home />}
-          />
+            {/* HOME */}
 
-
-          {/* PRODUCTS */}
-
-          <Route
-            path="/dessert/:slug"
-            element={<ProductPage />}
-          />
-
-          <Route
-            path="/matratt/:slug"
-            element={<ProductPage />}
-          />
+            <Route
+              path="/"
+              element={<Home />}
+            />
 
 
-          {/* ORDER */}
+            {/* PRODUCTS */}
 
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
+            <Route
+              path="/dessert/:slug"
+              element={<ProductPage />}
+            />
 
-          <Route
-            path="/order"
-            element={<PlaceOrder />}
-          />
-
-          <Route
-            path="/verify"
-            element={<Verify />}
-          />
-
-          <Route
-            path="/myorders"
-            element={<MyOrders />}
-          />
+            <Route
+              path="/matratt/:slug"
+              element={<ProductPage />}
+            />
 
 
-          {/* INFORMATION */}
+            {/* ORDER */}
 
-          <Route
-            path="/kopvillkor"
-            element={<TermsPage />}
-          />
+            <Route
+              path="/cart"
+              element={<Cart />}
+            />
 
-          <Route
-            path="/avbokning"
-            element={<CancellationPage />}
-          />
+            <Route
+              path="/order"
+              element={<PlaceOrder />}
+            />
 
-          <Route
-            path="/leverans"
-            element={<DeliveryPage />}
-          />
+            <Route
+              path="/verify"
+              element={<Verify />}
+            />
 
-          <Route
-            path="/integritet"
-            element={<PrivacyPage />}
-          />
-
-          <Route
-            path="/kontakt"
-            element={<ContactPage />}
-          />
+            <Route
+              path="/myorders"
+              element={<MyOrders />}
+            />
 
 
-          {/* 404 */}
+            {/* INFORMATION */}
 
-          <Route
-            path="*"
-            element={
-              <main
-                style={{
-                  minHeight: "60vh",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "40px 20px"
-                }}
-              >
-                <div>
+            <Route
+              path="/kopvillkor"
+              element={<TermsPage />}
+            />
 
-                  <h1>
-                    Sidan hittades inte
-                  </h1>
+            <Route
+              path="/avbokning"
+              element={<CancellationPage />}
+            />
 
-                  <p>
-                    Sidan du letar efter verkar inte finnas.
-                  </p>
+            <Route
+              path="/leverans"
+              element={<DeliveryPage />}
+            />
 
-                  <a href="/">
-                    Tillbaka till Manila Café
-                  </a>
+            <Route
+              path="/integritet"
+              element={<PrivacyPage />}
+            />
 
-                </div>
-              </main>
-            }
-          />
+            <Route
+              path="/kontakt"
+              element={<ContactPage />}
+            />
 
-        </Routes>
+
+            {/* 404 */}
+
+            <Route
+              path="*"
+              element={
+                <main
+                  style={{
+                    minHeight: "60vh",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    padding: "40px 20px"
+                  }}
+                >
+                  <div>
+
+                    <h1>
+                      Sidan hittades inte
+                    </h1>
+
+                    <p>
+                      Sidan du letar efter verkar inte finnas.
+                    </p>
+
+                    <a href="/">
+                      Tillbaka till Manila Café
+                    </a>
+
+                  </div>
+                </main>
+              }
+            />
+
+          </Routes>
+
         </Suspense>
 
       </div>
 
 
-           <Footer />
+      {/* FOOTER */}
+
+      <Footer />
+
+
+      {/* COOKIE CONSENT */}
 
       <CookieBanner />
+
+
+      {/* MANILA CAFÉ LIVECHAT */}
+
+      <Suspense fallback={null}>
+        <ManilaChat />
+      </Suspense>
 
     </>
   )

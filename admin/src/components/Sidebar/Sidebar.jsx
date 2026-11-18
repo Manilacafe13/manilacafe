@@ -34,6 +34,25 @@ const Sidebar = () => {
           <p>Rabattkoder</p>
         </NavLink>
 
+        {/* ========================================
+            MANILA CAFÉ LIVECHAT
+        ======================================== */}
+
+        <NavLink to='/livechat' className="sidebar-option">
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: '23px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}
+          >
+            💬
+          </span>
+          <p>Livechatt</p>
+        </NavLink>
+
       </div>
     </div>
   )
