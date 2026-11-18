@@ -1,1 +1,595 @@
-manila-chat-root{position:fixed;right:20px;bottom:20px;z-index:9999;font-family:inherit;color:#292034}.manila-chat-launch{width:60px;height:60px;border:0;border-radius:50%;background:#7440aa;color:white;font-size:27px;box-shadow:0 5px 20px #0003;cursor:pointer}.manila-chat-panel{position:absolute;bottom:74px;right:0;width:min(370px,calc(100vw - 30px));height:min(540px,calc(100dvh - 125px));display:flex;flex-direction:column;background:white;border-radius:18px;overflow:hidden;box-shadow:0 10px 40px #0003;border:1px solid #eee}.manila-chat-header{padding:15px 16px;background:#7440aa;color:white;display:flex;justify-content:space-between;align-items:center}.manila-chat-header div{display:flex;flex-direction:column;gap:4px}.manila-chat-header small{font-size:11px;opacity:.9}.manila-chat-header button{border:0;background:transparent;color:white;cursor:pointer;font-size:25px}.manila-chat-messages{flex:1;min-height:0;overflow:auto;background:#fcf9ff;padding:15px;display:flex;flex-direction:column;gap:9px}.manila-chat-messages p{font-size:13px;line-height:1.5;padding:11px 13px;border-radius:13px;max-width:85%;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.manila-chat-bot{align-self:flex-start;background:#eee5f8}.manila-chat-customer{align-self:flex-end;background:#7440aa;color:white}.manila-chat-options,.manila-chat-feedback{display:flex;flex-direction:column;gap:6px}.manila-chat-options button,.manila-chat-feedback button{border:1px solid #d7c6e8;background:white;border-radius:12px;padding:9px 12px;text-align:left;color:#60328e;cursor:pointer;font-size:13px}.manila-chat-feedback strong{font-size:12px}.manila-chat-compose{padding:10px;display:flex;gap:7px;border-top:1px solid #eee}.manila-chat-compose input{flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid #ddd;font:inherit;font-size:13px}.manila-chat-compose button{background:#7440aa;color:white;border:0;border-radius:10px;padding:0 15px;cursor:pointer}.manila-chat-compose button:disabled{opacity:.5}.manila-chat-footer{display:flex;justify-content:space-between;padding:0 12px 12px;gap:8px}.manila-chat-footer button{background:none;border:0;color:#7440aa;text-decoration:underline;font-size:11px;cursor:pointer}.manila-chat-error{font-size:12px;color:#b00020;padding:4px 12px;margin:0}@media(max-width:480px){.manila-chat-root{right:12px;bottom:12px}.manila-chat-panel{bottom:70px}}
+
+/* ======================================================
+   MANILA CAFÉ LIVECHAT V1.2
+   Floating Chat Widget
+   Desktop + Mobile
+====================================================== */
+
+/* ======================================================
+   MAIN CHAT ROOT
+   Always visible while scrolling
+====================================================== */
+
+.manila-chat-root {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+
+  z-index: 2147483000;
+
+  width: auto;
+  height: auto;
+
+  font-family: inherit;
+  color: #292034;
+
+  pointer-events: none;
+
+  isolation: isolate;
+}
+
+/* ======================================================
+   FLOATING CHAT BUTTON
+====================================================== */
+
+.manila-chat-launch {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 62px;
+  height: 62px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background: linear-gradient(
+    145deg,
+    #9256c8,
+    #7440aa
+  );
+
+  color: #ffffff;
+
+  font-size: 27px;
+
+  box-shadow:
+    0 6px 24px rgba(100, 50, 150, 0.32);
+
+  cursor: pointer;
+
+  pointer-events: auto;
+
+  visibility: visible;
+  opacity: 1;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.manila-chat-launch:hover {
+  transform: translateY(-3px) scale(1.05);
+
+  box-shadow:
+    0 9px 30px rgba(100, 50, 150, 0.42);
+}
+
+.manila-chat-launch:active {
+  transform: scale(0.96);
+}
+
+.manila-chat-launch:focus-visible {
+  outline: 3px solid #d7b5f4;
+  outline-offset: 4px;
+}
+
+/* ======================================================
+   CHAT PANEL
+====================================================== */
+
+.manila-chat-panel {
+  position: absolute;
+
+  right: 0;
+  bottom: 77px;
+
+  z-index: 1;
+
+  width: min(
+    370px,
+    calc(100vw - 30px)
+  );
+
+  height: min(
+    540px,
+    calc(100dvh - 125px)
+  );
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #ebe4f1;
+  border-radius: 19px;
+
+  box-shadow:
+    0 12px 45px rgba(45, 20, 70, 0.2);
+
+  pointer-events: auto;
+}
+
+/* ======================================================
+   CHAT HEADER
+====================================================== */
+
+.manila-chat-header {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 16px 18px;
+
+  background: linear-gradient(
+    135deg,
+    #8650bf,
+    #7440aa
+  );
+
+  color: #ffffff;
+}
+
+.manila-chat-header div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manila-chat-header strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.manila-chat-header small {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.manila-chat-header button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+
+  font-size: 24px;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.manila-chat-header button:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ======================================================
+   MESSAGE AREA
+====================================================== */
+
+.manila-chat-messages {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 11px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding: 17px;
+
+  background: #fcfaff;
+
+  scrollbar-width: thin;
+  scrollbar-color: #d8cae7 transparent;
+}
+
+/* ======================================================
+   MESSAGE BUBBLES
+====================================================== */
+
+.manila-chat-messages p {
+  width: fit-content;
+  max-width: 85%;
+
+  margin: 0;
+
+  padding: 12px 14px;
+
+  border-radius: 14px;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* BOT RESPONSE */
+
+.manila-chat-bot {
+  align-self: flex-start;
+
+  background: #eee5f8;
+  color: #453255;
+
+  border-bottom-left-radius: 5px;
+}
+
+/* CUSTOMER MESSAGE */
+
+.manila-chat-customer {
+  align-self: flex-end;
+
+  background: #7440aa;
+  color: #ffffff;
+
+  border-bottom-right-radius: 5px;
+}
+
+/* ======================================================
+   QUICK REPLY OPTIONS
+====================================================== */
+
+.manila-chat-options,
+.manila-chat-feedback {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.manila-chat-options button,
+.manila-chat-feedback button {
+  width: 100%;
+
+  padding: 11px 13px;
+
+  border: 1px solid #ddceec;
+  border-radius: 11px;
+
+  background: #ffffff;
+  color: #60328e;
+
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.manila-chat-options button:hover,
+.manila-chat-feedback button:hover {
+  background: #f5effc;
+  border-color: #b99bd7;
+}
+
+.manila-chat-options button:active,
+.manila-chat-feedback button:active {
+  transform: scale(0.99);
+}
+
+/* ======================================================
+   FEEDBACK
+====================================================== */
+
+.manila-chat-feedback {
+  margin-top: 5px;
+
+  padding: 12px;
+
+  background: #f8f4fc;
+
+  border: 1px solid #ede4f6;
+  border-radius: 13px;
+}
+
+.manila-chat-feedback strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b345d;
+
+  line-height: 1.5;
+}
+
+/* ======================================================
+   MESSAGE COMPOSER
+====================================================== */
+
+.manila-chat-compose {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 12px;
+
+  border-top: 1px solid #eee8f3;
+
+  background: #ffffff;
+}
+
+.manila-chat-compose input {
+  flex: 1;
+  min-width: 0;
+
+  height: 43px;
+
+  padding: 0 13px;
+
+  border: 1px solid #e1dce7;
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #fbfafd;
+  color: #292034;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.manila-chat-compose input:focus {
+  border-color: #9256c8;
+
+  box-shadow:
+    0 0 0 3px rgba(146, 86, 200, 0.12);
+
+  background: #ffffff;
+}
+
+.manila-chat-compose input::placeholder {
+  color: #a7a0af;
+}
+
+.manila-chat-compose button {
+  flex-shrink: 0;
+
+  height: 43px;
+
+  padding: 0 17px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: #7440aa;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.manila-chat-compose button:hover:not(:disabled) {
+  background: #60328e;
+}
+
+.manila-chat-compose button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ======================================================
+   CHAT FOOTER
+====================================================== */
+
+.manila-chat-footer {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  padding: 0 13px 13px;
+
+  background: #ffffff;
+}
+
+.manila-chat-footer button {
+  padding: 5px 0;
+
+  border: none;
+
+  background: transparent;
+  color: #7440aa;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  cursor: pointer;
+}
+
+.manila-chat-footer button:hover {
+  color: #60328e;
+}
+
+/* ======================================================
+   ERROR MESSAGE
+====================================================== */
+
+.manila-chat-error {
+  margin: 0;
+
+  padding: 7px 13px;
+
+  background: #fff1f1;
+  color: #b00020;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ======================================================
+   SCROLLBAR
+====================================================== */
+
+.manila-chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.manila-chat-messages::-webkit-scrollbar-thumb {
+  background: #dacbe9;
+  border-radius: 10px;
+}
+
+/* ======================================================
+   MOBILE RESPONSIVE
+====================================================== */
+
+@media (max-width: 600px) {
+
+  .manila-chat-root {
+    right: 14px;
+
+    bottom: calc(
+      14px + env(safe-area-inset-bottom)
+    );
+  }
+
+  .manila-chat-launch {
+    width: 56px;
+    height: 56px;
+
+    font-size: 25px;
+
+    box-shadow:
+      0 5px 20px rgba(100, 50, 150, 0.3);
+  }
+
+  .manila-chat-panel {
+    right: 0;
+    bottom: 69px;
+
+    width: min(
+      370px,
+      calc(100vw - 28px)
+    );
+
+    height: min(
+      540px,
+      calc(100dvh - 110px)
+    );
+
+    border-radius: 17px;
+  }
+
+  .manila-chat-header {
+    padding: 14px 15px;
+  }
+
+  .manila-chat-messages {
+    padding: 13px;
+    gap: 9px;
+  }
+
+  .manila-chat-messages p {
+    max-width: 90%;
+    font-size: 12px;
+  }
+
+  .manila-chat-compose {
+    padding: 10px;
+  }
+
+  .manila-chat-compose button {
+    padding: 0 13px;
+  }
+
+}
+
+/* ======================================================
+   VERY SMALL MOBILE DEVICES
+====================================================== */
+
+@media (max-width: 360px) {
+
+  .manila-chat-root {
+    right: 10px;
+    bottom: calc(
+      10px + env(safe-area-inset-bottom)
+    );
+  }
+
+  .manila-chat-panel {
+    width: calc(100vw - 20px);
+    right: 0;
+  }
+
+}
+
+/* ======================================================
+   ACCESSIBILITY
+====================================================== */
+
+.manila-chat-root button:focus-visible {
+  outline: 3px solid #d7b5f4;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .manila-chat-root *,
+  .manila-chat-root *::before,
+  .manila-chat-root *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
+}
