@@ -1001,3 +1001,52 @@
   background: rgba(255,255,255,0.08);
   border: 1px solid #f6cf80;
 }
+
+
+/* MANILA DELIVERY AREAS */
+.delivery-area-banner {
+  background: #291d33;
+  color: #ffffff;
+  padding: 10px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.4;
+}
+
+.delivery-area-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.25px;
+}
+
+.delivery-area-main strong {
+  color: #f7d49b;
+  font-weight: 800;
+}
+
+.delivery-area-pickup {
+  font-size: 11px;
+  color: #e4d5e8;
+}
+
+@media (max-width: 480px) {
+  .delivery-area-banner {
+    padding: 9px 10px;
+  }
+
+  .delivery-area-main {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+
+  .delivery-area-pickup {
+    font-size: 10px;
+  }
+}

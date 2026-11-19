@@ -82,6 +82,23 @@ const Navbar = ({ setShowLogin }) => {
 
   return (
     <>
+      {/* Tydliga leveransområden */}
+      <div
+        className="delivery-area-banner"
+        role="region"
+        aria-label="Leverans och avhämtning"
+      >
+        <div className="delivery-area-main">
+          <span aria-hidden="true">🚗</span>
+          <span>
+            <strong>HEMLEVERANS</strong> TILL GÖTEBORG, PARTILLE & KUNGSBACKA
+          </span>
+        </div>
+        <div className="delivery-area-pickup">
+          📍 Avhämtning i Västra Frölunda
+        </div>
+      </div>
+
       {/* Betalningsbanner */}
       <div
         className="payment-banner"

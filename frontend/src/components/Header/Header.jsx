@@ -3,29 +3,42 @@ import './Header.css'
 
 const Header = () => {
   return (
-    <header className="header">
-
+    <header className="header header--delivery">
       <div className="header-contents">
+        <span className="header-eyebrow">
+          🇵🇭 MANILA CAFÉ · GÖTEBORG
+        </span>
 
         <h1>
-          Filippinska maträtter & desserter i Göteborg
+          Filippinsk mat & desserter, direkt till dig.
         </h1>
 
-        <p>
-          Upptäck filippinska smaker hos Manila Café.
-          Beställ klassiska maträtter och populära desserter
-          för avhämtning eller leverans i Göteborg.
+        <p className="header-intro">
+          Välj dina favoriter från vår meny och lägg dem i varukorgen.
         </p>
 
-        <a
-          href="#food-display"
-          className="header-order-btn"
-        >
-          Se våra erbjudanden
+        <div className="header-delivery-options">
+          <div className="header-delivery-card">
+            <span className="header-delivery-icon" aria-hidden="true">🚗</span>
+            <strong>Hemleverans</strong>
+            <span>Göteborg, Partille & Kungsbacka</span>
+          </div>
+
+          <div className="header-delivery-card">
+            <span className="header-delivery-icon" aria-hidden="true">📍</span>
+            <strong>Avhämtning</strong>
+            <span>Mandolingatan 13, Västra Frölunda</span>
+          </div>
+        </div>
+
+        <a href="#explore-menu" className="header-order-btn">
+          Se vår meny ↓
         </a>
 
+        <p className="header-order-steps">
+          Välj produkter → Lägg i varukorgen → Välj leveranssätt i kassan
+        </p>
       </div>
-
     </header>
   )
 }
