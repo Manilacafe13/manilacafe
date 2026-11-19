@@ -7,11 +7,11 @@ import { StoreContext } from '../../context/StoreContext'
 // Visa bara betalningsmetoder som finns eller tydligt markeras som kommande.
 // Billie är aktiverat. Swish-ansökan väntar fortfarande på godkännande.
 const paymentOptions = [
-  { id: 'visa', name: 'VISA' },
-  { id: 'mastercard', name: 'Mastercard' },
-  { id: 'klarna', name: 'Klarna.' },
-  { id: 'billie', name: 'Billie', note: 'för företag' },
-  { id: 'swish', name: 'Swish', note: 'kommer snart', pending: true }
+  { id: 'visa', name: 'Visa', logo: '/payments/visa.svg' },
+  { id: 'mastercard', name: 'Mastercard', logo: '/payments/mastercard.svg' },
+  { id: 'klarna', name: 'Klarna', logo: '/payments/klarna.svg' },
+  { id: 'billie', name: 'Billie', logo: '/payments/billie.svg', note: 'För företag' },
+  { id: 'swish', name: 'Swish', note: 'Kommer snart', pending: true }
 ]
 
 const Navbar = ({ setShowLogin }) => {
@@ -82,15 +82,15 @@ const Navbar = ({ setShowLogin }) => {
 
   return (
     <>
-      {/* Rullande betalningsbanner, ovanför navigeringen */}
+      {/* Betalningsbanner */}
       <div
         className="payment-banner"
         role="region"
         aria-label="Betalningsalternativ hos Manila Café"
       >
         <span className="payment-banner-sr-only">
-          Betala med Visa, Mastercard eller Klarna. Billie finns för företag.
-          Swish är ännu inte tillgängligt.
+          Betala tryggt med Visa, Mastercard eller Klarna.
+          Billie finns för företag. Swish kommer snart.
         </span>
 
         <div className="payment-banner-track" aria-hidden="true">
@@ -98,7 +98,7 @@ const Navbar = ({ setShowLogin }) => {
             <div className="payment-banner-group" key={copy}>
               <span className="payment-banner-intro">
                 <span className="payment-banner-icon">✦</span>
-                Betala enkelt med
+                TRYGG & SMIDIG BETALNING
               </span>
 
               {paymentOptions.map((option) => (
@@ -106,11 +106,25 @@ const Navbar = ({ setShowLogin }) => {
                   className={`payment-banner-option${option.pending ? ' payment-banner-option--pending' : ''}`}
                   key={`${copy}-${option.id}`}
                 >
-                  <span className={`payment-banner-name payment-banner-name--${option.id}`}>
-                    {option.name}
-                  </span>
+                  {option.logo ? (
+                    <span className="payment-banner-logo-wrap">
+                      <img
+                        className={`payment-banner-logo payment-banner-logo--${option.id}`}
+                        src={option.logo}
+                        alt=""
+                        loading="eager"
+                      />
+                    </span>
+                  ) : (
+                    <span className="payment-banner-name">
+                      {option.name}
+                    </span>
+                  )}
+
                   {option.note && (
-                    <span className="payment-banner-note">{option.note}</span>
+                    <span className="payment-banner-note">
+                      {option.note}
+                    </span>
                   )}
                 </span>
               ))}

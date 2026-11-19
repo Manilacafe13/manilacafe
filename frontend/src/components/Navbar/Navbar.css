@@ -875,3 +875,129 @@
         display: none;
     }
 }
+
+/* MANILA CAFE - PAYMENT BANNER REFINEMENT */
+.payment-banner {
+  padding: 12px 0;
+  background: #235b46;
+}
+
+.payment-banner-track {
+  animation-duration: 45s;
+}
+
+.payment-banner-group {
+  gap: 24px;
+  padding-right: 24px;
+}
+
+.payment-banner-intro {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff9eb;
+}
+
+.payment-banner-logo-wrap {
+  min-width: 64px;
+  min-height: 36px;
+  padding: 7px 12px;
+  background: #ffffff;
+  border-radius: 9px;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.12);
+}
+
+.payment-banner-logo {
+  display: block;
+  height: 22px;
+  max-width: 95px;
+  width: auto;
+  object-fit: contain;
+}
+
+.payment-banner-logo--billie {
+  max-width: 110px;
+}
+
+.payment-banner-option--pending {
+  padding: 7px 12px;
+  border: 1px solid #f6cf80;
+  border-radius: 8px;
+}
+
+.payment-banner-option--pending .payment-banner-name {
+  color: #f6cf80;
+  font-weight: 800;
+}
+
+.payment-banner-note {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 750px) {
+  .payment-banner {
+    padding: 10px 0;
+  }
+
+  .payment-banner-track {
+    animation-duration: 38s;
+  }
+
+  .payment-banner-logo-wrap {
+    min-width: 53px;
+    min-height: 30px;
+    padding: 5px 8px;
+  }
+
+  .payment-banner-logo {
+    height: 19px;
+    max-width: 78px;
+  }
+
+  .payment-banner-group {
+    gap: 15px;
+    padding-right: 15px;
+  }
+
+  .payment-banner-intro {
+    font-size: 10px;
+  }
+}
+
+/* BETALNINGSMETODER – VARUMÄRKESFÄRGER */
+
+.payment-banner-logo-wrap {
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+/* VISA – vit bakgrund, blå logotyp */
+.payment-banner-option:has(.payment-banner-logo--visa)
+.payment-banner-logo-wrap {
+  background: #ffffff;
+}
+
+/* MASTERCARD – vit bakgrund, röd/gul logotyp */
+.payment-banner-option:has(.payment-banner-logo--mastercard)
+.payment-banner-logo-wrap {
+  background: #ffffff;
+}
+
+/* KLARNA – rosa bakgrund, svart logotyp */
+.payment-banner-option:has(.payment-banner-logo--klarna)
+.payment-banner-logo-wrap {
+  background: #ffb3c7;
+}
+
+/* BILLIE – neutral vit bakgrund */
+.payment-banner-option:has(.payment-banner-logo--billie)
+.payment-banner-logo-wrap {
+  background: #ffffff;
+}
+
+/* SWISH – kommande */
+.payment-banner-option--pending {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #f6cf80;
+}
