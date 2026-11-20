@@ -1,3 +1,5 @@
+import OrdersActiveCount from './OrdersActiveCount'
+import ChatActiveCount from './ChatActiveCount'
 
 import React from 'react'
 import './Sidebar.css'
@@ -21,7 +23,7 @@ const Sidebar = () => {
 
         <NavLink to='/orders' className="sidebar-option">
           <img src={assets.order_icon} alt="" />
-          <p>Beställningar</p>
+          <p>Beställningar <OrdersActiveCount /></p>
         </NavLink>
 
         <NavLink to='/future-products' className="sidebar-option">
@@ -50,7 +52,7 @@ const Sidebar = () => {
           >
             💬
           </span>
-          <p>Livechatt</p>
+          <p>Livechatt <ChatActiveCount /></p>
         </NavLink>
 
       </div>
