@@ -96,3 +96,29 @@
     }
 
 }
+
+/* MANILA MOBILE COUNTER FIX V1 */
+/* Label is hidden on phones, but counter stays visible above its icon. */
+@media (max-width: 900px) {
+  .sidebar-option:has(> .manila-orders-menu-count),
+  .sidebar-option:has(> [aria-label$="aktiva chattar"]) {
+    position: relative;
+    overflow: visible;
+  }
+
+  .sidebar-option > .manila-orders-menu-count,
+  .sidebar-option > [aria-label$="aktiva chattar"] {
+    position: absolute !important;
+    top: -7px !important;
+    right: -6px !important;
+    margin-left: 0 !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 5px !important;
+    font-size: 11px !important;
+    box-sizing: border-box;
+    z-index: 2;
+    box-shadow: 0 0 0 2px #fff;
+    pointer-events: none;
+  }
+}

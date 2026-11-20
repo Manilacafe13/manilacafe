@@ -23,7 +23,8 @@ const Sidebar = () => {
 
         <NavLink to='/orders' className="sidebar-option">
           <img src={assets.order_icon} alt="" />
-          <p>Beställningar <OrdersActiveCount /></p>
+          <p>Beställningar</p>
+          <OrdersActiveCount />
         </NavLink>
 
         <NavLink to='/future-products' className="sidebar-option">
@@ -52,7 +53,8 @@ const Sidebar = () => {
           >
             💬
           </span>
-          <p>Livechatt <ChatActiveCount /></p>
+          <p>Livechatt</p>
+          <ChatActiveCount />
         </NavLink>
 
       </div>
