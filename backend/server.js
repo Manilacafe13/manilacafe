@@ -44,7 +44,8 @@ import {
 // ======================================================
 
 import {
-  stripeWebhook
+  stripeWebhook,
+  reconcileExpiredStockHolds
 } from "./controllers/orderController.js";
 
 // ======================================================
@@ -238,7 +239,16 @@ app.use(
 // DATABASE CONNECTION
 // ======================================================
 
-connectedDB();
+connectedDB().then(() => {
+  // Recover held inventory when Stripe expiry webhooks were missed.
+  // Do not release unless Stripe confirms the session is expired.
+  const run = () => reconcileExpiredStockHolds().catch(error =>
+    console.error("Inventory hold reconciliation failed:", error.message)
+  );
+  void run();
+  const stockTimer = setInterval(run, 5 * 60 * 1000);
+  stockTimer.unref?.();
+});
 
 // ======================================================
 // STATIC FILES

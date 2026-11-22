@@ -595,6 +595,23 @@ discountAmount: {
 },
 
 
+// Reserved stock is taken from visible sameDayStock BEFORE Stripe Checkout.
+// Legacy orders default to none and retain their original paid-time deduction.
+stockReservationStatus: {
+  type: String,
+  enum: ["none", "reserved", "consumed", "released"],
+  default: "none"
+},
+stockReservedAt: { type: Date, default: null },
+stockReservationLines: {
+  type: [new mongoose.Schema({
+    productId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    inventoryEpoch: { type: Number, required: true, min: 0 }
+  }, { _id: false })],
+  default: []
+},
+
 discountReservationStatus: {
   type: String,
   enum: ["none", "reserved", "redeemed", "released"],
@@ -804,6 +821,8 @@ orderSchema.index({
   userId: 1,
   createdAt: -1
 });
+
+orderSchema.index({ stockReservationStatus: 1, stockReservedAt: 1 });
 
 
 // Sortering efter önskat datum

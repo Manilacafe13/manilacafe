@@ -845,8 +845,8 @@ const updateStock = async (
         id,
 
         {
-          sameDayStock:
-            stock
+          $set: { sameDayStock: stock },
+          $inc: { inventoryEpoch: 1 }
         },
 
         {

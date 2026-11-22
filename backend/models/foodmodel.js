@@ -93,6 +93,9 @@ const foodSchema = new mongoose.Schema({
     minlength: 1,
     maxlength: MAX_CATEGORY_LENGTH
   },
+  // Increments when admin manually resets available inventory.
+  // An expired hold from an earlier inventory generation must not refill new stock.
+  inventoryEpoch: { type: Number, default: 0, min: 0 },
   sameDayStock: {
     type: Number,
     default: 0,

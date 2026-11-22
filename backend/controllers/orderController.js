@@ -201,6 +201,71 @@ const groupStockByProduct = (items) => {
 
 
 // ======================================================
+// ATOMIC SAME-DAY STOCK HOLDS
+// The visible sameDayStock is AVAILABLE stock. Reserve it before Checkout,
+// consume the hold at confirmed payment, restore only on confirmed expiry.
+// inventoryEpoch prevents an old hold from refilling a later admin stock reset.
+// ======================================================
+const stockEpochCondition = (inventoryEpoch) => inventoryEpoch === 0
+  ? { $or: [{ inventoryEpoch: 0 }, { inventoryEpoch: { $exists: false } }] }
+  : { inventoryEpoch };
+
+const reserveOrderStock = async (order, session) => {
+  if (order.fulfillmentType !== "same-day") return;
+  const lines = groupStockByProduct(order.items);
+  const reservedLines = [];
+  for (const line of lines) {
+    const product = await foodModel.findById(line._id).session(session);
+    const inventoryEpoch = Number(product?.inventoryEpoch ?? 0);
+    if (!product || !Number.isInteger(inventoryEpoch) || inventoryEpoch < 0 ||
+        !Number.isInteger(product.sameDayStock) || product.sameDayStock < line.quantity) {
+      throw new Error(`SAME_DAY_STOCK:${line.name}`);
+    }
+    const changed = await foodModel.updateOne(
+      { _id: line._id, sameDayStock: { $gte: line.quantity }, ...stockEpochCondition(inventoryEpoch) },
+      { $inc: { sameDayStock: -line.quantity } },
+      { session }
+    );
+    if (changed.modifiedCount !== 1) {
+      throw new Error(`SAME_DAY_STOCK:${line.name}`);
+    }
+    reservedLines.push({ productId: line._id, quantity: line.quantity, inventoryEpoch });
+  }
+  order.stockReservationLines = reservedLines;
+  order.stockReservationStatus = "reserved";
+  order.stockReservedAt = new Date();
+};
+
+const releaseOrderStock = async (orderId, expectedSessionId = null) => {
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const order = await orderModel.findById(orderId).session(session);
+      if (!order || order.payment || order.stockReservationStatus !== "reserved") return;
+      if (expectedSessionId && order.stripeSessionId &&
+          order.stripeSessionId !== expectedSessionId) return;
+      for (const line of order.stockReservationLines || []) {
+        const changed = await foodModel.updateOne(
+          { _id: line.productId, ...stockEpochCondition(Number(line.inventoryEpoch)) },
+          { $inc: { sameDayStock: line.quantity } },
+          { session }
+        );
+        if (changed.modifiedCount !== 1) {
+          // Admin may have reset the day's stock (or deleted the product).
+          // Never add old stock into the new inventory generation.
+          console.warn("Skipped old inventory hold release:", String(line.productId));
+        }
+      }
+      order.stockReservationStatus = "released";
+      order.status = "Avbruten";
+      await order.save({ session });
+    });
+  } finally {
+    await session.endSession();
+  }
+};
+
+// ======================================================
 // DELIVERY ZONES
 // ======================================================
 
@@ -1231,7 +1296,15 @@ const processPaidCheckoutSession = async (
 
 
 
-        if (order.fulfillmentType === "same-day") {
+        if (order.stockReservationStatus === "released") {
+          throw new Error("STOCK_RESERVATION_EXPIRED");
+        }
+        if (order.stockReservationStatus === "reserved") {
+          // Already deducted atomically when the Stripe Checkout was created.
+          // Never deduct the same items a second time after payment.
+          order.stockReservationStatus = "consumed";
+        } else if (order.fulfillmentType === "same-day") {
+          // Legacy unreserved orders keep the original deduction path.
           // En produkt kan ligga på flera rader med olika kundval.
           // Dra av det SAMMANLAGDA antalet exakt en gång per produkt.
           const stockLines = groupStockByProduct(order.items);
@@ -2665,11 +2738,16 @@ if (bundles !== undefined) {
           newOrder.discountReservationStatus = "reserved";
           newOrder.discountReservedAt = new Date();
         }
+        await reserveOrderStock(newOrder, reservationSession);
         await newOrder.save({ session: reservationSession });
       });
     } catch (reservationError) {
       if (reservationError.message === "DISCOUNT_UNAVAILABLE") {
         return res.status(409).json({ success: false, message: "Rabattkoden är inte längre tillgänglig." });
+      }
+      if (String(reservationError.message).startsWith("SAME_DAY_STOCK:")) {
+        return res.status(409).json({ success: false,
+          message: `${String(reservationError.message).slice(15)} finns inte längre i tillräckligt antal.` });
       }
       throw reservationError;
     } finally {
@@ -2811,6 +2889,7 @@ if (bundles !== undefined) {
               { $set: { stripeSessionId: stripeSession.id } }
             );
             await releaseOrderDiscount(newOrder._id, stripeSession.id);
+            await releaseOrderStock(newOrder._id, stripeSession.id);
           }
         } catch (reconciliationError) {
           console.error("Stripe status uncertain; reservation retained:", reconciliationError.message);
@@ -3285,6 +3364,15 @@ const stripeWebhook = async (req, res) => {
 
 
 
+    if (event.type === "checkout.session.async_payment_failed") {
+      const failedSession = event.data.object;
+      const failedOrderId = failedSession?.metadata?.orderId;
+      if (failedOrderId && mongoose.isValidObjectId(failedOrderId)) {
+        await releaseOrderDiscount(failedOrderId, failedSession.id);
+        await releaseOrderStock(failedOrderId, failedSession.id);
+      }
+    }
+
     if (
 
       event.type ===
@@ -3368,6 +3456,7 @@ const stripeWebhook = async (req, res) => {
           { $set: { stripeSessionId: stripeSession.id } }
         );
         await releaseOrderDiscount(orderId, stripeSession.id);
+        await releaseOrderStock(orderId, stripeSession.id);
 
       }
 
@@ -3404,6 +3493,46 @@ const stripeWebhook = async (req, res) => {
 };
 
 
+
+// Recover from missed Stripe webhooks. Safe to run on several API instances:
+// all stock changes are guarded by order state within MongoDB transactions.
+const reconcileExpiredStockHolds = async () => {
+  const stripe = getStripe();
+  if (!stripe) return;
+  const cutoff = new Date(Date.now() - 35 * 60_000);
+  const pending = await orderModel.find({
+    payment: false,
+    stockReservationStatus: "reserved",
+    stripeSessionId: { $type: "string" },
+    stockReservedAt: { $lt: cutoff }
+  }).sort({ stockReservedAt: 1 }).limit(25).lean();
+  for (const order of pending) {
+    try {
+      if (!order.stripeSessionId) {
+        console.error("Stock hold requires manual Stripe reconciliation:", String(order._id));
+        continue;
+      }
+      let checkout = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+      if (checkout.payment_status === "paid") {
+        await processPaidCheckoutSession(checkout);
+        await sendOrderConfirmationSafely(order._id);
+      } else if (checkout.status === "expired") {
+        await releaseOrderDiscount(order._id, checkout.id);
+        await releaseOrderStock(order._id, checkout.id);
+      } else if (checkout.status === "open") {
+        // Stripe will reject expiry if payment completed concurrently.
+        checkout = await stripe.checkout.sessions.expire(checkout.id);
+        if (checkout.status === "expired") {
+          await releaseOrderDiscount(order._id, checkout.id);
+          await releaseOrderStock(order._id, checkout.id);
+        }
+      }
+      // A completed but unpaid async payment is NOT safe to release yet.
+    } catch (error) {
+      console.error("Stock hold reconciliation error:", String(order._id), error.message);
+    }
+  }
+};
 
 const userOrders = async (req, res) => {
 
@@ -3658,6 +3787,7 @@ export {
   verifyOrder,
 
   stripeWebhook,
+  reconcileExpiredStockHolds,
 
   userOrders,
 
