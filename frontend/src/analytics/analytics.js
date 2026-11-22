@@ -49,3 +49,23 @@ export const loadAnalytics = () => {
 
   document.head.appendChild(script);
 };
+
+
+// GA4: skicka bara efter samtycke, utan personuppgifter.
+export const trackCheckoutEvent = (name, params = {}) => {
+  if (typeof window === "undefined") return false;
+
+  try {
+    if (window.localStorage.getItem("manilacafe_cookie_consent") !== "accepted") {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  if (!analyticsLoaded) loadAnalytics();
+  if (typeof window.gtag !== "function") return false;
+
+  window.gtag("event", name, params);
+  return true;
+};
