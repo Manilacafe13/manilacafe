@@ -19,7 +19,7 @@ const Navbar = ({ setShowLogin }) => {
   const [menu, setMenu] = useState('home')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  const { cartItems = {}, customizedCartItems = {}, food_list = [], manilaSolo, token, setToken } = useContext(StoreContext)
+  const { cartItems = {}, customizedCartItems = {}, food_list = [], manilaSolo, token, signOut } = useContext(StoreContext)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -58,8 +58,7 @@ const Navbar = ({ setShowLogin }) => {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
-    setToken('')
+    signOut()
     setShowProfileMenu(false)
     setMenu('home')
     navigate('/')

@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 
 const LoginPopup = ({ setShowLogin }) => {
 
-  const { url, setToken } = useContext(StoreContext)
+  const { url, acceptLogin } = useContext(StoreContext)
 
   const [currState, setCurrState] = useState("Logga in")
 
@@ -73,12 +73,7 @@ const LoginPopup = ({ setShowLogin }) => {
 
       if (response.data.success) {
 
-        setToken(response.data.token)
-
-        localStorage.setItem(
-          "token",
-          response.data.token
-        )
+        await acceptLogin(response.data.token)
 
         setShowLogin(false)
 

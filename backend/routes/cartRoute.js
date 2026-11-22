@@ -3,6 +3,7 @@ import express from "express";
 import {
   addToCart,
   removeFromCart,
+  replaceCart,
   getCart
 } from "../controllers/cartController.js";
 
@@ -26,6 +27,9 @@ cartRouter.post(
   removeFromCart
 );
 
+
+// synchronize an existing guest cart after login
+cartRouter.post("/replace", authMiddleware, replaceCart);
 
 // get user cart
 cartRouter.post(

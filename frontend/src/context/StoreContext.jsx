@@ -39,6 +39,7 @@ const CUSTOMIZED_CHECKOUT_READY =
 // Guest/local cart storage
 const CART_STORAGE_KEY =
     "manilaCafeCart";
+const CART_PENDING_SYNC_KEY = "manilaCafeCartPendingLoginSync";
 
 
 const MANILA_SOLO_STORAGE_KEY = "manilaCafeSolo";
@@ -450,6 +451,7 @@ const getManilaSoloOrderPayload = () => {
             localStorage.removeItem(CART_STORAGE_KEY);
             localStorage.removeItem(CUSTOMIZED_CART_STORAGE_KEY);
             localStorage.removeItem(MANILA_SOLO_STORAGE_KEY);
+            localStorage.removeItem(CART_PENDING_SYNC_KEY);
             // Other open tabs also need to forget a successfully purchased cart.
             localStorage.setItem("manilaCafeCartCheckoutClearedAt", String(Date.now()));
         } catch (error) {
@@ -458,6 +460,48 @@ const getManilaSoloOrderPayload = () => {
         setCartItems({});
         setCustomizedCartItems({});
         setManilaSolo(null);
+    };
+
+    // When the customer signs out, remove the prior account's cart from
+    // this shared browser. Never delete any order history on the server.
+    const signOut = () => {
+        localStorage.removeItem(CART_PENDING_SYNC_KEY);
+        localStorage.removeItem("token");
+        setToken("");
+        clearPurchasedCart();
+    };
+
+    // Preserve an existing guest cart when signing in to buy it. An empty
+    // guest cart can safely load the authenticated user's saved cart.
+    const syncGuestCartAfterLogin = async (userToken) => {
+        try {
+            const response = await axios.post(
+                `${url}/api/cart/replace`,
+                { cartData: sanitizeCart(getStoredCart()) },
+                { headers: { token: userToken } }
+            );
+            if (response.data?.success && localStorage.getItem("token") === userToken) {
+                localStorage.removeItem(CART_PENDING_SYNC_KEY);
+            }
+        } catch (error) {
+            // Retain the local guest cart and retry on a subsequent load.
+            console.warn("Could not sync guest cart after login:", error.message);
+        }
+    };
+
+    const acceptLogin = async (newToken) => {
+        cartMutationRef.current += 1;
+        const hasGuestCart = Object.keys(sanitizeCart(cartItems)).length > 0 ||
+            Object.keys(customizedCartItems).length > 0 || Boolean(manilaSolo);
+        if (hasGuestCart) {
+            // Persist before storing token: a reload must not restore old server items.
+            localStorage.setItem(CART_PENDING_SYNC_KEY, "1");
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(sanitizeCart(cartItems)));
+        }
+        localStorage.setItem("token", newToken);
+        setToken(newToken);
+        if (hasGuestCart) await syncGuestCartAfterLogin(newToken);
+        else await loadCartData(newToken);
     };
 
     // ==================================================
@@ -1063,7 +1107,8 @@ const getManilaSoloOrderPayload = () => {
 
                 // The customer may have added items or completed checkout while this
                 // request was pending. Never revive the older server snapshot.
-                if (revisionAtStart !== cartMutationRef.current) return;
+                if (revisionAtStart !== cartMutationRef.current ||
+                    localStorage.getItem("token") !== userToken) return;
                 // If the product request failed, do not erase a saved server
                 // cart just because the catalog has not loaded yet.
                 const catalog = Array.isArray(latestProducts)
@@ -1153,8 +1198,11 @@ const getManilaSoloOrderPayload = () => {
             const latestProducts = await fetchFoodList();
 
             if (savedToken) {
-                await loadCartData(savedToken, latestProducts);
-
+                if (localStorage.getItem(CART_PENDING_SYNC_KEY) === "1") {
+                    await syncGuestCartAfterLogin(savedToken);
+                } else {
+                    await loadCartData(savedToken, latestProducts);
+                }
             }
 
         };
@@ -1168,7 +1216,22 @@ const getManilaSoloOrderPayload = () => {
     // Keep tabs consistent. Storage events fire only in the OTHER tabs.
     useEffect(() => {
         const onStorage = (event) => {
-            if (event.key === "manilaCafeCartCheckoutClearedAt") {
+            if (event.key === "token") {
+                // A logout/account switch in another tab must not leave a
+                // previous customer's items on this screen.
+                cartMutationRef.current += 1;
+                setCartItems({});
+                setCustomizedCartItems({});
+                setManilaSolo(null);
+                setToken(event.newValue || "");
+                if (event.newValue) {
+                    if (localStorage.getItem(CART_PENDING_SYNC_KEY) === "1") {
+                        void syncGuestCartAfterLogin(event.newValue);
+                    } else {
+                        void loadCartData(event.newValue);
+                    }
+                }
+            } else if (event.key === "manilaCafeCartCheckoutClearedAt") {
                 cartMutationRef.current += 1;
                 setCartItems({});
                 setCustomizedCartItems({});
@@ -1222,6 +1285,8 @@ const contextValue = {
     cartItems,
     setCartItems,
     clearPurchasedCart,
+    signOut,
+    acceptLogin,
     addToCart,
     removeFromCart,
 

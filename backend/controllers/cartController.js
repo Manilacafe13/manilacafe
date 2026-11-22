@@ -148,509 +148,115 @@ const calculateCartTotals = async (
 
 
 // ======================================================
-// ADD ITEM TO CART
+// ATOMIC CART MUTATIONS
 // ======================================================
-
-const addToCart = async (
-  req,
-  res
-) => {
-
+// A MongoDB compare-and-set prevents simultaneous requests from silently
+// overwriting a different product or losing an increment/decrement.
+// Never save an entire old cart snapshot from add/remove.
+const mutateCart = async (req, res, action) => {
   try {
-
-    // User ID kommer från authMiddleware
-    const userId =
-      req.userId;
-
-
-    const {
-      itemId
-    } = req.body;
-
-
-    // ==================================================
-    // CHECK USER ID
-    // ==================================================
-
-    if (!userId) {
-
-      return res.status(401).json({
-
-        success: false,
-
-        message:
-          "Du är inte inloggad."
-
-      });
-
+    const userId = req.userId;
+    const itemId = req.body?.itemId;
+    if (!userId || !mongoose.isValidObjectId(userId)) {
+      return res.status(401).json({ success: false, message: "Ogiltig användarsession. Logga in igen." });
+    }
+    if (typeof itemId !== "string" || !mongoose.isValidObjectId(itemId)) {
+      return res.status(400).json({ success: false, message: "Ogiltigt produkt-ID." });
+    }
+    const productId = itemId.toLowerCase();
+    if (action === "add" && !await foodModel.findById(productId)) {
+      return res.status(404).json({ success: false, message: "Produkten kunde inte hittas." });
     }
 
+    // Only a single field is changed, guarded by its previously observed
+    // value. A conflicting request retries against the new database state.
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const user = await userModel.findById(userId);
+      if (!user) {
+        return res.status(401).json({ success: false, message: "Användaren kunde inte hittas. Logga in igen." });
+      }
+      const oldCart = user.cartData || {};
+      const rawValue = Object.prototype.hasOwnProperty.call(oldCart, productId)
+        ? oldCart[productId] : undefined;
+      const oldQuantity = Number(rawValue ?? 0);
+      const quantity = Number.isInteger(oldQuantity) && oldQuantity >= 0
+        ? oldQuantity : 0;
+      if (action === "add" && quantity >= MAX_ITEM_QUANTITY) {
+        return res.status(400).json({
+          success: false, message: `Du kan lägga till högst ${MAX_ITEM_QUANTITY} st av samma produkt.`,
+          maxQuantity: MAX_ITEM_QUANTITY, currentQuantity: quantity
+        });
+      }
+      if (action === "remove" && quantity <= 0) {
+        return res.status(400).json({ success: false, message: "Produkten finns inte i varukorgen." });
+      }
 
-    if (
-      !mongoose.isValidObjectId(
-        userId
-      )
-    ) {
-
-      return res.status(401).json({
-
-        success: false,
-
-        message:
-          "Ogiltig användarsession. Logga in igen."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // CHECK ITEM ID
-    // ==================================================
-
-    if (!itemId) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          "Produkt-ID saknas."
-
-      });
-
-    }
-
-
-    if (
-      !mongoose.isValidObjectId(
-        itemId
-      )
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          "Ogiltigt produkt-ID."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // CHECK PRODUCT
-    // ==================================================
-
-    const product =
-      await foodModel.findById(
-        itemId
+      const field = `cartData.${productId}`;
+      const match = rawValue === undefined ? { $exists: false } : rawValue;
+      const nextQuantity = action === "add" ? quantity + 1 : quantity - 1;
+      const update = nextQuantity === 0
+        ? { $unset: { [field]: 1 } }
+        : { $set: { [field]: nextQuantity } };
+      const saved = await userModel.findOneAndUpdate(
+        { _id: userId, [field]: match }, update,
+        { new: true, projection: { cartData: 1 } }
       );
-
-
-    if (!product) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        message:
-          "Produkten kunde inte hittas."
-
+      if (!saved) continue;
+      const cartData = saved.cartData ? { ...saved.cartData } : {};
+      const totals = await calculateCartTotals(cartData);
+      return res.status(200).json({
+        success: true,
+        message: action === "add"
+          ? "Produkten har lagts till i varukorgen."
+          : "Produkten har tagits bort från varukorgen.",
+        cartData, ...totals
       });
-
     }
-
-
-    // ==================================================
-    // GET USER
-    // ==================================================
-
-    const user =
-      await userModel.findById(
-        userId
-      );
-
-
-    if (!user) {
-
-      return res.status(401).json({
-
-        success: false,
-
-        message:
-          "Användaren kunde inte hittas. Logga in igen."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // GET CART
-    // ==================================================
-
-    const cartData =
-      user.cartData
-        ? { ...user.cartData }
-        : {};
-
-
-    const productId =
-      itemId.toString();
-
-
-    // ==================================================
-    // CURRENT QUANTITY
-    // ==================================================
-
-    const currentQuantity =
-      Number(
-        cartData[productId] || 0
-      );
-
-
-    // ==================================================
-    // MAX QUANTITY CHECK
-    // ==================================================
-
-    if (
-      currentQuantity >=
-      MAX_ITEM_QUANTITY
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          `Du kan lägga till högst ${MAX_ITEM_QUANTITY} st av samma produkt.`,
-
-        maxQuantity:
-          MAX_ITEM_QUANTITY,
-
-        currentQuantity
-
-      });
-
-    }
-
-
-    // ==================================================
-    // ADD PRODUCT
-    // ==================================================
-
-    cartData[productId] =
-      currentQuantity + 1;
-
-
-    // ==================================================
-    // SAVE CART
-    // ==================================================
-
-    user.cartData =
-      cartData;
-
-
-    user.markModified(
-      "cartData"
-    );
-
-
-    await user.save();
-
-
-    // ==================================================
-    // TOTALS
-    // ==================================================
-
-    const totals =
-      await calculateCartTotals(
-        cartData
-      );
-
-
-    return res.status(200).json({
-
-      success: true,
-
-      message:
-        "Produkten har lagts till i varukorgen.",
-
-      cartData,
-
-      subtotal:
-        totals.subtotal,
-
-      vatRate:
-        totals.vatRate,
-
-      vatAmount:
-        totals.vatAmount,
-
-      total:
-        totals.total
-
+    return res.status(409).json({
+      success: false, message: "Varukorgen ändrades samtidigt. Försök igen."
     });
-
-
   } catch (error) {
-
-    console.error("Add to cart error:", error.message);
-
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Ett fel uppstod när produkten skulle läggas till i varukorgen."
-
-    });
-
+    console.error("Cart update error:", error.message);
+    return res.status(500).json({ success: false, message: "Varukorgen kunde inte uppdateras." });
   }
-
 };
 
+const addToCart = (req, res) => mutateCart(req, res, "add");
+const removeFromCart = (req, res) => mutateCart(req, res, "remove");
 
-// ======================================================
-// REMOVE ITEM FROM CART
-// ======================================================
 
-const removeFromCart = async (
-  req,
-  res
-) => {
-
+// Reconcile a guest cart after login. The client is responsible for sending
+// only its regular item quantities; never accept prices from the browser.
+const replaceCart = async (req, res) => {
   try {
-
-    const userId =
-      req.userId;
-
-
-    const {
-      itemId
-    } = req.body;
-
-
-    // ==================================================
-    // CHECK USER
-    // ==================================================
-
-    if (!userId) {
-
-      return res.status(401).json({
-
-        success: false,
-
-        message:
-          "Du är inte inloggad."
-
-      });
-
+    if (!req.userId || !mongoose.isValidObjectId(req.userId)) {
+      return res.status(401).json({ success: false, message: "Du är inte inloggad." });
     }
-
-
-    if (
-      !mongoose.isValidObjectId(
-        userId
-      )
-    ) {
-
-      return res.status(401).json({
-
-        success: false,
-
-        message:
-          "Ogiltig användarsession. Logga in igen."
-
-      });
-
+    const supplied = req.body?.cartData;
+    if (!supplied || typeof supplied !== "object" || Array.isArray(supplied) ||
+        Object.keys(supplied).length > 100) {
+      return res.status(400).json({ success: false, message: "Ogiltig varukorg." });
     }
-
-
-    // ==================================================
-    // CHECK PRODUCT ID
-    // ==================================================
-
-    if (!itemId) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          "Produkt-ID saknas."
-
-      });
-
+    const clean = {};
+    for (const [id, quantity] of Object.entries(supplied)) {
+      if (!mongoose.isValidObjectId(id) || !Number.isInteger(quantity) ||
+          quantity < 1 || quantity > MAX_ITEM_QUANTITY) {
+        return res.status(400).json({ success: false, message: "Ogiltigt produktantal." });
+      }
+      clean[id.toLowerCase()] = quantity;
     }
-
-
-    if (
-      !mongoose.isValidObjectId(
-        itemId
-      )
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          "Ogiltigt produkt-ID."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // GET USER
-    // ==================================================
-
-    const user =
-      await userModel.findById(
-        userId
-      );
-
-
-    if (!user) {
-
-      return res.status(401).json({
-
-        success: false,
-
-        message:
-          "Användaren kunde inte hittas. Logga in igen."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // GET CART
-    // ==================================================
-
-    const cartData =
-      user.cartData
-        ? { ...user.cartData }
-        : {};
-
-
-    const productId =
-      itemId.toString();
-
-
-    const currentQuantity =
-      Number(
-        cartData[productId] || 0
-      );
-
-
-    // ==================================================
-    // CHECK ITEM EXISTS
-    // ==================================================
-
-    if (currentQuantity <= 0) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-          "Produkten finns inte i varukorgen."
-
-      });
-
-    }
-
-
-    // ==================================================
-    // REMOVE / REDUCE
-    // ==================================================
-
-    if (currentQuantity > 1) {
-
-      cartData[productId] =
-        currentQuantity - 1;
-
-    } else {
-
-      delete cartData[productId];
-
-    }
-
-
-    // ==================================================
-    // SAVE CART
-    // ==================================================
-
-    user.cartData =
-      cartData;
-
-
-    user.markModified(
-      "cartData"
+    const updated = await userModel.findOneAndUpdate(
+      { _id: req.userId }, { $set: { cartData: clean } },
+      { new: true, projection: { cartData: 1 } }
     );
-
-
-    await user.save();
-
-
-    // ==================================================
-    // TOTALS
-    // ==================================================
-
-    const totals =
-      await calculateCartTotals(
-        cartData
-      );
-
-
-    return res.status(200).json({
-
-      success: true,
-
-      message:
-        "Produkten har tagits bort från varukorgen.",
-
-      cartData,
-
-      subtotal:
-        totals.subtotal,
-
-      vatRate:
-        totals.vatRate,
-
-      vatAmount:
-        totals.vatAmount,
-
-      total:
-        totals.total
-
-    });
-
-
+    if (!updated) {
+      return res.status(401).json({ success: false, message: "Användaren kunde inte hittas." });
+    }
+    return res.status(200).json({ success: true, cartData: clean });
   } catch (error) {
-
-    console.error("Remove from cart error:", error.message);
-
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Ett fel uppstod när varukorgen skulle uppdateras."
-
-    });
-
+    console.error("Cart replace error:", error.message);
+    return res.status(500).json({ success: false, message: "Varukorgen kunde inte synkroniseras." });
   }
-
 };
 
 
@@ -797,5 +403,6 @@ const getCart = async (
 export {
   addToCart,
   removeFromCart,
-  getCart
+  getCart,
+  replaceCart
 };
