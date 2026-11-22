@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import './Cart.css'
 import './CartCustomizations.css'
 import { StoreContext } from '../../context/StoreContext'
+import { getVisibleRegularCartEntries } from '../../context/cartIntegrity.js'
 
 // ======================================================
 // HELPERS
@@ -75,30 +76,7 @@ const Cart = () => {
   // NORMAL PRODUCTS
   // ====================================================
 
-  const normalEntries = food_list.flatMap((item) => {
-    const quantity = Number(cartItems[item._id] || 0)
-    const price = Number(item.price)
-
-    if (
-      !Number.isInteger(quantity) ||
-      quantity <= 0 ||
-      !Number.isFinite(price) ||
-      price < 0
-    ) {
-      return []
-    }
-
-    return [{
-      cartKey: item._id,
-      productId: item._id,
-      name: item.name,
-      image: item.image,
-      price,
-      quantity,
-      isCustomized: false,
-      invalidCustomization: false
-    }]
-  })
+  const normalEntries = getVisibleRegularCartEntries(cartItems, food_list)
 
   // ====================================================
   // CUSTOMIZED PRODUCTS

@@ -3,6 +3,7 @@ import './Navbar.css'
 import { assets } from '../../assets/assets'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { StoreContext } from '../../context/StoreContext'
+import { getCartBadgeCount } from '../../context/cartIntegrity.js'
 
 // Visa bara betalningsmetoder som finns eller tydligt markeras som kommande.
 // Billie är aktiverat. Swish-ansökan väntar fortfarande på godkännande.
@@ -18,24 +19,13 @@ const Navbar = ({ setShowLogin }) => {
   const [menu, setMenu] = useState('home')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  const { cartItems = {}, customizedCartItems = {}, manilaSolo, token, setToken } = useContext(StoreContext)
+  const { cartItems = {}, customizedCartItems = {}, food_list = [], manilaSolo, token, setToken } = useContext(StoreContext)
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Antal produkter i varukorgen: både vanliga och kundanpassade rader.
-  // Kunden ska få samma gröna prick oavsett hur produkten lagts till.
-  const regularCount = Object.values(cartItems).reduce(
-    (total, quantity) => total + Math.max(0, Number(quantity) || 0),
-    0
-  )
-  const customizedCount = Object.values(customizedCartItems).reduce(
-    (total, line) => total + Math.max(0, Number(line?.quantity) || 0),
-    0
-  )
-  const cartCount =
-    regularCount +
-    customizedCount +
-    (manilaSolo?.type === 'manila-solo' ? 1 : 0)
+  const cartCount = getCartBadgeCount({
+    cartItems, customizedCartItems, manilaSolo, foodList: food_list
+  })
 
   const handleMenuClick = (menuName) => {
     setMenu(menuName)

@@ -1,3 +1,4 @@
+import { trackCheckoutEvent } from '../../analytics/analytics.js';
 import React, {
   useContext,
   useEffect,
@@ -326,6 +327,10 @@ const getDeliveryZone = ({
   return false
 }
 const PlaceOrder = () => {
+  useEffect(() => {
+    trackCheckoutEvent("begin_checkout", { currency: "SEK" });
+  }, []);
+
   const {
     getTotalCartAmount,
     getVatAmount,
@@ -354,7 +359,7 @@ const PlaceOrder = () => {
   const SOLO_CHECKOUT_READY = true
 
   const FIXED_SOLO_NAMES = {
-    mealId: 'pancit',
+    mealId: 'chicken adobo',
     dessertId: 'golden turon & ube ice cream',
     drinkId: 'ube caramel twirl'
   }
@@ -971,6 +976,9 @@ const PlaceOrder = () => {
       !data.email.trim() ||
       !data.phone.trim()
     ) {
+      trackCheckoutEvent("checkout_error", {
+        error_reason: "missing_contact_details"
+      });
       alert(
         "Fyll i namn, e-post och telefonnummer."
       )
@@ -1007,6 +1015,9 @@ const PlaceOrder = () => {
       phoneDigits.length < 7 ||
       phoneDigits.length > 15
     ) {
+      trackCheckoutEvent("checkout_error", {
+        error_reason: "invalid_phone"
+      });
       alert(
         "Ange ett giltigt telefonnummer."
       )
@@ -1242,6 +1253,10 @@ const PlaceOrder = () => {
       // ==================================================
       // SEND ORDER
       // ==================================================
+      trackCheckoutEvent("payment_attempt", {
+        delivery_method: deliveryMethod
+      });
+
       const response =
         await axios.post(
           `${url}/api/order/place`,
@@ -1391,7 +1406,14 @@ const PlaceOrder = () => {
                   <span className="mc-option-check" aria-hidden="true">✓</span>
                 </label>
               </div>
-              <button type="button" className="mc-primary" disabled={subtotal <= 0 || customizedCheckoutBlocked || soloCheckoutBlocked} onClick={() => { setStepError(""); setCheckoutStep(2); }}>
+              <button type="button" className="mc-primary" disabled={subtotal <= 0 || customizedCheckoutBlocked || soloCheckoutBlocked} onClick={() => {
+          setStepError("");
+          trackCheckoutEvent("checkout_step", {
+            step_number: 2,
+            delivery_method: deliveryMethod
+          });
+          setCheckoutStep(2);
+        }}>
                 Fortsätt till datum och tid <span aria-hidden="true">→</span>
               </button>
             </section>

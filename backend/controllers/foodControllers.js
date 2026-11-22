@@ -716,6 +716,9 @@ const listFood = async (
         });
 
 
+    // Availability and same-day inventory must not be cached between visits.
+    res.set("Cache-Control", "no-store");
+
     return res.status(200).json({
 
       success: true,

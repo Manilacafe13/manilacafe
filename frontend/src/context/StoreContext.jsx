@@ -1,10 +1,12 @@
 import {
     createContext,
     useEffect,
+    useRef,
     useState
 } from "react";
 
 import axios from "axios";
+import { sanitizeRegularCart, pruneRegularCart } from "./cartIntegrity.js";
 import {
     CUSTOMIZED_CART_STORAGE_KEY,
     MAX_CART_QUANTITY,
@@ -44,7 +46,7 @@ const MANILA_SOLO_PRICE = 249;
 
 // Fasta produkter i Manila Solo. Ändra INTE till dynamiska kundval.
 const FIXED_SOLO_NAMES = {
-    mealId: "pancit",
+    mealId: "chicken adobo",
     dessertId: "golden turon & ube ice cream",
     drinkId: "ube caramel twirl"
 };
@@ -115,49 +117,7 @@ const getStoredManilaSolo = () => {
 // CLEAN CART DATA
 // ======================================================
 
-const sanitizeCart = (cart) => {
-
-    if (
-        !cart ||
-        typeof cart !== "object" ||
-        Array.isArray(cart)
-    ) {
-        return {};
-    }
-
-
-    const cleanCart = {};
-
-
-    for (
-        const [itemId, value]
-        of Object.entries(cart)
-    ) {
-
-        const quantity =
-            Number(value);
-
-
-        if (
-            itemId &&
-            Number.isFinite(quantity) &&
-            quantity > 0
-        ) {
-
-            cleanCart[itemId] =
-                Math.min(
-                    Math.floor(quantity),
-                    MAX_ITEM_QUANTITY
-                );
-
-        }
-
-    }
-
-
-    return cleanCart;
-
-};
+const sanitizeCart = sanitizeRegularCart;
 
 
 // ======================================================
@@ -240,6 +200,9 @@ const StoreContextProvider = (props) => {
         () => getStoredCart()
     );
 
+
+    // Guards against late /api/cart/get responses restoring a cart after checkout.
+    const cartMutationRef = useRef(0);
 
     // Separate line items: two versions of the same product are never merged
     // unless their selected ingredients and extra quantities are identical.
@@ -351,6 +314,7 @@ const StoreContextProvider = (props) => {
                 CUSTOMIZED_CART_STORAGE_KEY,
                 JSON.stringify(sanitizeCustomizedCart(next))
             );
+            cartMutationRef.current += 1;
             setCustomizedCartItems(next);
             return { success: true, cartKey };
         } catch (error) {
@@ -362,6 +326,7 @@ const StoreContextProvider = (props) => {
     };
 
     const removeFromCartCustomized = cartKey => {
+        cartMutationRef.current += 1;
         setCustomizedCartItems(previous => {
             if (!previous[cartKey]) return previous;
             const next = { ...previous };
@@ -378,7 +343,10 @@ const StoreContextProvider = (props) => {
         buildCustomizedCartEntries(customizedCartItems, food_list);
 
     // Must also be called after a successful order when checkout is integrated.
-    const clearCustomizedCart = () => setCustomizedCartItems({});
+    const clearCustomizedCart = () => {
+        cartMutationRef.current += 1;
+        setCustomizedCartItems({});
+    };
 
 
     // ======================================================
@@ -412,13 +380,14 @@ const StoreContextProvider = (props) => {
                 drinkId: selection.drinkId.toLowerCase()
             };
             if (!isFixedSolo(bundle, food_list)) {
-                throw new Error("Manila Solo innehåller endast Pancit, Golden Turon & Ube Ice Cream och Ube Caramel Twirl.");
+                throw new Error("Manila Solo innehåller endast Chicken Adobo, Golden Turon & Ube Ice Cream och Ube Caramel Twirl.");
             }
             if (Object.values(cartItems).some(q => Number(q) > 0) ||
                 Object.values(customizedCartItems).some(item => Number(item?.quantity) > 0)) {
                 throw new Error("Töm den vanliga varukorgen innan du lägger till Manila Solo.");
             }
             localStorage.setItem(MANILA_SOLO_STORAGE_KEY, JSON.stringify(bundle));
+            cartMutationRef.current += 1;
             setManilaSolo(bundle);
             return { success: true, message: "Manila Solo har lagts till i varukorgen." };
         } catch (error) {
@@ -431,6 +400,7 @@ const StoreContextProvider = (props) => {
             localStorage.removeItem(
                 MANILA_SOLO_STORAGE_KEY
             );
+            cartMutationRef.current += 1;
             setManilaSolo(null);
 
             return { success: true };
@@ -471,6 +441,24 @@ const getManilaSoloOrderPayload = () => {
 };
 
 
+
+    // Used only after /api/order/verify confirms payment.
+    // Write storage immediately so a fast reload cannot resurrect an old cart.
+    const clearPurchasedCart = () => {
+        cartMutationRef.current += 1;
+        try {
+            localStorage.removeItem(CART_STORAGE_KEY);
+            localStorage.removeItem(CUSTOMIZED_CART_STORAGE_KEY);
+            localStorage.removeItem(MANILA_SOLO_STORAGE_KEY);
+            // Other open tabs also need to forget a successfully purchased cart.
+            localStorage.setItem("manilaCafeCartCheckoutClearedAt", String(Date.now()));
+        } catch (error) {
+            console.warn("Could not clear saved cart:", error);
+        }
+        setCartItems({});
+        setCustomizedCartItems({});
+        setManilaSolo(null);
+    };
 
     // ==================================================
     // CLEAR INVALID SESSION
@@ -574,6 +562,7 @@ const getManilaSoloOrderPayload = () => {
             - användarkontot har tagits bort
         */
 
+        cartMutationRef.current += 1;
         setCartItems((prev) => {
 
             const quantity =
@@ -731,6 +720,7 @@ const getManilaSoloOrderPayload = () => {
         // ALWAYS UPDATE FRONTEND FIRST
         // ==================================================
 
+        cartMutationRef.current += 1;
         setCartItems((prev) => {
 
             const updatedCart = {
@@ -987,13 +977,15 @@ const getManilaSoloOrderPayload = () => {
                 response.data?.success
             ) {
 
-                setFoodList(
-                    Array.isArray(
-                        response.data.data
-                    )
-                        ? response.data.data
-                        : []
-                );
+                const products = Array.isArray(response.data.data)
+                    ? response.data.data
+                    : [];
+                setFoodList(products);
+                setCartItems(previous => {
+                    const next = pruneRegularCart(previous, products);
+                    return JSON.stringify(next) === JSON.stringify(previous) ? previous : next;
+                });
+                return products;
 
             }
 
@@ -1020,8 +1012,10 @@ const getManilaSoloOrderPayload = () => {
     // ==================================================
 
     const loadCartData = async (
-        userToken
+        userToken,
+        latestProducts = null
     ) => {
+        const revisionAtStart = cartMutationRef.current;
 
         /*
             No token = guest.
@@ -1067,9 +1061,15 @@ const getManilaSoloOrderPayload = () => {
                     );
 
 
-                setCartItems(
-                    backendCart
-                );
+                // The customer may have added items or completed checkout while this
+                // request was pending. Never revive the older server snapshot.
+                if (revisionAtStart !== cartMutationRef.current) return;
+                // If the product request failed, do not erase a saved server
+                // cart just because the catalog has not loaded yet.
+                const catalog = Array.isArray(latestProducts)
+                    ? latestProducts
+                    : (food_list.length > 0 ? food_list : null);
+                setCartItems(catalog ? pruneRegularCart(backendCart, catalog) : backendCart);
 
             }
 
@@ -1150,14 +1150,10 @@ const getManilaSoloOrderPayload = () => {
             }
 
 
-            await fetchFoodList();
-
+            const latestProducts = await fetchFoodList();
 
             if (savedToken) {
-
-                await loadCartData(
-                    savedToken
-                );
+                await loadCartData(savedToken, latestProducts);
 
             }
 
@@ -1168,6 +1164,49 @@ const getManilaSoloOrderPayload = () => {
 
     }, []);
 
+
+    // Keep tabs consistent. Storage events fire only in the OTHER tabs.
+    useEffect(() => {
+        const onStorage = (event) => {
+            if (event.key === "manilaCafeCartCheckoutClearedAt") {
+                cartMutationRef.current += 1;
+                setCartItems({});
+                setCustomizedCartItems({});
+                setManilaSolo(null);
+            } else if (event.key === CART_STORAGE_KEY) {
+                cartMutationRef.current += 1;
+                setCartItems(getStoredCart());
+            } else if (event.key === CUSTOMIZED_CART_STORAGE_KEY) {
+                cartMutationRef.current += 1;
+                setCustomizedCartItems(getStoredCustomizedCart());
+            } else if (event.key === MANILA_SOLO_STORAGE_KEY) {
+                cartMutationRef.current += 1;
+                setManilaSolo(getStoredManilaSolo());
+            }
+        };
+        window.addEventListener("storage", onStorage);
+        return () => window.removeEventListener("storage", onStorage);
+    }, []);
+
+    // Inventory can change while the customer is reading the menu.
+    // Refresh on return to the tab; backend still validates stock at checkout.
+    useEffect(() => {
+        let lastRefresh = Date.now();
+        const onReturn = () => {
+            const now = Date.now();
+            if (document.visibilityState !== "visible" || now - lastRefresh < 15000) return;
+            lastRefresh = now;
+            void fetchFoodList();
+        };
+        window.addEventListener("focus", onReturn);
+        document.addEventListener("visibilitychange", onReturn);
+        const interval = window.setInterval(onReturn, 60000);
+        return () => {
+            window.removeEventListener("focus", onReturn);
+            document.removeEventListener("visibilitychange", onReturn);
+            window.clearInterval(interval);
+        };
+    }, []);
 
     // ==================================================
     // CONTEXT VALUES
@@ -1182,6 +1221,7 @@ const contextValue = {
     // Cart
     cartItems,
     setCartItems,
+    clearPurchasedCart,
     addToCart,
     removeFromCart,
 

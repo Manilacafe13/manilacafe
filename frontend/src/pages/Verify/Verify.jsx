@@ -1,3 +1,4 @@
+import { trackCheckoutEvent } from '../../analytics/analytics.js';
 import React, {
   useContext,
   useEffect,
@@ -21,7 +22,8 @@ const Verify = () => {
 
   const {
     url,
-    setCartItems
+    clearPurchasedCart,
+    fetchFoodList
   } = useContext(StoreContext)
 
 
@@ -177,15 +179,22 @@ const Verify = () => {
         if (response.data.success) {
 
 
-          // Clear frontend cart
-          setCartItems({})
+          // Clear ALL cart types only after the backend confirms payment.
+          clearPurchasedCart()
+          // Reload stock levels after the order's stock deduction.
+          void fetchFoodList()
 
 
+          trackCheckoutEvent("checkout_verified", {
+            payment_result: "paid"
+          });
           setStatus("success")
 
 
           setMessage(
-            "Tack för din beställning! Din betalning har genomförts."
+            response.data.warning
+              ? "Betalningen lyckades, men din beställning behöver lagerkontrolleras. Vi kontaktar dig vid behov."
+              : "Tack för din beställning! Din betalning har genomförts."
           )
 
 
@@ -198,6 +207,7 @@ const Verify = () => {
         // PAYMENT CANCELLED
         // ==================================================
 
+        trackCheckoutEvent("checkout_cancelled");
         setStatus("cancelled")
 
 
@@ -238,7 +248,8 @@ const Verify = () => {
   }, [
     searchParams,
     url,
-    setCartItems
+    clearPurchasedCart,
+    fetchFoodList
   ])
 
 
