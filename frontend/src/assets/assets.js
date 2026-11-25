@@ -4,6 +4,7 @@ import logo from './logo.png'
 import search_icon from './search_icon.png'
 
 import menu_2 from './menu_2.png'
+import menu_14 from './menu_14.png'
 import menu_3 from './menu_3.png'
 import menu_8 from './menu_8.png'
 import menu_5 from './menu_5.png'
@@ -68,6 +69,10 @@ export const meal_list = [
     {
         menu_name: "Chicken Adobo",
         menu_image: menu_13
+    },
+    {
+        menu_name: "Pancit",
+        menu_image: menu_14
     }
 ]
 
