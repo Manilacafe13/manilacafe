@@ -70,3 +70,63 @@
     .food-item-bottom .mc-availability { font-size: 11px; gap: 4px 6px; }
     .mc-availability-price-row--detail { gap: 7px 10px; }
 }
+
+/* Manila Café: compact boxed availability */
+.mc-availability {
+    gap: 5px 6px;
+    font-size: 12px;
+}
+
+.mc-availability .mc-availability-status,
+.mc-availability .mc-availability-time {
+    box-sizing: border-box;
+    border: 1px solid;
+    border-radius: 7px;
+    padding: 5px 8px;
+    min-height: 27px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mc-availability .mc-availability-status--available {
+    color: #17613a;
+    background: #e7f5eb;
+    border-color: #a4d6b4;
+}
+.mc-availability .mc-availability-status--sold-out {
+    color: #a12132;
+    background: #fce8eb;
+    border-color: #e9a6b0;
+}
+.mc-availability .mc-availability-status--late {
+    color: #87500e;
+    background: #fff3df;
+    border-color: #edcb94;
+}
+.mc-availability .mc-availability-time {
+    color: #694092;
+    background: #f3ebfa;
+    border-color: #d9c6ea;
+}
+.mc-availability .mc-availability-dot {
+    width: 7px;
+    height: 7px;
+    flex-basis: 7px;
+}
+.mc-availability-price-row--detail .mc-availability {
+    font-size: 13px;
+}
+.mc-availability-price-row--detail .mc-availability-status,
+.mc-availability-price-row--detail .mc-availability-time {
+    padding: 7px 10px;
+}
+@media (max-width: 480px) {
+    .food-item-bottom .mc-availability {
+        font-size: 12px;
+        gap: 4px 5px;
+    }
+    .food-item-bottom .mc-availability-status,
+    .food-item-bottom .mc-availability-time {
+        padding: 5px 6px;
+    }
+}
