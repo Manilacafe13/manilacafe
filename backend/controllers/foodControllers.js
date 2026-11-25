@@ -795,23 +795,19 @@ const updateStock = async (
     // ==================================================
 
     const prep = preparationMinutes === undefined ? undefined : Number(preparationMinutes);
-    if (prep !== undefined && (!Number.isInteger(prep) || prep < 0 || prep > 720)) {
+    if (prep !== undefined && (preparationMinutes === null || typeof preparationMinutes === "boolean" || String(preparationMinutes).trim() === "" || !Number.isInteger(prep) || prep < 0 || prep > 720)) {
       return res.status(400).json({ success: false, message: "Tillagningstid måste vara 0–720 minuter." });
     }
-    const stock =
-      Number(
-        sameDayStock
-      );
+    const stock = sameDayStock === undefined ? undefined : Number(sameDayStock);
+    if (stock === undefined && prep === undefined) {
+      return res.status(400).json({ success: false, message: "Ange dagslager eller tillagningstid." });
+    }
 
 
-    if (
-      !Number.isInteger(
-        stock
-      ) ||
-      stock < 0 ||
-      stock >
-      MAX_SAME_DAY_STOCK
-    ) {
+    if (stock !== undefined && (
+      sameDayStock === null || typeof sameDayStock === "boolean" || String(sameDayStock).trim() === "" ||
+      !Number.isInteger(stock) || stock < 0 || stock > MAX_SAME_DAY_STOCK
+    )) {
 
       return res.status(400).json({
 
@@ -835,8 +831,8 @@ const updateStock = async (
         id,
 
         {
-          $set: { sameDayStock: stock, ...(prep === undefined ? {} : { preparationMinutes: prep }) },
-          $inc: { inventoryEpoch: 1 }
+          $set: { ...(stock === undefined ? {} : { sameDayStock: stock }), ...(prep === undefined ? {} : { preparationMinutes: prep }) },
+          ...(stock === undefined ? {} : { $inc: { inventoryEpoch: 1 } })
         },
 
         {
@@ -874,7 +870,7 @@ const updateStock = async (
       success: true,
 
       message:
-        "Dagslagret har uppdaterats.",
+        stock === undefined ? "Tillagningstiden har uppdaterats." : "Dagslagret har uppdaterats.",
 
       data:
         food

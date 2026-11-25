@@ -543,173 +543,39 @@ const List = () => {
   // UPDATE SAME-DAY STOCK
   // ======================================================
 
-  const updateStock = async (
-    foodId
-  ) => {
-
-    if (
-      !foodId ||
-      updatingStockId
-    ) {
-
+  const updateStock = async (foodId, field) => {
+    if (!foodId || updatingStockId) return
+    const token = localStorage.getItem("token")
+    if (!token) { toast.error("Du måste logga in som administratör."); return }
+    const isPrep = field === 'prep'
+    const raw = isPrep ? prepValues[foodId] : stockValues[foodId]
+    const value = Number(raw)
+    const max = isPrep ? 720 : MAX_SAME_DAY_STOCK
+    if (raw == null || String(raw).trim() === '' || !Number.isInteger(value) || value < 0 || value > max) {
+      toast.error(`${isPrep ? 'Tillagningstid' : 'Dagslager'} måste vara ett heltal mellan 0 och ${max}.`)
       return
-
     }
-
-
-    const token =
-      localStorage.getItem(
-        "token"
-      )
-
-
-    if (!token) {
-
-      toast.error(
-        "Du måste logga in som administratör."
-      )
-
-      return
-
-    }
-
-
-    const prep = Number(prepValues[foodId] ?? 0)
-    if (!Number.isInteger(prep) || prep < 0 || prep > 720) { toast.error("Tillagningstid måste vara 0–720 minuter."); return }
-    const stock =
-      Number(
-        stockValues[foodId]
-      )
-
-
-    if (
-      !Number.isInteger(stock) ||
-      stock < 0 ||
-      stock > MAX_SAME_DAY_STOCK
-    ) {
-
-      toast.error(
-        `Dagslagret måste vara ett heltal mellan 0 och ${MAX_SAME_DAY_STOCK}.`
-      )
-
-      return
-
-    }
-
-
+    const original = list.find(item => item._id === foodId)
     try {
-
-      setUpdatingStockId(
-        foodId
-      )
-
-
-      const response =
-        await axios.post(
-
-          `${url}/api/food/stock`,
-
-          {
-            id:
-              foodId,
-
-            sameDayStock: stock,
-            preparationMinutes: Number(prepValues[foodId] ?? 0)
-          },
-
-          {
-            headers: {
-              token
-            }
-          }
-
-        )
-
-
-      if (
-        response.data.success
-      ) {
-
-        toast.success(
-          response.data.message ||
-          "Dagslagret har uppdaterats."
-        )
-
-
-        setList((prevList) =>
-
-          prevList.map((item) =>
-
-            item._id === foodId
-
-              ? {
-                  ...item,
-
-                  sameDayStock: stock,
-                  preparationMinutes: Number(prepValues[foodId] ?? 0)
-                }
-
-              : item
-
-          )
-
-        )
-
-
-      } else {
-
-        toast.error(
-          response.data.message ||
-          "Dagslagret kunde inte uppdateras."
-        )
-
+      setUpdatingStockId(foodId)
+      const response = await axios.post(`${url}/api/food/stock`, {
+        id: foodId,
+        ...(isPrep ? { preparationMinutes: value } : { sameDayStock: value })
+      }, { headers: { token } })
+      if (!response.data.success || !response.data.data) {
+        toast.error(response.data.message || "Inställningen kunde inte sparas.")
+        return
       }
-
-
+      const saved = response.data.data
+      setList(prev => prev.map(item => item._id === foodId ? { ...item, sameDayStock: saved.sameDayStock, preparationMinutes: saved.preparationMinutes, inventoryEpoch: saved.inventoryEpoch } : item))
+      setStockValues(prev => ({...prev, [foodId]: !isPrep || Number(prev[foodId]) === Number(original?.sameDayStock ?? 0) ? saved.sameDayStock : prev[foodId]}))
+      setPrepValues(prev => ({...prev, [foodId]: isPrep || Number(prev[foodId]) === Number(original?.preparationMinutes ?? 0) ? saved.preparationMinutes ?? 0 : prev[foodId]}))
+      toast.success(response.data.message || "Inställningen har sparats.")
     } catch (error) {
-
-
-
-      if (
-        error.response?.status === 401
-      ) {
-
-        toast.error(
-          "Din inloggning har gått ut. Logga in igen."
-        )
-
-        return
-
-      }
-
-
-      if (
-        error.response?.status === 403
-      ) {
-
-        toast.error(
-          "Du har inte administratörsbehörighet."
-        )
-
-        return
-
-      }
-
-
-      toast.error(
-        error.response?.data?.message ||
-        "Något gick fel när dagslagret skulle uppdateras."
-      )
-
-
+      toast.error(error.response?.data?.message || "Inställningen kunde inte sparas.")
     } finally {
-
-      setUpdatingStockId(
-        null
-      )
-
+      setUpdatingStockId(null)
     }
-
   }
 
 
@@ -1094,71 +960,49 @@ const List = () => {
               {/* SAME-DAY STOCK */}
               {/* ======================================== */}
 
-              <div className="stock-control">
-                <label style={{display: 'block'}}>Tillagningstid (min)
-                  <input type="number" min="0" max="720" step="1" value={prepValues[item._id] ?? 0}
-                    onChange={event => setPrepValues(prev => ({...prev, [item._id]: event.target.value}))} />
-                </label>
-                <small style={{display: 'block'}}>Dagslager = antal portioner ni kan sälja idag, även vid tillagning på beställning.</small>
-
-
-                <input
-
-                  type="number"
-
-                  min="0"
-
-                  max={MAX_SAME_DAY_STOCK}
-
-                  step="1"
-
-                  value={
-                    stockValues[
-                      item._id
-                    ] ?? 0
-                  }
-
-                  onChange={(event) =>
-                    handleStockChange(
-                      item._id,
-                      event.target.value
-                    )
-                  }
-
-                />
-
-
-                <button
-
-                  type="button"
-
-                  className="save-stock-button"
-
-                  disabled={
-                    updatingStockId ===
-                    item._id
-                  }
-
-                  onClick={() =>
-                    updateStock(
-                      item._id
-                    )
-                  }
-
-                >
-
-                  {
-                    updatingStockId ===
-                    item._id
-
-                      ? "..."
-
-                      : "Spara"
-                  }
-
-                </button>
-
-
+              <div className="stock-control mc-admin-availability">
+                <div className="mc-admin-availability-heading">
+                  <strong>Tillgänglighet idag</strong>
+                  <span className={`mc-admin-stock-badge ${Number(item.sameDayStock) > 0 ? 'is-available' : 'is-sold-out'}`}>
+                    {Number(item.sameDayStock) > 0 ? 'I lager / kapacitet' : 'Slutsåld idag'}
+                  </span>
+                </div>
+                <div className="mc-admin-availability-row">
+                  <label>
+                    Dagslager / kapacitet
+                    <input type="number" min="0" max={MAX_SAME_DAY_STOCK} step="1"
+                      value={stockValues[item._id] ?? 0}
+                      disabled={Boolean(updatingStockId)}
+                      onChange={event => handleStockChange(item._id, event.target.value)} />
+                  </label>
+                  <button type="button" className="mc-admin-stock-zero" disabled={Boolean(updatingStockId)}
+                    onClick={() => handleStockChange(item._id, 0)}>Sätt 0</button>
+                  <button type="button" className="save-stock-button" disabled={Boolean(updatingStockId)}
+                    onClick={() => updateStock(item._id, 'stock')}>Spara lager</button>
+                </div>
+                <small>0 = slutsåld idag. Ange hur många beställningar ni kan ta emot idag.</small>
+                <div className="mc-admin-availability-row mc-admin-prep-row">
+                  <label>
+                    Tillagningstid (min)
+                    <input type="number" min="0" max="720" step="1"
+                      value={prepValues[item._id] ?? 0}
+                      disabled={Boolean(updatingStockId)}
+                      onChange={event => setPrepValues(prev => ({...prev, [item._id]: event.target.value}))} />
+                  </label>
+                  <button type="button" className="save-stock-button" disabled={Boolean(updatingStockId)}
+                    onClick={() => updateStock(item._id, 'prep')}>Spara tid</button>
+                </div>
+                <div className="mc-admin-prep-presets" aria-label="Snabbval för tillagningstid">
+                  {[0, 120, 300].map(minutes => (
+                    <button key={minutes} type="button" disabled={Boolean(updatingStockId)}
+                      aria-pressed={Number(prepValues[item._id]) === minutes}
+                      onClick={() => setPrepValues(prev => ({...prev, [item._id]: minutes}))}>
+                      {minutes === 0 ? 'Ingen extra tid' : `${minutes / 60} tim`}
+                    </button>
+                  ))}
+                </div>
+                {/pandesal/i.test(item.name || '') && <small>Rekommenderad tid: 2 tim (120 min).</small>}
+                {/mango\s*float/i.test(item.name || '') && <small>Rekommenderad tid: 5 tim (300 min).</small>}
               </div>
 
 
