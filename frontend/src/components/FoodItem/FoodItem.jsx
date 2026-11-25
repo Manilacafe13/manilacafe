@@ -1,3 +1,4 @@
+import ProductAvailability from "./ProductAvailability.jsx"
 import React, { useContext, useState } from 'react'
 import './FoodItem.css'
 import FoodImageCarousel from '../FoodImageCarousel/FoodImageCarousel'
@@ -573,6 +574,8 @@ const FoodItem = ({
 
                 </div>
 
+
+          <ProductAvailability product={product} />
 
                 {/* DESCRIPTION */}
 

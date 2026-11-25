@@ -66,6 +66,7 @@ const List = () => {
 
   const [stockValues, setStockValues] =
     useState({})
+  const [prepValues, setPrepValues] = useState({})
 
   // ==============================================
   // KUNDVAL / PRODUKTANPASSNINGAR
@@ -478,9 +479,8 @@ const List = () => {
         })
 
 
-        setStockValues(
-          initialStock
-        )
+        setStockValues(initialStock)
+        setPrepValues(Object.fromEntries(foods.map(item => [item._id, item.preparationMinutes ?? 0])))
 
 
       } else {
@@ -574,6 +574,8 @@ const List = () => {
     }
 
 
+    const prep = Number(prepValues[foodId] ?? 0)
+    if (!Number.isInteger(prep) || prep < 0 || prep > 720) { toast.error("Tillagningstid måste vara 0–720 minuter."); return }
     const stock =
       Number(
         stockValues[foodId]
@@ -611,8 +613,8 @@ const List = () => {
             id:
               foodId,
 
-            sameDayStock:
-              stock
+            sameDayStock: stock,
+            preparationMinutes: Number(prepValues[foodId] ?? 0)
           },
 
           {
@@ -643,8 +645,8 @@ const List = () => {
               ? {
                   ...item,
 
-                  sameDayStock:
-                    stock
+                  sameDayStock: stock,
+                  preparationMinutes: Number(prepValues[foodId] ?? 0)
                 }
 
               : item
@@ -1093,6 +1095,11 @@ const List = () => {
               {/* ======================================== */}
 
               <div className="stock-control">
+                <label style={{display: 'block'}}>Tillagningstid (min)
+                  <input type="number" min="0" max="720" step="1" value={prepValues[item._id] ?? 0}
+                    onChange={event => setPrepValues(prev => ({...prev, [item._id]: event.target.value}))} />
+                </label>
+                <small style={{display: 'block'}}>Dagslager = antal portioner ni kan sälja idag, även vid tillagning på beställning.</small>
 
 
                 <input

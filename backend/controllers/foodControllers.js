@@ -750,7 +750,7 @@ const updateStock = async (
 
     const {
       id,
-      sameDayStock
+      sameDayStock, preparationMinutes
     } = req.body;
 
 
@@ -794,6 +794,10 @@ const updateStock = async (
     // VALIDATE STOCK
     // ==================================================
 
+    const prep = preparationMinutes === undefined ? undefined : Number(preparationMinutes);
+    if (prep !== undefined && (!Number.isInteger(prep) || prep < 0 || prep > 720)) {
+      return res.status(400).json({ success: false, message: "Tillagningstid måste vara 0–720 minuter." });
+    }
     const stock =
       Number(
         sameDayStock
@@ -831,7 +835,7 @@ const updateStock = async (
         id,
 
         {
-          $set: { sameDayStock: stock },
+          $set: { sameDayStock: stock, ...(prep === undefined ? {} : { preparationMinutes: prep }) },
           $inc: { inventoryEpoch: 1 }
         },
 

@@ -14,7 +14,7 @@ const Header = () => {
         </h1>
 
         <p className="header-intro">
-          Välj dina favoriter från vår meny och lägg dem i varukorgen.
+          Beställ idag – njut idag! Avhämtning och hemleverans samma dag när lager och tillagningstid tillåter.
         </p>
 
         <div className="header-delivery-options">

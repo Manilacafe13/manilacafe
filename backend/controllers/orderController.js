@@ -1,3 +1,4 @@
+import { preparationMinutes, slotFits } from "../utils/availability.js";
 import orderModel from "../models/orderModel.js";
 
 import discountModel from "../models/discountModel.js";
@@ -2381,6 +2382,12 @@ if (bundles !== undefined) {
         success: false,
         message: validationError.message
       });
+    }
+
+    // Validate preparation lead time before payment, using server time and catalogue values.
+    const prepMinutes = Math.max(0, ...Array.from(quantitiesByProduct.keys(), id => preparationMinutes(productMap.get(id))));
+    if (!slotFits(requestedDate, requestedTime, prepMinutes, deliveryMethod)) {
+      return res.status(409).json({ success: false, message: "Vald tid är för tidig. Välj ett senare tidsintervall." });
     }
 
     // Lagerkrav kontrolleras på summerat antal, inte varje variant för sig.

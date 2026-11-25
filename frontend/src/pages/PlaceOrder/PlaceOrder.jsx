@@ -1,3 +1,4 @@
+import { preparationMinutes, slotFits, stockholmParts } from '../../context/availability.js'
 import { trackCheckoutEvent } from '../../analytics/analytics.js';
 import React, {
   useContext,
@@ -473,7 +474,7 @@ const PlaceOrder = () => {
   // DELIVERY / FULFILLMENT
   // ======================================================
   const [fulfillmentType, setFulfillmentType] =
-    useState("next-day")
+    useState("same-day")
   const [requestedTime, setRequestedTime] =
     useState("")
   const [largeOrderDate, setLargeOrderDate] =
@@ -679,7 +680,7 @@ const PlaceOrder = () => {
   // ======================================================
   // SAME-DAY STOCK CHECK
   // ======================================================
-  const sameDayAvailable = useMemo(() => {
+  const availability = useMemo(() => {
     // Aggregate original and customized quantities by product ID: if a
     // customer orders 2 ordinary and 3 customized, stock must cover 5.
     const quantities = new Map()
@@ -695,7 +696,7 @@ const PlaceOrder = () => {
       quantities.set(productId, (quantities.get(productId) || 0) + quantity)
     }
     if (hasManilaSolo) {
-  if (!soloValid || hasOtherCartItems) return false
+  if (!soloValid || hasOtherCartItems) return { blockers: ["Manila Solo"], minutes: 0 }
 
   for (const productId of soloProductIds) {
     quantities.set(
@@ -704,16 +705,19 @@ const PlaceOrder = () => {
     )
   }
 }
-    if (quantities.size === 0 || invalidCustomizedEntries) return false
+    if (quantities.size === 0 || invalidCustomizedEntries) return { blockers: ["Varukorgen"], minutes: 0 }
+    const blockers = []
+    let minutes = 0
 
     for (const [productId, quantity] of quantities.entries()) {
       const product = food_list.find(item => item._id === productId)
       if (!product || !Number.isInteger(Number(product.sameDayStock)) ||
         Number(product.sameDayStock) < quantity) {
-        return false
+        blockers.push(product?.name || "Produkt")
       }
+      minutes = Math.max(minutes, preparationMinutes(product))
     }
-    return true
+    return { blockers, minutes }
   }, [cartItems, customizedCartItems, food_list, invalidCustomizedEntries,
       hasManilaSolo, soloValid, hasOtherCartItems,
       manilaSolo?.mealId, manilaSolo?.dessertId, manilaSolo?.drinkId])
@@ -721,6 +725,9 @@ const PlaceOrder = () => {
   // ======================================================
   // FORCE LARGE ORDER FOR 10+ PRODUCTS
   // ======================================================
+  const [availabilityNow, setAvailabilityNow] = useState(() => new Date())
+  useEffect(() => { const timer = setInterval(() => setAvailabilityNow(new Date()), 15000); return () => clearInterval(timer) }, [])
+  const sameDayAvailable = availability.blockers.length === 0 && slotFits(stockholmParts(availabilityNow).date, "22:00-23:00", availability.minutes, deliveryMethod, availabilityNow)
   useEffect(() => {
     if (isLargeOrder) {
       setFulfillmentType(
@@ -734,7 +741,7 @@ const PlaceOrder = () => {
   useEffect(() => {
     if (
       fulfillmentType === "same-day" &&
-      !sameDayAvailable
+      !sameDayAvailable && food_list.length > 0 && checkoutStep >= 2
     ) {
       setFulfillmentType(
         "next-day"
@@ -742,55 +749,20 @@ const PlaceOrder = () => {
     }
   }, [
     sameDayAvailable,
-    fulfillmentType
+    fulfillmentType, food_list.length, checkoutStep
   ])
   // ======================================================
   // DATE HELPERS
   // ======================================================
-  const formatLocalDate = (date) => {
-    const year =
-      date.getFullYear()
-    const month =
-      String(
-        date.getMonth() + 1
-      ).padStart(
-        2,
-        "0"
-      )
-    const day =
-      String(
-        date.getDate()
-      ).padStart(
-        2,
-        "0"
-      )
-    return `${year}-${month}-${day}`
+  const dateAfter = days => {
+    const today = stockholmParts(new Date()).date
+    const date = new Date(`${today}T12:00:00Z`)
+    date.setUTCDate(date.getUTCDate() + days)
+    return date.toISOString().slice(0, 10)
   }
-  const getTodayDate = () => {
-    return formatLocalDate(
-      new Date()
-    )
-  }
-  const getTomorrowDate = () => {
-    const tomorrow =
-      new Date()
-    tomorrow.setDate(
-      tomorrow.getDate() + 1
-    )
-    return formatLocalDate(
-      tomorrow
-    )
-  }
-  const getMinimumLargeOrderDate = () => {
-    const minimumDate =
-      new Date()
-    minimumDate.setDate(
-      minimumDate.getDate() + 2
-    )
-    return formatLocalDate(
-      minimumDate
-    )
-  }
+  const getTodayDate = () => dateAfter(0)
+  const getTomorrowDate = () => dateAfter(1)
+  const getMinimumLargeOrderDate = () => dateAfter(2)
   // ======================================================
   // REQUESTED DATE
   // ======================================================
@@ -862,11 +834,7 @@ const PlaceOrder = () => {
     largeOrderDate
   ])
   const availableTimeSlots = getAvailableTimeSlots().filter((slot) => {
-    if (getRequestedDate() !== getTodayDate()) return true
-    const [hour, minute] = slot.split("-")[0].split(":").map(Number)
-    const slotStart = new Date()
-    slotStart.setHours(hour, minute, 0, 0)
-    return slotStart > new Date()
+    return slotFits(getRequestedDate(), slot, availability.minutes, deliveryMethod, new Date())
   })
   const continueToContact = () => {
     if (!getRequestedDate()) {
@@ -1428,7 +1396,7 @@ const PlaceOrder = () => {
                 <label className={`mc-date-pill ${fulfillmentType === "same-day" ? "selected" : ""} ${(!sameDayAvailable || isLargeOrder || isTodayClosed) ? "disabled" : ""}`}>
                   <input type="radio" name="fulfillmentType" value="same-day" checked={fulfillmentType === "same-day"} disabled={!sameDayAvailable || isLargeOrder || isTodayClosed} onChange={() => { setFulfillmentType("same-day"); setStepError("") }} />
                   <strong>Idag</strong>
-                  <small>{isTodayClosed ? "Stängt" : !sameDayAvailable ? "Ej i lager" : isLargeOrder ? "Endast för mindre beställningar" : "Snabbast"}</small>
+                  <small>{isTodayClosed ? "Stängt" : !sameDayAvailable ? (availability.blockers.length ? "Lager räcker inte" : "Inga tider kvar") : isLargeOrder ? "Endast för mindre beställningar" : "Snabbast"}</small>
                 </label>
                 <label className={`mc-date-pill ${fulfillmentType === "next-day" ? "selected" : ""} ${(isLargeOrder || isTomorrowClosed) ? "disabled" : ""}`}>
                   <input type="radio" name="fulfillmentType" value="next-day" checked={fulfillmentType === "next-day"} disabled={isLargeOrder || isTomorrowClosed} onChange={() => { setFulfillmentType("next-day"); setStepError("") }} />
@@ -1441,6 +1409,8 @@ const PlaceOrder = () => {
                   <small>Minst 2 dagar framåt</small>
                 </label>
               </div>
+              {availability.blockers.length > 0 && <p className="mc-hint">För idag räcker inte lagret för: {availability.blockers.join(", ")}. Välj ett kommande datum eller ändra varukorgen.</p>}
+              {availability.minutes > 0 && <p className="mc-hint">Beställningen behöver minst {availability.minutes} min förberedelse + 30 min betalningsmarginal{deliveryMethod === "delivery" ? " + 60 min leveransmarginal" : ""}.</p>}
               {isLargeOrder && (
                 <p className="mc-hint">Din beställning innehåller {totalQuantity} produkter. Större beställningar behöver minst 48 timmars framförhållning.</p>
               )}

@@ -1,3 +1,4 @@
+import ProductAvailability from "../../components/FoodItem/ProductAvailability.jsx"
 import React, { useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 
@@ -999,6 +1000,8 @@ const ProductPage = () => {
             )
           }
 
+
+          <ProductAvailability product={product} />
 
           {/* PRICE */}
 

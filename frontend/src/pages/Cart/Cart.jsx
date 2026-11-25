@@ -1,3 +1,4 @@
+import { preparationMinutes, slotFits, stockholmParts } from '../../context/availability.js'
 
 import React, { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -292,8 +293,26 @@ const Cart = () => {
   // JSX
   // ====================================================
 
+  const quantities = new Map()
+  for (const entry of [...entries, ...soloProducts.map(item => ({ productId: item.productId, quantity: 1 }))]) {
+    quantities.set(entry.productId, (quantities.get(entry.productId) || 0) + Number(entry.quantity || 0))
+  }
+  const cartProducts = [...quantities].map(([id, quantity]) => ({ product: food_list.find(p => String(p._id) === String(id)), quantity }))
+  const blockers = cartProducts.filter(({product, quantity}) => !product || Number(product.sameDayStock ?? 0) < quantity)
+  const prep = Math.max(0, ...cartProducts.map(({product}) => preparationMinutes(product)))
+  const now = new Date()
+  const today = stockholmParts(now).date
+  const earliest = Array.from({length: 13}, (_, i) => `${i + 10}:00-${i + 11}:00`).find(slot => slotFits(today, slot, prep, 'pickup', now))
+  const count = [...quantities.values()].reduce((a,b) => a+b, 0)
   return (
     <div className="cart">
+      {count > 0 && <div role="status" style={{padding: '12px', border: '1px solid #d6d6d6', borderRadius: 8, marginBottom: 12}}>
+        <strong>{count >= 10 ? 'Större beställning – välj datum i kassan' : blockers.length ? 'Alla produkter kan inte levereras idag' : earliest ? `Tidigast avhämtning idag: ${earliest}` : 'Inga tider kvar för idag'}</strong>
+        {blockers.length > 0 && <p>Dagens lager räcker inte för: {blockers.map(({product}) => product?.name || 'Produkt').join(', ')}.</p>}
+        {prep > 0 && <p>Minst {prep} min förberedelse för hela beställningen. Betalningsmarginal och eventuell leveranstid tillkommer.</p>}
+        <p>Bekräfta tillgängligt datum och tidsintervall i kassan.</p>
+      </div>}
+
 
       {/* ============================================== */}
       {/* PRODUCT LIST */}
