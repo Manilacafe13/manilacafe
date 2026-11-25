@@ -1,3 +1,4 @@
+
 import basket_icon from './basket_icon.png'
 import logo from './logo.png'
 import search_icon from './search_icon.png'
@@ -15,8 +16,7 @@ import menu_19 from './menu_19.png'
 import menu_17 from './menu_17.png'
 import menu_30 from './menu_30.png'
 import menu_31 from './menu_31.png'
-
-
+import menu_32 from './menu_32.png'
 
 import add_icon_white from './add_icon_white.png'
 import add_icon_green from './add_icon_green.png'
@@ -33,7 +33,6 @@ import profile_icon from './profile_icon.png'
 import bag_icon from './bag_icon.png'
 import logout_icon from './logout_icon.png'
 import parcel_icon from './parcel_icon.png'
-
 
 export const assets = {
     logo,
@@ -66,7 +65,6 @@ export const meal_list = [
         menu_name: "Sinigang",
         menu_image: menu_7
     },
-
     {
         menu_name: "Chicken Adobo",
         menu_image: menu_13
@@ -83,7 +81,7 @@ export const menu_list = [
         menu_name: "Floats",
         menu_image: menu_2
     },
-     {
+    {
         menu_name: "Halo-Halo",
         menu_image: menu_10
     },
@@ -110,6 +108,10 @@ export const menu_list = [
     {
         menu_name: "Sago",
         menu_image: menu_17
+    },
+    {
+        menu_name: "Champorado",
+        menu_image: menu_32
     }
 ]
 
@@ -131,5 +133,4 @@ export const drink_list = [
         menu_name: "Kalla dryck",
         menu_image: menu_31
     }
-
 ]
