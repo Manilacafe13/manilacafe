@@ -1001,12 +1001,11 @@ const ProductPage = () => {
           }
 
 
-          <ProductAvailability product={product} />
+          {/* PRICE + AVAILABILITY */}
 
-          {/* PRICE */}
-
-          <div className="product-page-price">
-            {product.price} kr
+          <div className="mc-availability-price-row mc-availability-price-row--detail">
+            <div className="product-page-price">{product.price} kr</div>
+            <ProductAvailability product={product} detailed />
           </div>
 
           {/* ================================== */}

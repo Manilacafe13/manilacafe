@@ -575,7 +575,6 @@ const FoodItem = ({
                 </div>
 
 
-          <ProductAvailability product={product} />
 
                 {/* DESCRIPTION */}
 
@@ -811,15 +810,17 @@ const FoodItem = ({
 
                 {/* BOTTOM */}
 
-                <div className="food-item-bottom">
+                <div className="food-item-bottom food-item-bottom--availability">
 
-                    <p
-                        className="food-item-price"
-                        aria-label={`Pris ${price} kronor`}
-                    >
-                        {price} kr
-                    </p>
-
+                    <div className="mc-availability-price-row">
+                        <p
+                            className="food-item-price"
+                            aria-label={`Pris ${price} kronor`}
+                        >
+                            {price} kr
+                        </p>
+                        <ProductAvailability product={product} />
+                    </div>
 
                     {quantity > 0 && (
 
