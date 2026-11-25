@@ -1,3 +1,4 @@
+import { uploadProductImageToR2, deleteProductImageFromR2 } from "../utils/r2Images.js";
 import futureProductModel from "../models/futureProductModel.js";
 import mongoose from "mongoose";
 import fs from "fs";
@@ -674,7 +675,8 @@ const addFutureProduct = async (
   res
 ) => {
 
-  let cloudinaryPublicId = null;
+  let r2ImageKey = null;
+  let imageSaved = false;
 
   try {
 
@@ -813,28 +815,11 @@ const addFutureProduct = async (
 
 
       // ==================================================
-      // UPLOAD TO CLOUDINARY
+      // UPLOAD TO R2
       // ==================================================
 
-      const uploadResult =
-        await cloudinary
-          .uploader
-          .upload(
-            req.file.path,
-            {
-
-              folder:
-                "manilacafe/future-products",
-
-              resource_type:
-                "image"
-
-            }
-          );
-
-
-      cloudinaryPublicId =
-        uploadResult.public_id;
+      const uploadResult = await uploadProductImageToR2(req.file.path);
+      r2ImageKey = uploadResult.public_id;
 
 
       image =
@@ -887,6 +872,7 @@ const addFutureProduct = async (
     // ==================================================
 
     await product.save();
+    imageSaved = true;
 
 
     // ==================================================
@@ -950,30 +936,15 @@ const addFutureProduct = async (
 
 
     // ==================================================
-    // ROLLBACK CLOUDINARY IMAGE IF DATABASE SAVE FAILED
+    // ROLLBACK R2 IMAGE IF DATABASE SAVE FAILED
     // ==================================================
 
-    if (cloudinaryPublicId) {
-
+    if (r2ImageKey && !imageSaved) {
       try {
-
-        await cloudinary
-          .uploader
-          .destroy(
-            cloudinaryPublicId
-          );
-
-      } catch (
-        cloudinaryError
-      ) {
-
-        console.log(
-          "Could not remove Cloudinary image:",
-          cloudinaryError.message
-        );
-
+        await deleteProductImageFromR2(r2ImageKey);
+      } catch (r2Error) {
+        console.error("R2 rollback failed:", r2Error.message);
       }
-
     }
 
 

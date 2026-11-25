@@ -1,4 +1,4 @@
-import { uploadProductImageToR2 } from "../utils/r2Images.js";
+import { uploadProductImageToR2, deleteProductImageFromR2 } from "../utils/r2Images.js";
 import foodModel from "../models/foodmodel.js";
 import mongoose from "mongoose";
 import fs from "fs";
@@ -332,7 +332,8 @@ const addFood = async (
   res
 ) => {
 
-  let cloudinaryPublicId = null;
+  let r2ImageKey = null;
+  let imageSaved = false;
 
 
   try {
@@ -573,10 +574,11 @@ const addFood = async (
 
 
     // ==================================================
-    // UPLOAD IMAGE TO CLOUDINARY
+    // UPLOAD IMAGE TO R2
     // ==================================================
 
     const uploadResult = await uploadProductImageToR2(req.file.path);
+    r2ImageKey = uploadResult.public_id;
 
 
     // ==================================================
@@ -618,6 +620,7 @@ const addFood = async (
     // ==================================================
 
     await food.save();
+    imageSaved = true;
 
 
     return res.status(201).json({
@@ -654,32 +657,15 @@ const addFood = async (
 
 
     // ==================================================
-    // REMOVE CLOUDINARY IMAGE IF SAVE FAILED
+    // REMOVE R2 IMAGE IF SAVE FAILED
     // ==================================================
 
-    if (
-      cloudinaryPublicId
-    ) {
-
+    if (r2ImageKey && !imageSaved) {
       try {
-
-        await cloudinary
-          .uploader
-          .destroy(
-            cloudinaryPublicId
-          );
-
-      } catch (
-      cloudinaryError
-      ) {
-
-        console.log(
-          "Could not remove Cloudinary image:",
-          cloudinaryError.message
-        );
-
+        await deleteProductImageFromR2(r2ImageKey);
+      } catch (r2Error) {
+        console.error("R2 rollback failed:", r2Error.message);
       }
-
     }
 
 
@@ -1098,9 +1084,10 @@ const removeFood = async (
     // ==================================================
 
     else if (
-      food.image
+      food.image && !/^https?:\/\//i.test(food.image) &&
+      /^[a-zA-Z0-9_.-]+$/.test(food.image) &&
+      food.image !== "." && food.image !== ".."
     ) {
-
       fs.unlink(
         `uploads/${food.image}`,
         (error) => {
