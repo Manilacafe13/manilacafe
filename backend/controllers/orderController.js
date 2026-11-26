@@ -3678,9 +3678,52 @@ const listOrders = async (req, res) => {
 const kitchenUnits = (order) => (Array.isArray(order.items) ? order.items : [])
   .flatMap((item, row) => Array.from({ length: Number(item.quantity || 0) }, (_, unit) => `${row}:${unit}`));
 
+// Workflow changes are separate from Stripe, inventory and customer checkout.
+const workflowVersionOf = order => Number(order.workflowVersion || 0);
+const workflowVersionFilter = version => version === 0
+  ? { $in: [0, null] } : version;
+const canPauseOrder = order => order.payment === true && [
+  "Betalning mottagen", "Beställning mottagen", "Förbereds", "Redo för upphämtning"
+].includes(order.status);
+
+const updateOrderWorkflow = async (req, res) => {
+  const { orderId, action, expectedVersion, expectedStatus } = req.body || {};
+  if (!mongoose.isValidObjectId(orderId) || !["pause", "resume", "reopen"].includes(action) ||
+      !Number.isSafeInteger(expectedVersion) || expectedVersion < 0 || typeof expectedStatus !== "string") {
+    return res.status(400).json({ success: false, message: "Ogiltig orderåtgärd." });
+  }
+  try {
+    const order = await orderModel.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: "Ordern finns inte." });
+    const conflict = message => res.status(409).json({ success: false, message });
+    if (workflowVersionOf(order) !== expectedVersion || order.status !== expectedStatus) {
+      return conflict("Ordern har ändrats. Uppdatera och försök igen.");
+    }
+    const paused = order.kitchenPaused === true;
+    const completed = ["Levererad", "Upphämtad"].includes(order.status);
+    if (action === "reopen" ? !(completed && order.payment === true) :
+        action === "pause" ? !(canPauseOrder(order) && !paused) : !(canPauseOrder(order) && paused)) {
+      return conflict("Den här åtgärden är inte tillåten för orderns aktuella status.");
+    }
+    const filter = { _id: orderId, payment: true, status: order.status,
+      kitchenPaused: paused ? true : { $ne: true }, workflowVersion: workflowVersionFilter(expectedVersion) };
+    const changes = { kitchenPaused: action === "pause" };
+    // Reopening corrects a mistaken completion, not a cancellation or a refund.
+    if (action === "reopen") changes.status = "Förbereds";
+    const updated = await orderModel.findOneAndUpdate(filter, {
+      $set: changes, $inc: { workflowVersion: 1 }
+    }, { new: true, runValidators: true });
+    if (!updated) return conflict("Ordern har ändrats. Uppdatera och försök igen.");
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Order workflow error:", error);
+    return res.status(500).json({ success: false, message: "Orderåtgärden kunde inte sparas." });
+  }
+};
+
 const updateKitchenProgress = async (req, res) => {
   const orderId = req.params.orderId;
-  const { action, unitKey, expectedVersion } = req.body || {};
+  const { action, unitKey, expectedVersion, expectedWorkflowVersion = 0 } = req.body || {};
   if (!mongoose.isValidObjectId(orderId) || !Number.isSafeInteger(expectedVersion) || expectedVersion < 0 ||
       !["check", "uncheck", "pack", "unpack"].includes(action)) {
     return res.status(400).json({ success: false, message: "Ogiltig köksuppdatering." });
@@ -3688,7 +3731,8 @@ const updateKitchenProgress = async (req, res) => {
   try {
     const order = await orderModel.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: "Ordern finns inte." });
-    if (!order.payment || ["Avbruten", "Levererad", "Upphämtad"].includes(order.status) ||
+    if (order.kitchenPaused === true || workflowVersionOf(order) !== expectedWorkflowVersion ||
+        !order.payment || ["Avbruten", "Levererad", "Upphämtad"].includes(order.status) ||
         order.status === "Betalning mottagen - lagerkontroll krävs") {
       return res.status(409).json({ success: false, message: "Ordern kan inte ändras i köket just nu.", data: order });
     }
@@ -3714,6 +3758,7 @@ const updateKitchenProgress = async (req, res) => {
     }
     const packed = action === "pack" ? true : action === "unpack" ? false : false;
     const filter = { _id: orderId, payment: true, status: order.status,
+      kitchenPaused: { $ne: true }, workflowVersion: workflowVersionFilter(expectedWorkflowVersion),
       $or: [{ "kitchenProgress.version": expectedVersion },
         ...(expectedVersion === 0 ? [{ "kitchenProgress.version": { $exists: false } }] : [])] };
     const updated = await orderModel.findOneAndUpdate(filter, {
@@ -3733,7 +3778,7 @@ const updateKitchenProgress = async (req, res) => {
 };
 
 const updateStatus = async (req, res) => {
-  const { orderId, status } = req.body || {};
+  const { orderId, status, expectedWorkflowVersion = 0 } = req.body || {};
   if (!mongoose.isValidObjectId(orderId) || typeof status !== "string" ||
       !ALLOWED_ORDER_STATUSES.includes(status.trim())) {
     return res.status(400).json({ success: false, message: "Ogiltigt order-ID eller orderstatus." });
@@ -3742,6 +3787,9 @@ const updateStatus = async (req, res) => {
   try {
     const order = await orderModel.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: "Ordern finns inte." });
+    if (order.kitchenPaused === true || workflowVersionOf(order) !== expectedWorkflowVersion) {
+      return res.status(409).json({ success: false, message: "Aktivera en vilande order eller uppdatera orderlistan först." });
+    }
     if (["Upphämtad", "Levererad", "Avbruten"].includes(order.status)) {
       return res.status(409).json({ success: false, message: "Avslutade beställningar kan inte ändras här." });
     }
@@ -3765,7 +3813,8 @@ const updateStatus = async (req, res) => {
       return res.status(409).json({ success: false, message: "Bocka av alla produkter och kontrollera packningen först." });
     }
     // Atomic filter re-checks packed and checklist version; no bypass via direct API calls.
-    const filter = { _id: orderId, status: order.status, payment: order.payment };
+    const filter = { _id: orderId, status: order.status, payment: order.payment,
+      kitchenPaused: { $ne: true }, workflowVersion: workflowVersionFilter(expectedWorkflowVersion) };
     if (needsKitchen) {
       filter["kitchenProgress.packed"] = true;
       const currentVersion = Number(order.kitchenProgress?.version || 0);
@@ -3801,6 +3850,7 @@ export {
   listOrders,
 
   updateStatus,
+  updateOrderWorkflow,
   updateKitchenProgress
 
 };

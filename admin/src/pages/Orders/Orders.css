@@ -86,7 +86,7 @@
 .mc-orders-hint span { white-space: nowrap; }
 .mc-orders-counts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -199,6 +199,7 @@
   max-width: 55%;
 }
 .mc-order-state--active { color: #17683b; background: #e7f5eb; }
+.mc-order-state--paused { color: #67418b; background: #f1e9fa; }
 .mc-order-state--pending { color: #92630b; background: #fff3d9; }
 .mc-order-state--completed { color: #456851; background: #eaf0eb; }
 .mc-order-state--cancelled { color: #953f3f; background: #ffeded; }
@@ -553,3 +554,9 @@
   .mc-order-product > strong { grid-column: 2; justify-self: start; }
   .mc-order-kitchen-product-title { flex-wrap: wrap; }
 }
+
+/* Internal planning controls */
+.mc-order-pause-button { background: #f4eef9; color: #5d387d; border: 1px solid #d7c5e7; }
+.mc-order-pause-button:hover:not(:disabled) { background: #e9dcf5; }
+.mc-orders-paused-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; margin-bottom: 16px; background: #fff4d9; border: 1px solid #e8cc87; border-radius: 10px; color: #79520e; font-size: 13px; }
+.mc-orders-paused-alert button { border: 1px solid #d5b46a; background: white; color: #79520e; border-radius: 8px; padding: 9px 12px; cursor: pointer; font: inherit; font-weight: 700; }

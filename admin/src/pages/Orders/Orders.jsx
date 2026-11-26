@@ -10,6 +10,7 @@ const COMPLETED = new Set(['Levererad', 'Upphämtad'])
 const POLL_MS = 15000
 const TABS = [
   { id: 'active', title: 'Pågående' },
+  { id: 'paused', title: 'Vilande' },
   { id: 'pending', title: 'Väntar betalning' },
   { id: 'completed', title: 'Arkiv' },
   { id: 'cancelled', title: 'Avbrutna' }
@@ -19,6 +20,7 @@ const getGroup = (order) => {
   if (COMPLETED.has(order.status)) return 'completed'
   if (order.status === 'Avbruten') return 'cancelled'
   if (order.payment !== true) return 'pending'
+  if (order.kitchenPaused === true) return 'paused'
   return 'active'
 }
 
@@ -49,6 +51,7 @@ const stockholmDay = (date = new Date()) => new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Stockholm', year: 'numeric', month: '2-digit', day: '2-digit'
 }).format(date)
 const requestedDay = order => {
+  if (!order.requestedDate) return ''
   const d = new Date(order.requestedDate)
   return Number.isNaN(d.getTime()) ? '' : stockholmDay(d)
 }
@@ -246,6 +249,8 @@ const Orders = ({ url }) => {
   const knownPaymentsRef = useRef(new Map())
   const initializedRef = useRef(false)
   const fetchingRef = useRef(false)
+  const mutationRef = useRef(false)
+  const mutationEpoch = useRef(0)
   const mountedRef = useRef(false)
   const soundEnabledRef = useRef(false)
   const orderAudioRef = useRef(null)
@@ -296,7 +301,8 @@ const Orders = ({ url }) => {
   }
 
   const fetchAllOrders = useCallback(async () => {
-    if (fetchingRef.current) return
+    if (fetchingRef.current || mutationRef.current) return
+    const epoch = mutationEpoch.current
     const token = localStorage.getItem('token')
     if (!token || !backendUrl) {
       setError(!token ? 'Du behöver logga in som administratör.' : 'Backend-adressen saknas.')
@@ -309,6 +315,7 @@ const Orders = ({ url }) => {
         headers: { token, Authorization: `Bearer ${token}` }
       })
       if (!response.data?.success) throw new Error(response.data?.message || 'Orderlistan kunde inte hämtas.')
+      if (mutationRef.current || epoch !== mutationEpoch.current) return
       const incoming = Array.isArray(response.data.data) ? response.data.data : []
 
       if (initializedRef.current) {
@@ -404,13 +411,15 @@ const Orders = ({ url }) => {
   }, [fetchAllOrders])
 
   const updateKitchen = async (order, action, unitKey) => {
-    if (updatingKitchen) return
+    if (mutationRef.current) return
     const token = localStorage.getItem('token')
     if (!token || !backendUrl) return toast.error('Logga in igen för att spara checklistan.')
+    mutationRef.current = true
+    mutationEpoch.current += 1
     setUpdatingKitchen(order._id)
     try {
       const response = await axios.patch(`${backendUrl}/api/order/kitchen/${order._id}`,
-        { action, unitKey, expectedVersion: Number(order.kitchenProgress?.version || 0) },
+        { action, unitKey, expectedVersion: Number(order.kitchenProgress?.version || 0), expectedWorkflowVersion: Number(order.workflowVersion || 0) },
         { headers: { token, Authorization: `Bearer ${token}` } })
       if (!response.data?.success) throw new Error(response.data?.message || 'Kunde inte spara.')
       setOrders(previous => previous.map(o => o._id === order._id ? response.data.data : o))
@@ -418,29 +427,34 @@ const Orders = ({ url }) => {
       const latest = error.response?.data?.data
       if (latest?._id) setOrders(previous => previous.map(o => o._id === latest._id ? latest : o))
       toast.error(error.response?.data?.message || error.message || 'Checklistan kunde inte sparas.')
-      void fetchAllOrders()
     } finally {
+      mutationRef.current = false
       setUpdatingKitchen(null)
+      void fetchAllOrders()
     }
   }
 
   const updateStatus = async (orderId, status) => {
     const token = localStorage.getItem('token')
-    if (!token || !backendUrl || updatingOrder) return
+    if (!token || !backendUrl || mutationRef.current) return
+    const currentOrder = orders.find(o => o._id === orderId)
+    if (!currentOrder) return
     if (['Redo för upphämtning', 'På väg', 'Upphämtad', 'Levererad'].includes(status)) {
       const order = orders.find(o => o._id === orderId)
       if (!order || !kitchenReady(order)) return toast.error('Bocka av och packa alla produkter först.')
     }
     if (status === 'Avbruten' && !window.confirm('Avbryta beställningen? Den blir kvar under Avbrutna.')) return
     if (COMPLETED.has(status) && !window.confirm('Bekräfta att beställningen är färdig och överlämnad? Den flyttas till Arkiv.')) return
+    mutationRef.current = true
+    mutationEpoch.current += 1
     setUpdatingOrder(orderId)
     try {
-      const response = await axios.post(`${backendUrl}/api/order/status`, { orderId, status }, {
+      const response = await axios.post(`${backendUrl}/api/order/status`, { orderId, status, expectedWorkflowVersion: Number(currentOrder.workflowVersion || 0) }, {
         headers: { token, Authorization: `Bearer ${token}` }
       })
       if (!response.data?.success) throw new Error(response.data?.message || 'Orderstatus kunde inte sparas.')
       setOrders(previous => previous.map(order =>
-        order._id === orderId ? { ...order, status: response.data.data?.status || status } : order
+        order._id === orderId ? response.data.data : order
       ))
       setExpandedId(current => current === orderId ? null : current)
       setKitchenOrderId(null)
@@ -448,7 +462,38 @@ const Orders = ({ url }) => {
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Orderstatus kunde inte sparas.')
     } finally {
+      mutationRef.current = false
       setUpdatingOrder(null)
+      void fetchAllOrders()
+    }
+  }
+
+  const updateWorkflow = async (order, action) => {
+    if (mutationRef.current) return
+    const token = localStorage.getItem('token')
+    if (!token || !backendUrl) return toast.error('Logga in igen för att ändra ordern.')
+    if (action === 'reopen' && !window.confirm('Återöppna en felaktigt avslutad order? Kunden kommer att se status Förbereds igen. Betalning, lager och checklista ändras inte.')) return
+    if (action === 'pause' && ['IDAG', 'FÖRSENAD', 'DATUM SAKNAS'].includes(dateKind(order)) &&
+        !window.confirm('Ordern ska hanteras idag, är försenad eller saknar datum. Lägg den ändå på vila?')) return
+    mutationRef.current = true
+    mutationEpoch.current += 1
+    setUpdatingOrder(order._id)
+    try {
+      const response = await axios.patch(`${backendUrl}/api/order/workflow`, {
+        orderId: order._id, action, expectedVersion: Number(order.workflowVersion || 0), expectedStatus: order.status
+      }, { headers: { token, Authorization: `Bearer ${token}` } })
+      if (!response.data?.success || !response.data?.data) throw new Error(response.data?.message || 'Orderåtgärden kunde inte sparas.')
+      setOrders(previous => previous.map(o => o._id === order._id ? response.data.data : o))
+      window.dispatchEvent(new Event('manilacafe:orders-updated'))
+      setExpandedId(null)
+      setKitchenOrderId(null)
+      toast.success(action === 'pause' ? 'Ordern finns nu under Vilande.' : 'Ordern finns nu under Pågående.')
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Orderåtgärden kunde inte sparas.')
+    } finally {
+      mutationRef.current = false
+      setUpdatingOrder(null)
+      void fetchAllOrders()
     }
   }
 
@@ -460,8 +505,9 @@ const Orders = ({ url }) => {
     return `${backendUrl}/images/${value}`
   }
 
-  const counts = { active: 0, pending: 0, completed: 0, cancelled: 0 }
+  const counts = { active: 0, paused: 0, pending: 0, completed: 0, cancelled: 0 }
   orders.forEach(order => { counts[getGroup(order)] += 1 })
+  const duePaused = orders.filter(order => getGroup(order) === 'paused' && ['IDAG', 'FÖRSENAD', 'DATUM SAKNAS'].includes(dateKind(order))).length
 
   const visibleOrders = orders
     .filter(order => getGroup(order) === tab)
@@ -517,6 +563,12 @@ const Orders = ({ url }) => {
         ))}
       </section>
 
+      {duePaused > 0 && (
+        <div className="mc-orders-paused-alert" role="status">
+          <span><strong>{duePaused} vilande {duePaused === 1 ? 'order' : 'ordrar'}</strong> ska hanteras idag, är försenade eller saknar datum.</span>
+          <button type="button" onClick={() => { setTab('paused'); setQuery(''); setExpandedId(null); setKitchenOrderId(null) }}>Visa vilande</button>
+        </div>
+      )}
       <div className="mc-orders-tools">
         <label className="mc-orders-search">
           <span>Sök bland {TABS.find(item => item.id === tab)?.title.toLowerCase()}</span>
@@ -557,8 +609,10 @@ const Orders = ({ url }) => {
             const checked = new Set(order.kitchenProgress?.checkedUnits || [])
             const checkedCount = units.filter(unit => checked.has(unit.key)).length
             const ready = kitchenReady(order)
-            const kitchenBusy = updatingKitchen === order._id
+            const kitchenBusy = Boolean(updatingKitchen || updatingOrder)
             const canPrepare = group === 'active' && order.status !== 'Betalning mottagen - lagerkontroll krävs'
+            const canPause = canPrepare && ['Betalning mottagen', 'Beställning mottagen', 'Förbereds', 'Redo för upphämtning'].includes(order.status)
+            const canReopen = group === 'completed' && order.payment === true
             const dayLabel = dateKind(order)
             const statusOptions = [
               'Beställning mottagen', 'Förbereds',
@@ -579,7 +633,7 @@ const Orders = ({ url }) => {
                 </div>
                 <div className="mc-order-top">
                   <div><span className="mc-order-kicker">ORDER</span><h2>{orderNumber(order._id)}</h2></div>
-                  <span className={`mc-order-state mc-order-state--${group}`}>{currentStatus}</span>
+                  <span className={`mc-order-state mc-order-state--${group}`}>{group === 'paused' ? 'Vilande' : currentStatus}</span>
                 </div>
                 <div className="mc-order-primary">
                   <strong>{orderName(order)}</strong>
@@ -599,6 +653,7 @@ const Orders = ({ url }) => {
                     ⚠ Anpassad beställning – kontrollera kundvalen innan du lagar maten.
                   </p>
                 )}
+                {group === 'paused' && <p className="mc-order-warning">Vilande · {currentStatus}. Aktivera ordern när arbetet ska påbörjas. Checklistan är sparad.</p>}
                 <section className="mc-kitchen-checklist" aria-label={`Checklista för ${orderNumber(order._id)}`}>
                   <div className="mc-kitchen-progress-title">
                     <strong>Produkter klara</strong><strong>{checkedCount} / {units.length}</strong>
@@ -651,8 +706,14 @@ const Orders = ({ url }) => {
                     aria-expanded={expanded} aria-controls={`mc-order-details-${order._id}`}>
                     {expanded ? 'Dölj detaljer ↑' : 'Visa detaljer ↓'}
                   </button>
+                  {canPause && <button type="button" className="mc-order-pause-button" disabled={kitchenBusy}
+                    onClick={() => void updateWorkflow(order, 'pause')}>Lägg på vila</button>}
+                  {group === 'paused' && <button type="button" className="mc-order-finish-button" disabled={kitchenBusy}
+                    onClick={() => void updateWorkflow(order, 'resume')}>Aktivera order</button>}
+                  {canReopen && <button type="button" className="mc-order-pause-button" disabled={kitchenBusy}
+                    onClick={() => void updateWorkflow(order, 'reopen')}>Återöppna order</button>}
                   {group === 'active' && (
-                    <button type="button" className="mc-order-finish-button" disabled={updatingOrder === order._id || !ready}
+                    <button type="button" className="mc-order-finish-button" disabled={kitchenBusy || !ready || !canPrepare}
                       onClick={() => void updateStatus(order._id, pickup ? 'Upphämtad' : 'Levererad')}>
                       {updatingOrder === order._id ? 'Sparar…' : ready ? 'Avsluta & arkivera' : 'Packning krävs före avslut'}
                     </button>
@@ -794,7 +855,7 @@ const Orders = ({ url }) => {
                     <div className="mc-order-status-editor">
                       <label htmlFor={`mc-status-${order._id}`}>Ändra orderstatus</label>
                       <select id={`mc-status-${order._id}`} value={currentStatus}
-                        disabled={updatingOrder === order._id}
+                        disabled={kitchenBusy || group === 'paused' || group === 'completed' || group === 'cancelled'}
                         onChange={event => void updateStatus(order._id, event.target.value)}>
                         {!statusOptions.includes(currentStatus) && <option value={currentStatus}>{currentStatus}</option>}
                         {statusOptions.map(status => <option key={status} value={status}>{status}</option>)}

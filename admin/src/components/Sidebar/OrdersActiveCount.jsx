@@ -10,6 +10,7 @@ const isActiveOrder = (order) => Boolean(
   order &&
   !COMPLETED.has(order.status) &&
   order.status !== 'Avbruten' &&
+  order.kitchenPaused !== true &&
   order.payment === true
 );
 

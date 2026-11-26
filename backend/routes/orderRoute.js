@@ -7,6 +7,7 @@ import {
   userOrders,
   listOrders,
   updateStatus,
+  updateOrderWorkflow,
   updateKitchenProgress
 } from "../controllers/orderController.js";
 
@@ -109,6 +110,13 @@ orderRouter.post(
   updateStatus
 );
 
+
+orderRouter.patch(
+  "/workflow",
+  authMiddleware,
+  adminAuth,
+  updateOrderWorkflow
+);
 
 // ======================================================
 // KITCHEN CONTROL — ADMIN

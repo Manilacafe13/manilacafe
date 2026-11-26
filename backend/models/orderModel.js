@@ -430,6 +430,7 @@ const orderSchema = new mongoose.Schema(
         }
       },
       packed: { type: Boolean, default: false },
+      version: { type: Number, default: 0, min: 0 },
       updatedAt: { type: Date, default: null }
     },
 
@@ -698,6 +699,10 @@ discountValue: {
     // ==================================================
     // ORDER STATUS
     // ==================================================
+
+    // Internal admin planning, independent of payment and fulfillment.
+    kitchenPaused: { type: Boolean, default: false },
+    workflowVersion: { type: Number, default: 0, min: 0 },
 
     status: {
       type: String,
